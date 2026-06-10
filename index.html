@@ -675,19 +675,25 @@ window._gsFirebaseReady = false;
 
     console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
 
-    if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
-    if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
-    if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
-    if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
-    if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
-    if (h        && typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h);
-    if (s        && typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s);
+    // Peupler les tableaux directement ici, sans passer par window callbacks
+    // pour garantir que c'est fait de façon synchrone avant _gsFirebaseReady = true
+    if (p?.list)  { if (typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list); }
+    if (g?.list)  { if (typeof window._gsSetGames        === 'function') window._gsSetGames(g.list); }
+    if (gm?.list) { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list); }
+    if (c?.list)  { if (typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list); }
+    if (f)        { if (typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f); }
+    if (h)        { if (typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h); }
+    if (s)        { if (typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s); }
     if (typeof window._gsRender === 'function') window._gsRender();
 
-    // Marquer Firebase comme prêt
+    // Marquer Firebase prêt APRÈS que tout est chargé
     window._gsFirebaseReady = true;
-    console.log('✅ Firebase prêt — products:', products.length, 'games:', games.length, 'gamers:', topGamers.length);
-  } catch(e) { console.warn('❌ Firebase init erreur:', e); }
+    console.log('✅ Firebase prêt — products:', window._products_count, 'games:', window._games_count, 'gamers:', window._gamers_count);
+  } catch(e) {
+    console.warn('❌ Firebase init erreur:', e);
+    // Même en cas d'erreur partielle, marquer prêt pour ne pas bloquer l'UI
+    window._gsFirebaseReady = true;
+  }
 })();
 
 // ===== SAVE =====
@@ -1686,9 +1692,22 @@ async function saveData() {
 
   try {
     if (!window.fbSaveData) throw new Error('fbSaveData non disponible');
+
+    // Sécurité : si tous les tableaux sont vides et qu'on avait des données avant,
+    // c'est anormal — on refuse d'écraser Firebase avec des données vides
+    const totalItems = products.length + games.length + topGamers.length;
+    const hadDataBefore = (window._products_count > 0 || window._games_count > 0 || window._gamers_count > 0);
+    if (totalItems === 0 && hadDataBefore) {
+      throw new Error('Sauvegarde annulée — tableaux vides alors que des données existaient');
+    }
+
     console.log('💾 saveData → Firestore', { products: products.length, games: games.length, gamers: topGamers.length });
     await window.fbSaveData(products, games, topGamers);
     console.log('✅ saveData OK');
+    // Mettre à jour les compteurs après sauvegarde réussie
+    window._products_count = products.length;
+    window._games_count = games.length;
+    window._gamers_count = topGamers.length;
     try { localStorage.removeItem('gs_products'); localStorage.removeItem('gs_games'); localStorage.removeItem('gs_gamers'); } catch(e) {}
   } catch(e) {
     console.error('❌ saveData erreur:', e);
@@ -2021,20 +2040,27 @@ let topGamers = loadGamers();
 
 // ===== CALLBACKS POUR FIREBASE (évite window.arr = arr qui casse les refs) =====
 window._gsSetProducts = (data) => {
-  console.log('📥 Firebase → products reçus:', data.length, data);
-  products.length = 0; data.forEach(x => products.push(x));
+  products.length = 0;
+  data.forEach(x => products.push(x));
+  window._products_count = products.length;
+  console.log('📥 products chargés:', products.length);
 };
 window._gsSetGames = (data) => {
-  console.log('📥 Firebase → games reçus:', data.length, data);
-  games.length = 0; data.forEach(x => games.push(x));
+  games.length = 0;
+  data.forEach(x => games.push(x));
+  window._games_count = games.length;
+  console.log('📥 games chargés:', games.length);
 };
 window._gsSetGamers = (data) => {
-  console.log('📥 Firebase → gamers reçus:', data.length, data);
-  topGamers.length = 0; data.forEach(x => topGamers.push(x));
+  topGamers.length = 0;
+  data.forEach(x => topGamers.push(x));
+  window._gamers_count = topGamers.length;
+  console.log('📥 gamers chargés:', topGamers.length);
 };
 window._gsSetCandidatures = (data) => {
-  console.log('📥 Firebase → candidatures reçues:', data.length);
-  candidatures.length = 0; data.forEach(x => candidatures.push(x));
+  candidatures.length = 0;
+  data.forEach(x => candidatures.push(x));
+  console.log('📥 candidatures chargées:', candidatures.length);
 };
 window._gsSetUser         = (user) => { currentUser = user; };
 window._gsRender = () => {
