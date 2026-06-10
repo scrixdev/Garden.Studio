@@ -665,10 +665,10 @@ window.fbUploadImage = async function(file, path) {
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
       fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
-    if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
-    if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
-    if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
-    if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
+    if (p?.list  && typeof window._gsSetProducts     === 'function') { window._gsSetProducts(p.list);     localStorage.setItem('gs_products',    JSON.stringify(p.list)); }
+    if (g?.list  && typeof window._gsSetGames        === 'function') { window._gsSetGames(g.list);         localStorage.setItem('gs_games',       JSON.stringify(g.list)); }
+    if (gm?.list && typeof window._gsSetGamers       === 'function') { window._gsSetGamers(gm.list);      localStorage.setItem('gs_gamers',      JSON.stringify(gm.list)); }
+    if (c?.list  && typeof window._gsSetCandidatures === 'function') { window._gsSetCandidatures(c.list); localStorage.setItem('gs_candidatures', JSON.stringify(c.list)); }
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
     if (h        && typeof window.applyHeroFromData     === 'function') window.applyHeroFromData(h);
     if (s        && typeof window.applySettingsFromData  === 'function') window.applySettingsFromData(s);
