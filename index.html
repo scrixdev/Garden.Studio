@@ -613,7 +613,7 @@ footer {
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, deleteDoc, writeBatch } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -651,6 +651,39 @@ async function fsGet(path) {
 }
 async function fsSet(path, data) { await setDoc(doc(db, ...path.split('/')), data); }
 
+// Lire une subcollection -> tableau d'objets tries par _order
+async function fsGetCollection(collPath) {
+  try {
+    const ref = collection(db, ...collPath.split('/'));
+    const snap = await getDocs(ref);
+    if (snap.empty) return null;
+    const items = [];
+    snap.forEach(d => items.push({ _id: d.id, ...d.data() }));
+    items.sort((a, b) => (a._order ?? 0) - (b._order ?? 0));
+    return items;
+  } catch(e) { console.warn('fsGetCollection error:', e); return null; }
+}
+
+// Ecrire un tableau dans une subcollection (remplace tout en batch)
+async function fsSetCollection(collPath, items) {
+  const collRef = collection(db, ...collPath.split('/'));
+  const existing = await getDocs(collRef);
+  const batchDel = writeBatch(db);
+  existing.forEach(d => batchDel.delete(d.ref));
+  await batchDel.commit();
+  const CHUNK = 450;
+  for (let i = 0; i < items.length; i += CHUNK) {
+    const b = writeBatch(db);
+    items.slice(i, i + CHUNK).forEach((item, idx) => {
+      const id = item._id || String(i + idx);
+      const docRef = doc(collRef, id);
+      const { _id, ...rest } = item;
+      b.set(docRef, { _order: i + idx, ...rest });
+    });
+    await b.commit();
+  }
+}
+
 // ===== STORAGE : upload image → URL publique =====
 window.fbUploadImage = async function(file, path) {
   const storageRef = ref(storage, path + '/' + Date.now() + '_' + file.name.replace(/\s+/g,'_'));
@@ -669,17 +702,17 @@ window._gsFirebaseReady = false;
 
     console.log('🔄 Chargement depuis Firestore...');
     const [p, g, gm, c, f, h, s] = await Promise.all([
-      fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
+      fsGet('site/products'), fsGetCollection('games'), fsGetCollection('gamers'),
       fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
 
-    console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
+    console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.length, gamers: gm?.length });
 
     // Peupler les tableaux directement ici, sans passer par window callbacks
     // pour garantir que c'est fait de façon synchrone avant _gsFirebaseReady = true
     if (p?.list)  { if (typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list); }
-    if (g?.list)  { if (typeof window._gsSetGames        === 'function') window._gsSetGames(g.list); }
-    if (gm?.list) { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list); }
+    if (g)        { if (typeof window._gsSetGames        === 'function') window._gsSetGames(g); }
+    if (gm)       { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm); }
     if (c?.list)  { if (typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list); }
     if (f)        { if (typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f); }
     if (h)        { if (typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h); }
@@ -700,9 +733,9 @@ window._gsFirebaseReady = false;
 window.fbSaveData = async (products, games, gamers) => {
   console.log('🔥 fbSaveData → envoi Firestore:', { products: products.length, games: games.length, gamers: gamers.length });
   await Promise.all([
-    fsSet('site/products', { list: products }),
-    fsSet('site/games',    { list: games }),
-    fsSet('site/gamers',   { list: gamers })
+    fsSet('site/products',       { list: products }),
+    fsSetCollection('games',     games),
+    fsSetCollection('gamers',    gamers)
   ]);
   console.log('✅ fbSaveData OK');
 };
