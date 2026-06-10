@@ -659,12 +659,12 @@ window.fbUploadImage = async function(file, path) {
 };
 
 // ===== INIT DATA =====
+window._gsFirebaseReady = false;
 (async () => {
   try {
-    // Nettoyage immédiat du localStorage pour éviter tout conflit avec Firebase
+    // Nettoyage localStorage
     try {
       ['gs_products','gs_games','gs_gamers','gs_candidatures'].forEach(k => localStorage.removeItem(k));
-      console.log('🧹 localStorage nettoyé — Firebase est la seule source de vérité');
     } catch(e) {}
 
     console.log('🔄 Chargement depuis Firestore...');
@@ -673,7 +673,7 @@ window.fbUploadImage = async function(file, path) {
       fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
 
-    console.log('📦 Données Firestore brutes:', { products: p, games: g, gamers: gm, candidatures: c, footer: f, hero: h, settings: s });
+    console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
 
     if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
     if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
@@ -683,7 +683,10 @@ window.fbUploadImage = async function(file, path) {
     if (h        && typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h);
     if (s        && typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s);
     if (typeof window._gsRender === 'function') window._gsRender();
-    console.log('✅ Firebase chargé avec succès');
+
+    // Marquer Firebase comme prêt
+    window._gsFirebaseReady = true;
+    console.log('✅ Firebase prêt — products:', products.length, 'games:', games.length, 'gamers:', topGamers.length);
   } catch(e) { console.warn('❌ Firebase init erreur:', e); }
 })();
 
@@ -1663,16 +1666,36 @@ const DEFAULT_GAMERS = [
 function loadData()   { return []; /* Firebase est la seule source de vérité */ }
 function loadGames()  { return []; /* Firebase est la seule source de vérité */ }
 function loadGamers() { return []; /* Firebase est la seule source de vérité */ }
+let _saveInProgress = false;
 async function saveData() {
-  if (!window.fbSaveData) { console.error('❌ fbSaveData non disponible'); throw new Error('Firebase non prêt'); }
-  console.log('💾 saveData → Firestore', { products: products.length, games: games.length, gamers: topGamers.length });
-  console.log('  products:', JSON.stringify(products));
-  console.log('  games:', JSON.stringify(games));
-  console.log('  gamers:', JSON.stringify(topGamers));
-  await window.fbSaveData(products, games, topGamers);
-  console.log('✅ saveData OK — Firestore mis à jour');
-  // Nettoyage localStorage pour éviter tout conflit
-  try { localStorage.removeItem('gs_products'); localStorage.removeItem('gs_games'); localStorage.removeItem('gs_gamers'); } catch(e) {}
+  // Attendre que Firebase soit prêt (max 8 secondes)
+  if (!window._gsFirebaseReady) {
+    console.log('⏳ En attente Firebase...');
+    await new Promise((resolve, reject) => {
+      const start = Date.now();
+      const check = setInterval(() => {
+        if (window._gsFirebaseReady) { clearInterval(check); resolve(); }
+        else if (Date.now() - start > 8000) { clearInterval(check); reject(new Error('Firebase timeout')); }
+      }, 100);
+    });
+  }
+
+  // Bloquer les doubles clics
+  if (_saveInProgress) { console.warn('⚠️ Save déjà en cours, ignoré'); return; }
+  _saveInProgress = true;
+
+  try {
+    if (!window.fbSaveData) throw new Error('fbSaveData non disponible');
+    console.log('💾 saveData → Firestore', { products: products.length, games: games.length, gamers: topGamers.length });
+    await window.fbSaveData(products, games, topGamers);
+    console.log('✅ saveData OK');
+    try { localStorage.removeItem('gs_products'); localStorage.removeItem('gs_games'); localStorage.removeItem('gs_gamers'); } catch(e) {}
+  } catch(e) {
+    console.error('❌ saveData erreur:', e);
+    throw e;
+  } finally {
+    _saveInProgress = false;
+  }
 }
 
 // ===== CANDIDATURES =====
@@ -2527,15 +2550,23 @@ function editProduct(i) {
 function cancelProductEdit() { document.getElementById('product-edit-form').style.display = 'none'; delete tempImgs['product']; }
 
 async function saveProductEdit() {
+  if (_saveInProgress) return;
   const i = parseInt(document.getElementById('pe-index').value);
   const existingProductImg = (i >= 0 && i < products.length) ? (products[i].img || '') : '';
   const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: ('product' in tempImgs) ? tempImgs['product'] : existingProductImg };
+  if (!data.title.trim()) { showToast('⚠️ Titre requis'); return; }
   console.log('💾 saveProductEdit i=' + i, data);
   if (i === -1) products.push(data); else products[i] = data;
   showToast('Sauvegarde en cours...');
-  await saveData();
-  renderProductsList(); renderProductsOnSite(); cancelProductEdit();
-  showToast('Produit sauvegardé !'); logChange('Produit "' + data.title + '" modifié');
+  try {
+    await saveData();
+    renderProductsList(); renderProductsOnSite(); cancelProductEdit();
+    showToast('✅ Produit sauvegardé !'); logChange('Produit "' + data.title + '" modifié');
+  } catch(e) {
+    // Annuler l'ajout si erreur
+    if (i === -1) products.pop(); else products[i] = existingProductImg ? {title:'',desc:'',img:existingProductImg} : products[i];
+    showToast('❌ Erreur sauvegarde — vérifie ta connexion');
+  }
 }
 
 function deleteProduct(i) {
@@ -2597,6 +2628,7 @@ function editGame(i) {
 function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; delete tempImgs['game']; }
 
 async function saveGameEdit() {
+  if (_saveInProgress) return;
   const i = parseInt(document.getElementById('ge-index').value);
   const data = {
     name: document.getElementById('ge-name').value,
@@ -2608,11 +2640,17 @@ async function saveGameEdit() {
     status: document.getElementById('ge-status').value,
     img: ('game' in tempImgs) ? tempImgs['game'] : (i >= 0 && i < games.length ? games[i].img || '' : '')
   };
+  if (!data.name.trim()) { showToast('⚠️ Nom requis'); return; }
   if (i === -1) games.push(data); else games[i] = data;
   showToast('Sauvegarde en cours...');
-  await saveData();
-  renderGamesList(); renderGamesOnSite(); cancelGameEdit();
-  showToast('Jeu sauvegardé !'); logChange('Jeu "' + data.name + '" modifié');
+  try {
+    await saveData();
+    renderGamesList(); renderGamesOnSite(); cancelGameEdit();
+    showToast('✅ Jeu sauvegardé !'); logChange('Jeu "' + data.name + '" modifié');
+  } catch(e) {
+    if (i === -1) games.pop();
+    showToast('❌ Erreur sauvegarde');
+  }
 }
 
 function deleteGame(i) {
@@ -2687,6 +2725,7 @@ function editGamer(i) {
 function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; }
 
 async function saveGamerEdit() {
+  if (_saveInProgress) return;
   const i = parseInt(document.getElementById('gme-index').value);
   const data = {
     name: document.getElementById('gme-name').value,
@@ -2695,11 +2734,17 @@ async function saveGamerEdit() {
     country: document.getElementById('gme-country').value,
     img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : '')
   };
+  if (!data.name.trim()) { showToast('⚠️ Nom requis'); return; }
   if (i === -1) topGamers.push(data); else topGamers[i] = data;
   showToast('Sauvegarde en cours...');
-  await saveData();
-  renderGamersList(); renderGamersPage(); cancelGamerEdit();
-  showToast('Membre sauvegardé ✅'); logChange('Membre "' + data.name + '" modifié');
+  try {
+    await saveData();
+    renderGamersList(); renderGamersPage(); cancelGamerEdit();
+    showToast('✅ Membre sauvegardé !'); logChange('Membre "' + data.name + '" modifié');
+  } catch(e) {
+    if (i === -1) topGamers.pop();
+    showToast('❌ Erreur sauvegarde');
+  }
 }
 
 function deleteGamer(i) {
