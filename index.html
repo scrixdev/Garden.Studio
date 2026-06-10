@@ -2260,9 +2260,40 @@ function renderGamesOnSite() {
 }
 
 // ===== IMAGE UPLOAD =====
-function handleImgUpload(input, key) {
+async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
+  // Upload hero-bg to Firebase Storage for persistence
+  if (key === 'hero-bg' && window.fbUploadImage) {
+    showToast('Upload en cours...');
+    try {
+      const url = await window.fbUploadImage(file, 'hero-bg');
+      tempImgs[key] = url;
+      const media = document.getElementById('hero-bg-media');
+      if (media) {
+        const isVideo = file.type.startsWith('video/');
+        media.innerHTML = isVideo
+          ? `<video autoplay muted loop playsinline src="${url}"></video>`
+          : `<img src="${url}" alt="hero background">`;
+      }
+      const preview = document.getElementById(key + '-img-preview');
+      const previewImg = document.getElementById(key + '-img-preview-img');
+      if (preview && previewImg && !file.type.startsWith('video/')) { previewImg.src = url; preview.style.display = 'inline-block'; }
+      // Save hero bg URL to Firebase
+      if (window.fbSaveHero) {
+        const heroData = {
+          title: document.getElementById('f-hero-title').value,
+          desc: document.getElementById('f-hero-desc').value,
+          btn1: document.getElementById('f-hero-btn1').value,
+          btn2: document.getElementById('f-hero-btn2').value,
+          bg: url, bgIsVideo: file.type.startsWith('video/')
+        };
+        await window.fbSaveHero(heroData);
+      }
+      showToast('Image de fond sauvegardée !');
+    } catch(e) { showToast('Erreur upload image'); console.error(e); }
+    return;
+  }
   const reader = new FileReader();
   reader.onload = (e) => {
     const dataUrl = e.target.result;
@@ -2273,17 +2304,6 @@ function handleImgUpload(input, key) {
     if (key === 'feat1') { const el = document.getElementById('feat-img-1'); if (el) el.innerHTML = `<img src="${dataUrl}" alt="">`; }
     if (key === 'feat2') { const el = document.getElementById('feat-img-2'); if (el) el.innerHTML = `<img src="${dataUrl}" alt="">`; }
     if (key === 'portal') { const el = document.getElementById('portal-inner'); if (el) el.innerHTML = `<img src="${dataUrl}" alt="">`; }
-    if (key === 'hero-bg') {
-      const media = document.getElementById('hero-bg-media');
-      if (media) {
-        const isVideo = file.type.startsWith('video/');
-        if (isVideo) {
-          media.innerHTML = `<video autoplay muted loop playsinline src="${dataUrl}"></video>`;
-        } else {
-          media.innerHTML = `<img src="${dataUrl}" alt="hero background">`;
-        }
-      }
-    }
   };
   reader.readAsDataURL(file);
 }
@@ -2400,6 +2420,14 @@ window.applyHeroFromData = function(h) {
   if (h.btn2) {
     document.getElementById('hero-btn2').textContent = h.btn2;
     document.getElementById('f-hero-btn2').value = h.btn2;
+  }
+  if (h.bg) {
+    const media = document.getElementById('hero-bg-media');
+    if (media) {
+      media.innerHTML = h.bgIsVideo
+        ? `<video autoplay muted loop playsinline src="${h.bg}"></video>`
+        : `<img src="${h.bg}" alt="hero background">`;
+    }
   }
 };
 
@@ -3315,6 +3343,7 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 
 
 <!-- ===== CUSTOM CONFIRM MODAL ===== -->
+
 <div class="modal-overlay" id="confirm-modal" style="z-index:99999">
   <div class="modal-box" style="max-width:380px;padding:0;text-align:center">
     <div style="padding:40px 36px 32px">
