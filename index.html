@@ -2437,18 +2437,19 @@ function editProduct(i) {
 
 function cancelProductEdit() { document.getElementById('product-edit-form').style.display = 'none'; tempImgs['product'] = ''; }
 
-function saveProductEdit() {
+async function saveProductEdit() {
   const i = parseInt(document.getElementById('pe-index').value);
   const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: tempImgs['product'] || '' };
   if (i === -1) products.push(data); else products[i] = data;
-  saveData();
+  showToast('Sauvegarde en cours...');
+  await saveData();
   renderProductsList(); renderProductsOnSite(); cancelProductEdit();
   showToast('Produit sauvegardé !'); logChange('Produit "' + data.title + '" modifié');
 }
 
 function deleteProduct(i) {
-  showConfirm('Supprimer ce produit ?', 'Cette action est irréversible.', () => {
-    products.splice(i, 1); saveData(); renderProductsList(); renderProductsOnSite();
+  showConfirm('Supprimer ce produit ?', 'Cette action est irréversible.', async () => {
+    products.splice(i, 1); await saveData(); renderProductsList(); renderProductsOnSite();
     showToast('Produit supprimé'); logChange('Produit supprimé');
   });
 }
@@ -2501,7 +2502,7 @@ function editGame(i) {
 
 function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; tempImgs['game'] = ''; }
 
-function saveGameEdit() {
+async function saveGameEdit() {
   const i = parseInt(document.getElementById('ge-index').value);
   const data = {
     name: document.getElementById('ge-name').value,
@@ -2514,14 +2515,15 @@ function saveGameEdit() {
     img: tempImgs['game'] || ''
   };
   if (i === -1) games.push(data); else games[i] = data;
-  saveData();
+  showToast('Sauvegarde en cours...');
+  await saveData();
   renderGamesList(); renderGamesOnSite(); cancelGameEdit();
   showToast('Jeu sauvegardé !'); logChange('Jeu "' + data.name + '" modifié');
 }
 
 function deleteGame(i) {
-  showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', () => {
-    games.splice(i, 1); saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
+  showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', async () => {
+    games.splice(i, 1); await saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
     showToast('Jeu supprimé'); logChange('Jeu supprimé');
   });
 }
@@ -2529,8 +2531,8 @@ function deleteGame(i) {
 function deleteGameFromForm() {
   const i = parseInt(document.getElementById('ge-index').value);
   if (i < 0) return;
-  showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', () => {
-    games.splice(i, 1); saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
+  showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', async () => {
+    games.splice(i, 1); await saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
     cancelGameEdit();
     showToast('Jeu supprimé'); logChange('Jeu supprimé');
   });
@@ -2584,7 +2586,7 @@ function editGamer(i) {
 
 function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; tempImgs['gamer'] = ''; }
 
-function saveGamerEdit() {
+async function saveGamerEdit() {
   const i = parseInt(document.getElementById('gme-index').value);
   const data = {
     name: document.getElementById('gme-name').value,
@@ -2594,14 +2596,15 @@ function saveGamerEdit() {
     img: tempImgs['gamer'] || ''
   };
   if (i === -1) topGamers.push(data); else topGamers[i] = data;
-  saveData();
+  showToast('Sauvegarde en cours...');
+  await saveData();
   renderGamersList(); cancelGamerEdit();
   showToast('Gamer sauvegardé !'); logChange('Gamer "' + data.name + '" modifié');
 }
 
 function deleteGamer(i) {
-  showConfirm('Supprimer ce membre ?', 'Cette action est irréversible.', () => {
-    topGamers.splice(i, 1); saveData(); renderGamersList(); updateStats();
+  showConfirm('Supprimer ce membre ?', 'Cette action est irréversible.', async () => {
+    topGamers.splice(i, 1); await saveData(); renderGamersList(); updateStats();
     showToast('Membre supprimé'); logChange('Membre supprimé');
   });
 }
