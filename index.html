@@ -615,6 +615,7 @@ footer {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBtJKXcuZ6U4vKsPIVHagmRwz-xRuQdGT4",
@@ -627,14 +628,14 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const auth = getAuth(app);
+const db      = getFirestore(app);
+const auth    = getAuth(app);
+const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
-// ===== AUTH STATE LISTENER =====
+// ===== AUTH STATE =====
 onAuthStateChanged(auth, (user) => {
   if (user) {
-    // On écrit directement dans la var locale via _gsSetUser
     const username = user.displayName || user.email.split('@')[0];
     if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid });
     if (typeof window.updateNavAfterLogin === 'function') window.updateNavAfterLogin(username);
@@ -644,73 +645,56 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ===== FIRESTORE HELPERS =====
-async function fsGet(docPath) {
-  try {
-    const snap = await getDoc(doc(db, ...docPath.split('/')));
-    return snap.exists() ? snap.data() : null;
-  } catch(e) { console.warn('fsGet', docPath, e); return null; }
+// ===== FIRESTORE =====
+async function fsGet(path) {
+  try { const s = await getDoc(doc(db, ...path.split('/'))); return s.exists() ? s.data() : null; } catch(e) { return null; }
 }
-async function fsSet(docPath, data) {
-  await setDoc(doc(db, ...docPath.split('/')), data);
-}
+async function fsSet(path, data) { await setDoc(doc(db, ...path.split('/')), data); }
 
-// ===== INIT: charge depuis Firebase, met à jour les arrays locaux =====
+// ===== STORAGE : upload image → URL publique =====
+window.fbUploadImage = async function(file, path) {
+  const storageRef = ref(storage, path + '/' + Date.now() + '_' + file.name.replace(/\s+/g,'_'));
+  const snap = await uploadBytes(storageRef, file);
+  return await getDownloadURL(snap.ref);
+};
+
+// ===== INIT DATA =====
 (async () => {
   try {
     const [p, g, gm, c, f] = await Promise.all([
-      fsGet('site/products'),
-      fsGet('site/games'),
-      fsGet('site/gamers'),
-      fsGet('site/candidatures'),
-      fsGet('site/footer')
+      fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
+      fsGet('site/candidatures'), fsGet('site/footer')
     ]);
-    // Mise à jour des arrays via callbacks — pas de window.xxx = yyy
     if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
     if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
     if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
     if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
-    // Re-render
     if (typeof window._gsRender === 'function') window._gsRender();
-    console.log('✅ Garden Studio — Firebase chargé');
-  } catch(e) {
-    console.warn('Firebase init error:', e);
-  }
+    console.log('✅ Firebase chargé');
+  } catch(e) { console.warn('Firebase init:', e); }
 })();
 
-// ===== SAVE FUNCTIONS =====
-window.fbSaveData = async function(products, games, gamers) {
+// ===== SAVE =====
+window.fbSaveData = async (products, games, gamers) => {
   await Promise.all([
-    fsSet('site/products',  { list: products }),
-    fsSet('site/games',     { list: games }),
-    fsSet('site/gamers',    { list: gamers })
+    fsSet('site/products', { list: products }),
+    fsSet('site/games',    { list: games }),
+    fsSet('site/gamers',   { list: gamers })
   ]);
 };
-window.fbSaveCandidatures = async function(candidatures) {
-  await fsSet('site/candidatures', { list: candidatures });
-};
-window.fbSaveFooter = async function(data) {
-  await fsSet('site/footer', data);
-};
+window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
+window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
 
-// ===== AUTH FUNCTIONS =====
-window.fbRegister = async function(email, pwd, username) {
-  const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-  await updateProfile(cred.user, { displayName: username });
-  return cred.user;
+// ===== AUTH =====
+window.fbRegister = async (email, pwd, username) => {
+  const c = await createUserWithEmailAndPassword(auth, email, pwd);
+  await updateProfile(c.user, { displayName: username });
+  return c.user;
 };
-window.fbSignIn = async function(email, pwd) {
-  const cred = await signInWithEmailAndPassword(auth, email, pwd);
-  return cred.user;
-};
-window.fbSignInGoogle = async function() {
-  const cred = await signInWithPopup(auth, googleProvider);
-  return cred.user;
-};
-window.fbSignOut = async function() {
-  await signOut(auth);
-};
+window.fbSignIn       = async (email, pwd) => (await signInWithEmailAndPassword(auth, email, pwd)).user;
+window.fbSignInGoogle = async () => (await signInWithPopup(auth, googleProvider)).user;
+window.fbSignOut      = async () => await signOut(auth);
 
 </script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -744,7 +728,7 @@ window.fbSignOut = async function() {
   </ul>
   <div class="nav-right">
     <button class="btn-signin" onclick="openSignIn()">Connexion</button>
-    <button class="btn-admin" onclick="openAdmin()">
+    <button class="btn-admin" id="btn-admin-nav" onclick="openAdmin()" style="display:none">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
       Admin
     </button>
@@ -788,7 +772,7 @@ window.fbSignOut = async function() {
   <a onclick="showPage('recruit');closeMobileNav()" style="color:var(--lime)">On recrute</a>
   <div class="mobile-nav-footer">
     <button class="btn-signin" onclick="openSignIn();closeMobileNav()" style="flex:1">Connexion</button>
-    <button class="btn-admin" onclick="openAdmin();closeMobileNav()" style="flex:1;justify-content:center">
+    <button class="btn-admin" id="btn-admin-mobile" onclick="openAdmin();closeMobileNav()" style="flex:1;justify-content:center;display:none">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
       Admin
     </button>
@@ -2306,8 +2290,23 @@ function removeImg(key) {
   if (preview) preview.style.display = 'none';
 }
 
+// ===== ADMINS AUTORISÉS =====
+const ADMIN_EMAILS = [
+  'suco.the.shadows@gmail.com',
+  // Ajoute d'autres emails ici si besoin :
+  // 'autre@email.com',
+];
+
+function isAdmin() {
+  return currentUser && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+}
+
 // ===== ADMIN =====
 function openAdmin() {
+  if (!isAdmin()) {
+    showToast('⛔ Accès refusé.');
+    return;
+  }
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
   renderProductsList();
@@ -2885,12 +2884,19 @@ async function doSignOut() {
 }
 
 function updateNavAfterLogin(username) {
+  // Bouton connexion → affiche le pseudo
   const btn = document.querySelector('.btn-signin');
   if (btn) {
     btn.textContent = username;
     btn.style.background = 'rgba(162,89,255,0.1)';
     btn.onclick = () => showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut);
   }
+  // Bouton admin → visible seulement si admin
+  const adminNav    = document.getElementById('btn-admin-nav');
+  const adminMobile = document.getElementById('btn-admin-mobile');
+  const show = currentUser && ADMIN_EMAILS.includes(currentUser.email.toLowerCase());
+  if (adminNav)    adminNav.style.display    = show ? '' : 'none';
+  if (adminMobile) adminMobile.style.display = show ? '' : 'none';
 }
 
 function updateNavAfterLogout() {
@@ -2900,6 +2906,11 @@ function updateNavAfterLogout() {
     btn.style.background = '';
     btn.onclick = openSignIn;
   }
+  // Cacher le bouton admin
+  const adminNav    = document.getElementById('btn-admin-nav');
+  const adminMobile = document.getElementById('btn-admin-mobile');
+  if (adminNav)    adminNav.style.display    = 'none';
+  if (adminMobile) adminMobile.style.display = 'none';
 }
 
 // ===== GAMER PROFILE MODAL =====
