@@ -665,10 +665,14 @@ window.fbUploadImage = async function(file, path) {
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
       fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
-    if (p?.list  && typeof window._gsSetProducts     === 'function') { window._gsSetProducts(p.list);     localStorage.setItem('gs_products',    JSON.stringify(p.list)); }
-    if (g?.list  && typeof window._gsSetGames        === 'function') { window._gsSetGames(g.list);         localStorage.setItem('gs_games',       JSON.stringify(g.list)); }
-    if (gm?.list && typeof window._gsSetGamers       === 'function') { window._gsSetGamers(gm.list);      localStorage.setItem('gs_gamers',      JSON.stringify(gm.list)); }
-    if (c?.list  && typeof window._gsSetCandidatures === 'function') { window._gsSetCandidatures(c.list); localStorage.setItem('gs_candidatures', JSON.stringify(c.list)); }
+    if (!window._justSaved) {
+      if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
+      if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
+      if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
+      if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
+    } else {
+      console.log('🔒 Firebase init bloqué — sauvegarde récente en cours');
+    }
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
     if (h        && typeof window.applyHeroFromData     === 'function') window.applyHeroFromData(h);
     if (s        && typeof window.applySettingsFromData  === 'function') window.applySettingsFromData(s);
@@ -1661,8 +1665,12 @@ function loadGamers() {
   try { const g = localStorage.getItem('gs_gamers'); if (g) return JSON.parse(g); } catch(e) {}
   return DEFAULT_GAMERS.map(x => ({...x}));
 }
+let _justSaved = false;
 async function saveData() {
   try {
+    _justSaved = true;
+    clearTimeout(window._justSavedTimer);
+    window._justSavedTimer = setTimeout(() => { _justSaved = false; }, 5000);
     if (window.fbSaveData) {
       await window.fbSaveData(products, games, topGamers);
     }
@@ -2395,7 +2403,9 @@ async function saveAll() {
       title: document.getElementById('f-hero-title').value,
       desc: document.getElementById('f-hero-desc').value,
       btn1: document.getElementById('f-hero-btn1').value,
-      btn2: document.getElementById('f-hero-btn2').value
+      btn2: document.getElementById('f-hero-btn2').value,
+      bg: tempImgs['hero-bg'] || '',
+      bgIsVideo: !!(tempImgs['hero-bg'] && tempImgs['hero-bg'].includes('video'))
     };
     await window.fbSaveHero(heroData);
   }
@@ -2431,6 +2441,7 @@ window.applyHeroFromData = function(h) {
     document.getElementById('f-hero-btn2').value = h.btn2;
   }
   if (h.bg) {
+    tempImgs['hero-bg'] = h.bg;
     const media = document.getElementById('hero-bg-media');
     if (media) {
       media.innerHTML = h.bgIsVideo
@@ -2504,11 +2515,12 @@ function editProduct(i) {
   document.getElementById('product-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelProductEdit() { document.getElementById('product-edit-form').style.display = 'none'; tempImgs['product'] = ''; }
+function cancelProductEdit() { document.getElementById('product-edit-form').style.display = 'none'; delete tempImgs['product']; }
 
 async function saveProductEdit() {
   const i = parseInt(document.getElementById('pe-index').value);
-  const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: tempImgs['product'] || '' };
+  const existingImg = (i >= 0 && i < products.length) ? (products[i].img || '') : '';
+  const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: ('product' in tempImgs) ? tempImgs['product'] : existingImg };
   if (i === -1) products.push(data); else products[i] = data;
   showToast('Sauvegarde en cours...');
   await saveData();
@@ -2529,7 +2541,7 @@ function deleteProduct(i) {
 function addProduct() {
   document.getElementById('pe-title').value = ''; document.getElementById('pe-desc').value = '';
   document.getElementById('pe-index').value = -1; document.getElementById('product-img-preview').style.display = 'none';
-  tempImgs['product'] = ''; document.getElementById('product-edit-form').style.display = 'block';
+  delete tempImgs['product']; document.getElementById('product-edit-form').style.display = 'block';
   document.getElementById('product-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -2572,7 +2584,7 @@ function editGame(i) {
   document.getElementById('game-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; tempImgs['game'] = ''; }
+function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; delete tempImgs['game']; }
 
 async function saveGameEdit() {
   const i = parseInt(document.getElementById('ge-index').value);
@@ -2584,7 +2596,7 @@ async function saveGameEdit() {
     link: document.getElementById('ge-link').value,
     desc: document.getElementById('ge-desc').value,
     status: document.getElementById('ge-status').value,
-    img: tempImgs['game'] || ''
+    img: ('game' in tempImgs) ? tempImgs['game'] : (i >= 0 && i < games.length ? games[i].img || '' : '')
   };
   if (i === -1) games.push(data); else games[i] = data;
   showToast('Sauvegarde en cours...');
@@ -2624,7 +2636,7 @@ function addGame() {
   document.getElementById('ge-index').value = -1; document.getElementById('game-img-preview').style.display = 'none';
   document.getElementById('ge-delete-btn').style.display = 'none';
   document.getElementById('game-edit-form-title').textContent = 'Nouveau jeu';
-  tempImgs['game'] = ''; document.getElementById('game-edit-form').style.display = 'block';
+  delete tempImgs['game']; document.getElementById('game-edit-form').style.display = 'block';
   document.getElementById('game-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -2662,7 +2674,7 @@ function editGamer(i) {
   document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; tempImgs['gamer'] = ''; }
+function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; }
 
 async function saveGamerEdit() {
   const i = parseInt(document.getElementById('gme-index').value);
@@ -2671,7 +2683,7 @@ async function saveGamerEdit() {
     score: document.getElementById('gme-score').value,
     game: document.getElementById('gme-game').value,
     country: document.getElementById('gme-country').value,
-    img: tempImgs['gamer'] || ''
+    img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : '')
   };
   if (i === -1) topGamers.push(data); else topGamers[i] = data;
   showToast('Sauvegarde en cours...');
@@ -2694,7 +2706,7 @@ function addGamer() {
   document.getElementById('gme-name').value = ''; document.getElementById('gme-score').value = '';
   document.getElementById('gme-game').value = ''; document.getElementById('gme-country').value = '';
   document.getElementById('gme-index').value = -1; document.getElementById('gamer-img-preview').style.display = 'none';
-  tempImgs['gamer'] = ''; document.getElementById('gamer-edit-form').style.display = 'block';
+  delete tempImgs['gamer']; document.getElementById('gamer-edit-form').style.display = 'block';
   document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
