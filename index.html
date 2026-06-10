@@ -2264,34 +2264,42 @@ async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
   // Upload hero-bg to Firebase Storage for persistence
-  if (key === 'hero-bg' && window.fbUploadImage) {
+  if (key === 'hero-bg') {
     showToast('Upload en cours...');
+    const isVideo = file.type.startsWith('video/');
     try {
-      const url = await window.fbUploadImage(file, 'hero-bg');
+      let url;
+      if (window.fbUploadImage) {
+        url = await window.fbUploadImage(file, 'hero-bg');
+      } else {
+        // fallback base64
+        url = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+      }
       tempImgs[key] = url;
       const media = document.getElementById('hero-bg-media');
       if (media) {
-        const isVideo = file.type.startsWith('video/');
         media.innerHTML = isVideo
           ? `<video autoplay muted loop playsinline src="${url}"></video>`
           : `<img src="${url}" alt="hero background">`;
       }
       const preview = document.getElementById(key + '-img-preview');
       const previewImg = document.getElementById(key + '-img-preview-img');
-      if (preview && previewImg && !file.type.startsWith('video/')) { previewImg.src = url; preview.style.display = 'inline-block'; }
-      // Save hero bg URL to Firebase
+      if (preview && previewImg && !isVideo) { previewImg.src = url; preview.style.display = 'inline-block'; }
       if (window.fbSaveHero) {
         const heroData = {
           title: document.getElementById('f-hero-title').value,
           desc: document.getElementById('f-hero-desc').value,
           btn1: document.getElementById('f-hero-btn1').value,
           btn2: document.getElementById('f-hero-btn2').value,
-          bg: url, bgIsVideo: file.type.startsWith('video/')
+          bg: url, bgIsVideo: isVideo
         };
         await window.fbSaveHero(heroData);
       }
-      showToast('Image de fond sauvegardée !');
-    } catch(e) { showToast('Erreur upload image'); console.error(e); }
+      showToast('Image de fond sauvegardée ✅');
+    } catch(e) {
+      console.error('Upload error:', e);
+      showToast('Erreur upload — vérifie les règles Firebase Storage');
+    }
     return;
   }
   const reader = new FileReader();
@@ -2509,8 +2517,11 @@ async function saveProductEdit() {
 
 function deleteProduct(i) {
   showConfirm('Supprimer ce produit ?', 'Cette action est irréversible.', async () => {
-    products.splice(i, 1); await saveData(); renderProductsList(); renderProductsOnSite();
-    showToast('Produit supprimé'); logChange('Produit supprimé');
+    products.splice(i, 1);
+    showToast('Suppression en cours...');
+    await saveData();
+    renderProductsList(); renderProductsOnSite();
+    showToast('Produit supprimé ✅'); logChange('Produit supprimé');
   });
 }
 
@@ -2583,8 +2594,11 @@ async function saveGameEdit() {
 
 function deleteGame(i) {
   showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', async () => {
-    games.splice(i, 1); await saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
-    showToast('Jeu supprimé'); logChange('Jeu supprimé');
+    games.splice(i, 1);
+    showToast('Suppression en cours...');
+    await saveData();
+    renderGamesList(); renderGamesOnSite(); updateStats();
+    showToast('Jeu supprimé ✅'); logChange('Jeu supprimé');
   });
 }
 
@@ -2592,9 +2606,12 @@ function deleteGameFromForm() {
   const i = parseInt(document.getElementById('ge-index').value);
   if (i < 0) return;
   showConfirm('Supprimer ce jeu ?', 'Cette action est irréversible.', async () => {
-    games.splice(i, 1); await saveData(); renderGamesList(); renderGamesOnSite(); updateStats();
+    games.splice(i, 1);
+    showToast('Suppression en cours...');
+    await saveData();
+    renderGamesList(); renderGamesOnSite(); updateStats();
     cancelGameEdit();
-    showToast('Jeu supprimé'); logChange('Jeu supprimé');
+    showToast('Jeu supprimé ✅'); logChange('Jeu supprimé');
   });
 }
 
@@ -2664,8 +2681,11 @@ async function saveGamerEdit() {
 
 function deleteGamer(i) {
   showConfirm('Supprimer ce membre ?', 'Cette action est irréversible.', async () => {
-    topGamers.splice(i, 1); await saveData(); renderGamersList(); updateStats();
-    showToast('Membre supprimé'); logChange('Membre supprimé');
+    topGamers.splice(i, 1);
+    showToast('Suppression en cours...');
+    await saveData();
+    renderGamersList(); updateStats();
+    showToast('Membre supprimé ✅'); logChange('Membre supprimé');
   });
 }
 
@@ -2864,9 +2884,11 @@ function showConfirm(title, sub, cb) {
   document.getElementById('confirm-subtitle').textContent = sub;
   document.getElementById('confirm-modal').classList.add('open');
 }
-function confirmOk() {
+async function confirmOk() {
+  const cb = _confirmCallback;
+  _confirmCallback = null;
   closeConfirm();
-  if (_confirmCallback) { _confirmCallback(); _confirmCallback = null; }
+  if (cb) await cb();
 }
 function closeConfirm() {
   document.getElementById('confirm-modal').classList.remove('open');
