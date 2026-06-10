@@ -661,16 +661,17 @@ window.fbUploadImage = async function(file, path) {
 // ===== INIT DATA =====
 (async () => {
   try {
-    const [p, g, gm, c, f, h] = await Promise.all([
+    const [p, g, gm, c, f, h, s] = await Promise.all([
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
-      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero')
+      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
     if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
     if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
     if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
     if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
-    if (h        && typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h);
+    if (h        && typeof window.applyHeroFromData     === 'function') window.applyHeroFromData(h);
+    if (s        && typeof window.applySettingsFromData  === 'function') window.applySettingsFromData(s);
     if (typeof window._gsRender === 'function') window._gsRender();
     console.log('✅ Firebase chargé');
   } catch(e) { console.warn('Firebase init:', e); }
@@ -687,6 +688,7 @@ window.fbSaveData = async (products, games, gamers) => {
 window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
 window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
 window.fbSaveHero         = async (d) => await fsSet('site/hero', d);
+window.fbSaveSettings     = async (d) => await fsSet('site/settings', d);
 
 // ===== AUTH =====
 window.fbRegister = async (email, pwd, username) => {
@@ -2722,16 +2724,18 @@ function loadFooterLinks() {
 function applyColor(varName, value) {
   document.documentElement.style.setProperty(varName, value);
   logChange('Couleur ' + varName + ' → ' + value);
+  _debounceSaveSettings();
 }
 
-function resetColors() {
+async function resetColors() {
   const defaults = { '--lime': '#a259ff', '--dark': '#080810', '--dark2': '#0e0e18', '--card-bg': '#0f0f1a' };
   const ids = { '--lime': 'lime', '--dark': 'dark', '--dark2': 'dark2', '--card-bg': 'card' };
   Object.entries(defaults).forEach(([v, val]) => {
-    applyColor(v, val);
+    document.documentElement.style.setProperty(v, val);
     document.getElementById('c-' + ids[v]).value = val;
     document.getElementById('cv-' + ids[v]).textContent = val;
   });
+  if (window.fbSaveSettings) await window.fbSaveSettings(_getSettingsData());
   showToast('Couleurs réinitialisées !');
 }
 
@@ -2742,10 +2746,48 @@ function toggleSection(btn, selector) {
   if (el) el.style.display = btn.classList.contains('on') ? '' : 'none';
 }
 
-function applyPageTitle() {
+async function applyPageTitle() {
   document.title = document.getElementById('f-page-title').value;
+  if (window.fbSaveSettings) await window.fbSaveSettings(_getSettingsData());
   showToast('Titre mis à jour !');
 }
+
+// ===== SETTINGS HELPERS =====
+function _getSettingsData() {
+  return {
+    lime:  document.getElementById('c-lime')  ? document.getElementById('c-lime').value  : '#a259ff',
+    dark:  document.getElementById('c-dark')  ? document.getElementById('c-dark').value  : '#080810',
+    dark2: document.getElementById('c-dark2') ? document.getElementById('c-dark2').value : '#0e0e18',
+    card:  document.getElementById('c-card')  ? document.getElementById('c-card').value  : '#0f0f1a',
+    title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title
+  };
+}
+
+let _settingsDebounceTimer = null;
+function _debounceSaveSettings() {
+  clearTimeout(_settingsDebounceTimer);
+  _settingsDebounceTimer = setTimeout(async () => {
+    if (window.fbSaveSettings) await window.fbSaveSettings(_getSettingsData());
+  }, 1000);
+}
+
+window.applySettingsFromData = function(s) {
+  const map = { '--lime': s.lime, '--dark': s.dark, '--dark2': s.dark2, '--card-bg': s.card };
+  const ids = { '--lime': 'lime', '--dark': 'dark', '--dark2': 'dark2', '--card-bg': 'card' };
+  Object.entries(map).forEach(([v, val]) => {
+    if (!val) return;
+    document.documentElement.style.setProperty(v, val);
+    const inp = document.getElementById('c-' + ids[v]);
+    const lbl = document.getElementById('cv-' + ids[v]);
+    if (inp) inp.value = val;
+    if (lbl) lbl.textContent = val;
+  });
+  if (s.title) {
+    document.title = s.title;
+    const inp = document.getElementById('f-page-title');
+    if (inp) inp.value = s.title;
+  }
+};
 
 // ===== KEYBOARD =====
 document.addEventListener('keydown', e => {
