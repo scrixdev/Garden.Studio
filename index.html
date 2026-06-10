@@ -661,15 +661,16 @@ window.fbUploadImage = async function(file, path) {
 // ===== INIT DATA =====
 (async () => {
   try {
-    const [p, g, gm, c, f] = await Promise.all([
+    const [p, g, gm, c, f, h] = await Promise.all([
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
-      fsGet('site/candidatures'), fsGet('site/footer')
+      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero')
     ]);
     if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
     if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
     if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
     if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
+    if (h        && typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h);
     if (typeof window._gsRender === 'function') window._gsRender();
     console.log('✅ Firebase chargé');
   } catch(e) { console.warn('Firebase init:', e); }
@@ -685,6 +686,7 @@ window.fbSaveData = async (products, games, gamers) => {
 };
 window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
 window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
+window.fbSaveHero         = async (d) => await fsSet('site/hero', d);
 
 // ===== AUTH =====
 window.fbRegister = async (email, pwd, username) => {
@@ -2357,6 +2359,15 @@ async function saveAll() {
   applyHero(); applyFooter();
   showToast('Sauvegarde en cours...');
   await saveData();
+  if (window.fbSaveHero) {
+    const heroData = {
+      title: document.getElementById('f-hero-title').value,
+      desc: document.getElementById('f-hero-desc').value,
+      btn1: document.getElementById('f-hero-btn1').value,
+      btn2: document.getElementById('f-hero-btn2').value
+    };
+    await window.fbSaveHero(heroData);
+  }
   showToast('✅ Sauvegardé sur Firebase !');
   logChange('Sauvegarde complète effectuée (Firebase)');
 }
@@ -2370,6 +2381,25 @@ function applyHero() {
   showToast('Hero mis à jour !');
   logChange('Hero section modifiée');
 }
+
+window.applyHeroFromData = function(h) {
+  if (h.title) {
+    document.getElementById('hero-title').innerHTML = h.title.replace(/\n/g, '<br>');
+    document.getElementById('f-hero-title').value = h.title;
+  }
+  if (h.desc) {
+    document.getElementById('hero-desc').textContent = h.desc;
+    document.getElementById('f-hero-desc').value = h.desc;
+  }
+  if (h.btn1) {
+    document.getElementById('hero-btn1').textContent = h.btn1;
+    document.getElementById('f-hero-btn1').value = h.btn1;
+  }
+  if (h.btn2) {
+    document.getElementById('hero-btn2').textContent = h.btn2;
+    document.getElementById('f-hero-btn2').value = h.btn2;
+  }
+};
 
 // ===== NAVBAR =====
 function addNavItem() {
