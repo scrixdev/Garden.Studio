@@ -661,33 +661,41 @@ window.fbUploadImage = async function(file, path) {
 // ===== INIT DATA =====
 (async () => {
   try {
+    // Nettoyage immédiat du localStorage pour éviter tout conflit avec Firebase
+    try {
+      ['gs_products','gs_games','gs_gamers','gs_candidatures'].forEach(k => localStorage.removeItem(k));
+      console.log('🧹 localStorage nettoyé — Firebase est la seule source de vérité');
+    } catch(e) {}
+
+    console.log('🔄 Chargement depuis Firestore...');
     const [p, g, gm, c, f, h, s] = await Promise.all([
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
       fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
     ]);
-    if (!window._justSaved) {
-      if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
-      if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
-      if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
-      if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
-    } else {
-      console.log('🔒 Firebase init bloqué — sauvegarde récente en cours');
-    }
+
+    console.log('📦 Données Firestore brutes:', { products: p, games: g, gamers: gm, candidatures: c, footer: f, hero: h, settings: s });
+
+    if (p?.list  && typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list);
+    if (g?.list  && typeof window._gsSetGames        === 'function') window._gsSetGames(g.list);
+    if (gm?.list && typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list);
+    if (c?.list  && typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list);
     if (f        && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
-    if (h        && typeof window.applyHeroFromData     === 'function') window.applyHeroFromData(h);
-    if (s        && typeof window.applySettingsFromData  === 'function') window.applySettingsFromData(s);
+    if (h        && typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h);
+    if (s        && typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s);
     if (typeof window._gsRender === 'function') window._gsRender();
-    console.log('✅ Firebase chargé');
-  } catch(e) { console.warn('Firebase init:', e); }
+    console.log('✅ Firebase chargé avec succès');
+  } catch(e) { console.warn('❌ Firebase init erreur:', e); }
 })();
 
 // ===== SAVE =====
 window.fbSaveData = async (products, games, gamers) => {
+  console.log('🔥 fbSaveData → envoi Firestore:', { products: products.length, games: games.length, gamers: gamers.length });
   await Promise.all([
     fsSet('site/products', { list: products }),
     fsSet('site/games',    { list: games }),
     fsSet('site/gamers',   { list: gamers })
   ]);
+  console.log('✅ fbSaveData OK');
 };
 window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
 window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
@@ -1652,44 +1660,32 @@ const DEFAULT_GAMERS = [
   { name: 'Pierre Dubois', score: '1,090,100', game: 'Ocean Dive', country: '🇫🇷 France', img: '', role: 'Community Manager', skills: 'Discord · Marketing · Support' }
 ];
 
-function loadData() {
-  // Données initiales — Firebase écrase au chargement via _fbReady
-  try { const p = localStorage.getItem('gs_products'); if (p) return JSON.parse(p); } catch(e) {}
-  return DEFAULT_PRODUCTS.map(x => ({...x}));
-}
-function loadGames() {
-  try { const g = localStorage.getItem('gs_games'); if (g) return JSON.parse(g); } catch(e) {}
-  return DEFAULT_GAMES.map(x => ({...x}));
-}
-function loadGamers() {
-  try { const g = localStorage.getItem('gs_gamers'); if (g) return JSON.parse(g); } catch(e) {}
-  return DEFAULT_GAMERS.map(x => ({...x}));
-}
-let _justSaved = false;
+function loadData()   { return []; /* Firebase est la seule source de vérité */ }
+function loadGames()  { return []; /* Firebase est la seule source de vérité */ }
+function loadGamers() { return []; /* Firebase est la seule source de vérité */ }
 async function saveData() {
-  try {
-    _justSaved = true;
-    clearTimeout(window._justSavedTimer);
-    window._justSavedTimer = setTimeout(() => { _justSaved = false; }, 5000);
-    if (window.fbSaveData) {
-      await window.fbSaveData(products, games, topGamers);
-    }
-    // Backup localStorage
-    localStorage.setItem('gs_products', JSON.stringify(products));
-    localStorage.setItem('gs_games', JSON.stringify(games));
-    localStorage.setItem('gs_gamers', JSON.stringify(topGamers));
-  } catch(e) { console.error('saveData error:', e); throw e; }
+  if (!window.fbSaveData) { console.error('❌ fbSaveData non disponible'); throw new Error('Firebase non prêt'); }
+  console.log('💾 saveData → Firestore', { products: products.length, games: games.length, gamers: topGamers.length });
+  console.log('  products:', JSON.stringify(products));
+  console.log('  games:', JSON.stringify(games));
+  console.log('  gamers:', JSON.stringify(topGamers));
+  await window.fbSaveData(products, games, topGamers);
+  console.log('✅ saveData OK — Firestore mis à jour');
+  // Nettoyage localStorage pour éviter tout conflit
+  try { localStorage.removeItem('gs_products'); localStorage.removeItem('gs_games'); localStorage.removeItem('gs_gamers'); } catch(e) {}
 }
 
 // ===== CANDIDATURES =====
 function loadCandidatures() {
-  try { const c = localStorage.getItem('gs_candidatures'); if (c) return JSON.parse(c); } catch(e) {}
-  return [];
+  return []; /* Firebase est la seule source de vérité */
 }
 async function saveCandidatures() {
   try {
-    if (window.fbSaveCandidatures) await window.fbSaveCandidatures(candidatures);
-    localStorage.setItem('gs_candidatures', JSON.stringify(candidatures));
+    if (!window.fbSaveCandidatures) { console.error('❌ fbSaveCandidatures non disponible'); return; }
+    console.log('💾 saveCandidatures → Firestore', candidatures.length, 'candidatures');
+    await window.fbSaveCandidatures(candidatures);
+    console.log('✅ saveCandidatures OK');
+    try { localStorage.removeItem('gs_candidatures'); } catch(e) {}
   } catch(e) { console.error('saveCandidatures error:', e); }
 }
 
@@ -2001,10 +1997,22 @@ let games = loadGames();
 let topGamers = loadGamers();
 
 // ===== CALLBACKS POUR FIREBASE (évite window.arr = arr qui casse les refs) =====
-window._gsSetProducts     = (data) => { products.length = 0; data.forEach(x => products.push(x)); };
-window._gsSetGames        = (data) => { games.length = 0; data.forEach(x => games.push(x)); };
-window._gsSetGamers       = (data) => { topGamers.length = 0; data.forEach(x => topGamers.push(x)); };
-window._gsSetCandidatures = (data) => { candidatures.length = 0; data.forEach(x => candidatures.push(x)); };
+window._gsSetProducts = (data) => {
+  console.log('📥 Firebase → products reçus:', data.length, data);
+  products.length = 0; data.forEach(x => products.push(x));
+};
+window._gsSetGames = (data) => {
+  console.log('📥 Firebase → games reçus:', data.length, data);
+  games.length = 0; data.forEach(x => games.push(x));
+};
+window._gsSetGamers = (data) => {
+  console.log('📥 Firebase → gamers reçus:', data.length, data);
+  topGamers.length = 0; data.forEach(x => topGamers.push(x));
+};
+window._gsSetCandidatures = (data) => {
+  console.log('📥 Firebase → candidatures reçues:', data.length);
+  candidatures.length = 0; data.forEach(x => candidatures.push(x));
+};
 window._gsSetUser         = (user) => { currentUser = user; };
 window._gsRender = () => {
   renderProductsOnSite();
@@ -2405,8 +2413,9 @@ async function saveAll() {
       btn1: document.getElementById('f-hero-btn1').value,
       btn2: document.getElementById('f-hero-btn2').value,
       bg: tempImgs['hero-bg'] || '',
-      bgIsVideo: !!(tempImgs['hero-bg'] && tempImgs['hero-bg'].includes('video'))
+      bgIsVideo: !!(tempImgs['hero-bg'] && document.getElementById('hero-bg-media') && document.getElementById('hero-bg-media').querySelector('video'))
     };
+    console.log('💾 saveAll heroData:', heroData);
     await window.fbSaveHero(heroData);
   }
   showToast('✅ Sauvegardé sur Firebase !');
@@ -2519,8 +2528,9 @@ function cancelProductEdit() { document.getElementById('product-edit-form').styl
 
 async function saveProductEdit() {
   const i = parseInt(document.getElementById('pe-index').value);
-  const existingImg = (i >= 0 && i < products.length) ? (products[i].img || '') : '';
-  const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: ('product' in tempImgs) ? tempImgs['product'] : existingImg };
+  const existingProductImg = (i >= 0 && i < products.length) ? (products[i].img || '') : '';
+  const data = { title: document.getElementById('pe-title').value, desc: document.getElementById('pe-desc').value, img: ('product' in tempImgs) ? tempImgs['product'] : existingProductImg };
+  console.log('💾 saveProductEdit i=' + i, data);
   if (i === -1) products.push(data); else products[i] = data;
   showToast('Sauvegarde en cours...');
   await saveData();
@@ -2714,7 +2724,7 @@ function addGamer() {
 
 // ===== FOOTER =====
 function applyFooter() {
-  loadFooterLinks();
+  // Ne recharge plus depuis localStorage, Firebase gère ça
 }
 
 async function applyFooterLinks() {
@@ -2736,7 +2746,7 @@ async function applyFooterLinks() {
     const desc = document.getElementById('f-footer-desc')?.value || '';
     await window.fbSaveFooter({ ...footerData, desc });
   }
-  try { localStorage.setItem('gs_footer_links', JSON.stringify(footerData)); } catch(e) {}
+  try { localStorage.removeItem('gs_footer_links'); } catch(e) {} // localStorage désactivé
   showToast('Liens réseaux mis à jour !');
   logChange('Footer — liens réseaux modifiés');
 }
@@ -2750,7 +2760,7 @@ async function applyFooterDesc() {
     const rb = document.getElementById('f-footer-roblox').value.trim();
     await window.fbSaveFooter({ youtube: yt, discord: dc, roblox: rb, desc: txt });
   }
-  try { localStorage.setItem('gs_footer_desc', txt); } catch(e) {}
+  try { localStorage.removeItem('gs_footer_desc'); } catch(e) {} // localStorage désactivé
   showToast('Description footer mise à jour !');
   logChange('Footer — description modifiée');
 }
@@ -2769,16 +2779,8 @@ function applyFooterFromData(data) {
 window.applyFooterFromData = applyFooterFromData;
 
 function loadFooterLinks() {
-  // Tenter d'abord localStorage comme fallback immédiat avant Firebase
-  try {
-    const raw = localStorage.getItem('gs_footer_links');
-    if (raw) {
-      const data = JSON.parse(raw);
-      applyFooterFromData(data);
-    }
-    const desc = localStorage.getItem('gs_footer_desc');
-    if (desc) { const el = document.getElementById('footer-brand-text'); if (el) el.textContent = desc; const fi = document.getElementById('f-footer-desc'); if (fi) fi.value = desc; }
-  } catch(e) {}
+  // Désactivé — Firebase est la seule source de vérité
+  console.log('loadFooterLinks: données gérées par Firebase uniquement');
 }
 
 // ===== COLORS =====
