@@ -64,8 +64,29 @@ nav {
 /* ===== HERO ===== */
 .hero {
   min-height: 92vh; position: relative; overflow: hidden;
-  display: flex; align-items: flex-end;
 }
+.hero-slide {
+  position: absolute; inset: 0; display: flex; align-items: flex-end;
+  opacity: 0; visibility: hidden; transition: opacity 0.6s ease; z-index: 1;
+}
+.hero-slide.active { opacity: 1; visibility: visible; z-index: 2; }
+.hero-arrow {
+  position: absolute; top: 0; bottom: 80px; width: 64px; z-index: 10;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; color: rgba(255,255,255,0.55); cursor: pointer; transition: all 0.2s;
+}
+.hero-arrow:hover { color: var(--lime); background: rgba(8,8,16,0.3); }
+.hero-arrow.prev { left: 0; }
+.hero-arrow.next { right: 0; }
+.hero-arrow svg { width: 34px; height: 34px; }
+.hero-dots {
+  position: absolute; bottom: 22px; left: 60px; z-index: 10; display: flex; gap: 8px;
+}
+.hero-dot {
+  width: 32px; height: 4px; background: rgba(255,255,255,0.25); border: none; cursor: pointer;
+  transition: all 0.25s; padding: 0;
+}
+.hero-dot.active { background: var(--lime); }
 .hero-bg-media {
   position: absolute; inset: 0; width: 100%; height: 100%;
 }
@@ -670,7 +691,7 @@ window._gsFirebaseReady = false;
     console.log('🔄 Chargement depuis Firestore...');
     const [p, g, gm, c, f, h, s] = await Promise.all([
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
-      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/hero'), fsGet('site/settings')
+      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/heroes'), fsGet('site/settings')
     ]);
 
     console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
@@ -682,7 +703,7 @@ window._gsFirebaseReady = false;
     if (gm?.list) { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list); }
     if (c?.list)  { if (typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list); }
     if (f)        { if (typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f); }
-    if (h)        { if (typeof window.applyHeroFromData   === 'function') window.applyHeroFromData(h); }
+    if (h?.list)  { if (typeof window._gsSetHeroSlides    === 'function') window._gsSetHeroSlides(h.list); }
     if (s)        { if (typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s); }
     if (typeof window._gsRender === 'function') window._gsRender();
 
@@ -708,7 +729,7 @@ window.fbSaveData = async (products, games, gamers) => {
 };
 window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
 window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
-window.fbSaveHero         = async (d) => await fsSet('site/hero', d);
+window.fbSaveHeroes       = async (d) => await fsSet('site/heroes', { list: d });
 window.fbSaveSettings     = async (d) => await fsSet('site/settings', d);
 
 // ===== AUTH =====
@@ -807,27 +828,16 @@ window.fbSignOut      = async () => await signOut(auth);
 <!-- ===== PAGE: HOME ===== -->
 <div class="page active" id="page-home">
 
-  <!-- HERO -->
+  <!-- HERO CAROUSEL (multi-slides) -->
   <section class="hero" id="home-hero">
-    <div class="hero-bg-media" id="hero-bg-media">
-      <div class="hero-bg-placeholder">
-        <svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="rgba(162,89,255,0.15)" stroke-width="1"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg>
-      </div>
-    </div>
-    <div class="hero-overlay"></div>
-    <div class="hero-overlay-bottom"></div>
-    <div class="hero-content">
-      <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(162,89,255,0.1);border:1px solid rgba(162,89,255,0.25);padding:5px 14px;margin-bottom:28px">
-        <span style="width:6px;height:6px;background:var(--lime);border-radius:50%;animation:gemPulse 2s ease-in-out infinite"></span>
-        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">Studio Indépendant</span>
-      </div>
-      <h1 class="hero-title" id="hero-title">We Build<br><span style="color:var(--lime)">Games</span><br>That Matter</h1>
-      <p class="hero-desc" id="hero-desc">Garden Studio est un studio indépendant qui crée des expériences gaming uniques. Explore nos jeux, suis nos projets, rejoins l'aventure.</p>
-      <div class="hero-btns">
-        <button class="btn-primary" id="hero-btn1" onclick="showPage('games')">Voir nos jeux</button>
-        <button class="btn-outline" id="hero-btn2" onclick="showPage('about')">À propos</button>
-      </div>
-    </div>
+    <div id="hero-slides-container"></div>
+    <button class="hero-arrow prev" id="hero-arrow-prev" onclick="prevHeroSlide()" aria-label="Précédent">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="hero-arrow next" id="hero-arrow-next" onclick="nextHeroSlide()" aria-label="Suivant">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+    <div class="hero-dots" id="hero-dots"></div>
   </section>
 
   <!-- TOP PRODUCTS -->
@@ -1223,7 +1233,7 @@ window.fbSignOut      = async () => await signOut(auth);
       </div>
       <div class="sidebar-item" onclick="showSection('hero',this)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-        Hero Section
+        Bannières Hero
       </div>
       <div class="sidebar-section">Contenu</div>
       <div class="sidebar-item" onclick="showSection('products',this)">
@@ -1287,31 +1297,62 @@ window.fbSignOut      = async () => await signOut(auth);
 
       <!-- HERO -->
       <div class="admin-section" id="section-hero">
-        <div class="admin-section-title">Hero Section</div>
-        <div class="admin-section-sub">Modifie le titre, la description, les boutons et l'image du portail</div>
+        <div class="admin-section-title">Bannières Hero</div>
+        <div class="admin-section-sub">Crée, modifie ou supprime plusieurs bannières — elles s'affichent en carousel sur l'accueil (flèches/points masqués s'il n'y en a qu'une)</div>
         <div class="admin-card">
+          <div class="admin-card-header"><span class="admin-card-title" id="hero-card-title">Bannières</span></div>
+          <div id="hero-list"></div>
+          <button class="btn-add-new" onclick="addHeroSlide()">+ Ajouter une bannière</button>
+        </div>
+        <div class="admin-card" id="hero-edit-form" style="display:none">
+          <div class="admin-card-header">
+            <span class="admin-card-title" id="hero-edit-form-title">Éditer la bannière</span>
+            <button class="btn-delete" onclick="cancelHeroEdit()"><i data-lucide="x"></i> Annuler</button>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Badge (petit texte au-dessus du titre)</label>
+            <input type="text" class="form-input" id="he-badge" placeholder="ex: Studio Indépendant">
+          </div>
           <div class="form-group">
             <label class="form-label">Titre principal</label>
-            <textarea class="form-textarea" id="f-hero-title" style="min-height:80px">Discover
-Collect Game
-From Us</textarea>
+            <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne"></textarea>
           </div>
           <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea class="form-textarea" id="f-hero-desc">Découvre, collecte et joue aux meilleurs titres indépendants. Garden Studio crée des expériences gaming inoubliables depuis 2020.</textarea>
+            <textarea class="form-textarea" id="he-desc"></textarea>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Texte bouton principal</label>
-              <input type="text" class="form-input" id="f-hero-btn1" value="Découvrir">
+              <input type="text" class="form-input" id="he-btn1" placeholder="ex: Voir nos jeux">
             </div>
             <div class="form-group">
+              <label class="form-label">Page du bouton principal</label>
+              <select class="form-select" id="he-btn1page">
+                <option value="games">Jeux</option>
+                <option value="about">Studio</option>
+                <option value="top-gamers">Équipe</option>
+                <option value="recruit">Recrute</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
               <label class="form-label">Texte bouton secondaire</label>
-              <input type="text" class="form-input" id="f-hero-btn2" value="Explorer">
+              <input type="text" class="form-input" id="he-btn2" placeholder="ex: À propos">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Page du bouton secondaire</label>
+              <select class="form-select" id="he-btn2page">
+                <option value="about">Studio</option>
+                <option value="games">Jeux</option>
+                <option value="top-gamers">Équipe</option>
+                <option value="recruit">Recrute</option>
+              </select>
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label">Image de fond du Hero</label>
+            <label class="form-label">Image/vidéo de fond</label>
             <div class="img-upload-zone">
               <input type="file" accept="image/*,video/*" onchange="handleImgUpload(this,'hero-bg')">
               <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
@@ -1323,9 +1364,11 @@ From Us</textarea>
               <button class="img-preview-remove" onclick="removeImg('hero-bg')"><i data-lucide="x"></i></button>
             </div>
           </div>
-          <button class="btn-primary" style="font-size:12px" onclick="applyHero()">Appliquer les changements</button>
+          <input type="hidden" id="he-index">
+          <button class="btn-primary" style="font-size:12px" onclick="saveHeroEdit()">Sauvegarder</button>
         </div>
       </div>
+
 
       <!-- PRODUCTS -->
       <div class="admin-section" id="section-products">
@@ -1388,6 +1431,10 @@ From Us</textarea>
           <div class="form-row">
             <div class="form-group"><label class="form-label">Développeur</label><input type="text" class="form-input" id="ge-dev" placeholder="ex: Mojang Studios"></div>
             <div class="form-group"><label class="form-label">Date de sortie</label><input type="text" class="form-input" id="ge-date" placeholder="ex: 18 Nov 2011"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (sur 5)</label>
+            <input type="number" class="form-input" id="ge-rating" min="0" max="5" step="0.1" placeholder="ex: 4.8">
           </div>
           <div class="form-group">
             <label class="form-label"><i data-lucide="link"></i> Lien du jeu (URL)</label>
@@ -1641,6 +1688,9 @@ From Us</textarea>
 
 <script>
 // ===== DATA WITH LOCALSTORAGE PERSISTENCE =====
+const DEFAULT_HERO_SLIDES = [
+  { title: 'We Build\nGames\nThat Matter', desc: "Garden Studio est un studio indépendant qui crée des expériences gaming uniques. Explore nos jeux, suis nos projets, rejoins l'aventure.", btn1: 'Voir nos jeux', btn1Page: 'games', btn2: 'À propos', btn2Page: 'about', bg: '', bgIsVideo: false, badge: 'Studio Indépendant' }
+];
 const DEFAULT_PRODUCTS = [
   { title: 'Genshin Impact – Version 3.3', desc: "Meet the Wanderer and Faruzan, and join in Teyvat's most popular card game! Check out what's new at Gameloft!", img: '' },
   { title: 'Hello Game – New Season', desc: "Wanderer and Faruzan join the most popular card game. Deep dive into what's new at Gameloft.", img: '' },
@@ -2037,6 +2087,9 @@ function showApplyNotif() {
 let products = loadData();
 let games = loadGames();
 let topGamers = loadGamers();
+let heroSlides = JSON.parse(JSON.stringify(DEFAULT_HERO_SLIDES));
+let currentHeroSlide = 0;
+let _heroAutoplayTimer = null;
 
 // ===== CALLBACKS POUR FIREBASE (évite window.arr = arr qui casse les refs) =====
 window._gsSetProducts = (data) => {
@@ -2057,6 +2110,12 @@ window._gsSetGamers = (data) => {
   window._gamers_count = topGamers.length;
   console.log('📥 gamers chargés:', topGamers.length);
 };
+window._gsSetHeroSlides = (data) => {
+  if (!data || !data.length) return;
+  heroSlides.length = 0;
+  data.forEach(x => heroSlides.push(x));
+  console.log('📥 hero slides chargés:', heroSlides.length);
+};
 window._gsSetCandidatures = (data) => {
   candidatures.length = 0;
   data.forEach(x => candidatures.push(x));
@@ -2067,6 +2126,7 @@ window._gsRender = () => {
   renderProductsOnSite();
   renderGamesOnSite();
   renderGamersPage();
+  renderHeroSlides();
   updateCandBadge();
   updateStats();
   if (window.lucide) lucide.createIcons();
@@ -2074,6 +2134,7 @@ window._gsRender = () => {
 
 const tempImgs = {};
 let currentPage = 'home';
+
 
 // ===== NAVIGATION =====
 function showPage(pageId) {
@@ -2121,6 +2182,27 @@ function setTab(id) {
 }
 
 // ===== RENDER: GAMES PAGE =====
+// ===== RATING STARS =====
+function starsHTML(rating, size) {
+  rating = parseFloat(rating) || 0;
+  size = size || 12;
+  if (!rating) return '';
+  const full = Math.floor(rating);
+  const half = (rating - full) >= 0.4 && (rating - full) < 0.9;
+  let svgs = '';
+  for (let i = 0; i < 5; i++) {
+    const fillId = `gs-star-grad-${Math.random().toString(36).slice(2,8)}`;
+    if (i < full) {
+      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb800" stroke="#ffb800" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
+    } else if (i === full && half) {
+      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><defs><linearGradient id="${fillId}"><stop offset="50%" stop-color="#ffb800"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="url(#${fillId})" stroke="#ffb800" stroke-width="1"/></svg>`;
+    } else {
+      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
+    }
+  }
+  return `<span style="display:inline-flex;align-items:center;gap:2px">${svgs}<span style="margin-left:4px;font-size:${size}px;font-weight:700;color:#ffb800">${rating.toFixed(1)}</span></span>`;
+}
+
 function renderGamesPage() {
   const grid = document.getElementById('games-page-grid');
   const statusLabel = { available: 'Disponible', coming: 'Bientôt', new: 'Nouveau' };
@@ -2136,6 +2218,7 @@ function renderGamesPage() {
       <div class="game-card-info">
         <div class="game-card-name">${g.name}</div>
         <div class="game-card-dev">${g.dev || 'Développeur inconnu'}</div>
+        ${g.rating ? `<div style="margin-bottom:8px">${starsHTML(g.rating, 11)}</div>` : ''}
         <div class="game-card-desc">${(g.desc || '').substring(0, 80)}${g.desc && g.desc.length > 80 ? '...' : ''}</div>
       </div>
       <div class="game-card-footer">
@@ -2275,6 +2358,7 @@ function openGameModal(i) {
     <div class="modal-meta-item"><div class="modal-meta-label">Développeur</div><div class="modal-meta-value">${g.dev || '—'}</div></div>
     <div class="modal-meta-item"><div class="modal-meta-label">Date de sortie</div><div class="modal-meta-value">${g.date || '—'}</div></div>
     <div class="modal-meta-item"><div class="modal-meta-label">Statut</div><div class="modal-meta-value" style="color:var(--lime)">${statusLabel[g.status] || 'Disponible'}</div></div>
+    ${g.rating ? `<div class="modal-meta-item"><div class="modal-meta-label">Note</div><div class="modal-meta-value">${starsHTML(g.rating, 13)}</div></div>` : ''}
   `;
   document.getElementById('modal-desc').textContent = g.desc || 'Aucune description disponible pour ce jeu.';
 
@@ -2329,7 +2413,7 @@ function renderGamesOnSite() {
 async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
-  // Upload hero-bg to Firebase Storage for persistence
+  // Upload hero-bg vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
   if (key === 'hero-bg') {
     showToast('Upload en cours...');
     const isVideo = file.type.startsWith('video/');
@@ -2338,30 +2422,17 @@ async function handleImgUpload(input, key) {
       if (window.fbUploadImage) {
         url = await window.fbUploadImage(file, 'hero-bg');
       } else {
-        // fallback base64
         url = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
       }
       tempImgs[key] = url;
-      const media = document.getElementById('hero-bg-media');
-      if (media) {
-        media.innerHTML = isVideo
-          ? `<video autoplay muted loop playsinline src="${url}"></video>`
-          : `<img src="${url}" alt="hero background">`;
-      }
+      tempImgs['hero-bg-isVideo'] = isVideo;
       const preview = document.getElementById(key + '-img-preview');
       const previewImg = document.getElementById(key + '-img-preview-img');
-      if (preview && previewImg && !isVideo) { previewImg.src = url; preview.style.display = 'inline-block'; }
-      if (window.fbSaveHero) {
-        const heroData = {
-          title: document.getElementById('f-hero-title').value,
-          desc: document.getElementById('f-hero-desc').value,
-          btn1: document.getElementById('f-hero-btn1').value,
-          btn2: document.getElementById('f-hero-btn2').value,
-          bg: url, bgIsVideo: isVideo
-        };
-        await window.fbSaveHero(heroData);
+      if (preview && previewImg) {
+        if (isVideo) { preview.style.display = 'none'; }
+        else { previewImg.src = url; preview.style.display = 'inline-block'; }
       }
-      showToast('Image de fond sauvegardée ✅');
+      showToast('Image uploadée — clique sur Sauvegarder ✅');
     } catch(e) {
       console.error('Upload error:', e);
       showToast('Erreur upload — vérifie les règles Firebase Storage');
@@ -2410,6 +2481,7 @@ function openAdmin() {
   renderProductsList();
   renderGamesList();
   renderGamersList();
+  renderHeroList();
   updateStats();
 }
 
@@ -2452,62 +2524,168 @@ function updateStats() {
 // (Firebase callbacks définis plus haut via window._gsSetXxx)
 
 async function saveAll() {
-  applyHero(); applyFooter();
+  applyFooter();
   showToast('Sauvegarde en cours...');
   await saveData();
-  if (window.fbSaveHero) {
-    const heroData = {
-      title: document.getElementById('f-hero-title').value,
-      desc: document.getElementById('f-hero-desc').value,
-      btn1: document.getElementById('f-hero-btn1').value,
-      btn2: document.getElementById('f-hero-btn2').value,
-      bg: tempImgs['hero-bg'] || '',
-      bgIsVideo: !!(tempImgs['hero-bg'] && document.getElementById('hero-bg-media') && document.getElementById('hero-bg-media').querySelector('video'))
-    };
-    console.log('💾 saveAll heroData:', heroData);
-    await window.fbSaveHero(heroData);
-  }
+  await saveHeroSlides();
   showToast('✅ Sauvegardé sur Firebase !');
   logChange('Sauvegarde complète effectuée (Firebase)');
 }
 
-// ===== HERO =====
-function applyHero() {
-  document.getElementById('hero-title').innerHTML = document.getElementById('f-hero-title').value.replace(/\n/g, '<br>');
-  document.getElementById('hero-desc').textContent = document.getElementById('f-hero-desc').value;
-  document.getElementById('hero-btn1').textContent = document.getElementById('f-hero-btn1').value;
-  document.getElementById('hero-btn2').textContent = document.getElementById('f-hero-btn2').value;
-  showToast('Hero mis à jour !');
-  logChange('Hero section modifiée');
+// ===== HERO CAROUSEL (multi-slides) =====
+const ctrlIconHero = `<svg width="90" height="90" viewBox="0 0 24 24" fill="none" stroke="rgba(162,89,255,0.15)" stroke-width="1"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg>`;
+
+function renderHeroSlides() {
+  const container = document.getElementById('hero-slides-container');
+  if (!container) return;
+  if (!heroSlides.length) heroSlides = JSON.parse(JSON.stringify(DEFAULT_HERO_SLIDES));
+  if (currentHeroSlide >= heroSlides.length) currentHeroSlide = 0;
+
+  container.innerHTML = heroSlides.map((h, i) => `
+    <div class="hero-slide ${i === currentHeroSlide ? 'active' : ''}" data-slide="${i}">
+      <div class="hero-bg-media">
+        ${h.bg ? (h.bgIsVideo ? `<video autoplay muted loop playsinline src="${h.bg}"></video>` : `<img src="${h.bg}" alt="">`) : `<div class="hero-bg-placeholder">${ctrlIconHero}</div>`}
+      </div>
+      <div class="hero-overlay"></div>
+      <div class="hero-overlay-bottom"></div>
+      <div class="hero-content">
+        ${h.badge ? `<div style="display:inline-flex;align-items:center;gap:8px;background:rgba(162,89,255,0.1);border:1px solid rgba(162,89,255,0.25);padding:5px 14px;margin-bottom:28px">
+          <span style="width:6px;height:6px;background:var(--lime);border-radius:50%;animation:gemPulse 2s ease-in-out infinite"></span>
+          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">${h.badge}</span>
+        </div>` : ''}
+        <h1 class="hero-title">${(h.title || '').replace(/\n/g, '<br>')}</h1>
+        <p class="hero-desc">${h.desc || ''}</p>
+        <div class="hero-btns">
+          ${h.btn1 ? `<button class="btn-primary" onclick="showPage('${h.btn1Page || 'games'}')">${h.btn1}</button>` : ''}
+          ${h.btn2 ? `<button class="btn-outline" onclick="showPage('${h.btn2Page || 'about'}')">${h.btn2}</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('hero-dots').innerHTML = heroSlides.length > 1
+    ? heroSlides.map((_, i) => `<button class="hero-dot ${i === currentHeroSlide ? 'active' : ''}" onclick="goToHeroSlide(${i})"></button>`).join('')
+    : '';
+
+  const showArrows = heroSlides.length > 1;
+  document.getElementById('hero-arrow-prev').style.display = showArrows ? 'flex' : 'none';
+  document.getElementById('hero-arrow-next').style.display = showArrows ? 'flex' : 'none';
+
+  resetHeroAutoplay();
 }
 
-window.applyHeroFromData = function(h) {
-  if (h.title) {
-    document.getElementById('hero-title').innerHTML = h.title.replace(/\n/g, '<br>');
-    document.getElementById('f-hero-title').value = h.title;
+function goToHeroSlide(i) {
+  currentHeroSlide = i;
+  renderHeroSlides();
+}
+function nextHeroSlide() { currentHeroSlide = (currentHeroSlide + 1) % heroSlides.length; renderHeroSlides(); }
+function prevHeroSlide() { currentHeroSlide = (currentHeroSlide - 1 + heroSlides.length) % heroSlides.length; renderHeroSlides(); }
+function resetHeroAutoplay() {
+  if (_heroAutoplayTimer) clearInterval(_heroAutoplayTimer);
+  if (heroSlides.length > 1) _heroAutoplayTimer = setInterval(nextHeroSlide, 7000);
+}
+
+async function saveHeroSlides() {
+  if (!window.fbSaveHeroes) return;
+  await window.fbSaveHeroes(heroSlides);
+}
+
+// ----- ADMIN : liste -----
+function renderHeroList() {
+  const list = document.getElementById('hero-list');
+  if (!list) return;
+  list.innerHTML = heroSlides.map((h, i) => `
+    <div class="game-list-item">
+      <div class="game-list-thumb" style="background:linear-gradient(135deg,#1a2a10,#0a1a20)">${h.bg && !h.bgIsVideo ? `<img src="${h.bg}" alt="">` : ctrlIconHero}</div>
+      <div class="game-list-info"><div class="game-list-name">${(h.title || 'Sans titre').split('\n')[0]}</div><div class="game-list-meta">Bannière #${i + 1}${i === 0 ? ' — affichée par défaut' : ''}</div></div>
+      <div class="game-list-actions">
+        <button class="btn-edit" onclick="editHeroSlide(${i})">Éditer</button>
+        <button class="btn-delete" onclick="deleteHeroSlide(${i})">Suppr</button>
+      </div>
+    </div>`).join('') || emptyStateHTML('Aucune bannière hero. Ajoute-en une !');
+  const title = document.getElementById('hero-card-title');
+  if (title) title.textContent = `Bannières (${heroSlides.length})`;
+}
+
+function addHeroSlide() {
+  document.getElementById('he-title').value = '';
+  document.getElementById('he-desc').value = '';
+  document.getElementById('he-badge').value = 'Studio Indépendant';
+  document.getElementById('he-btn1').value = 'Voir nos jeux';
+  document.getElementById('he-btn1page').value = 'games';
+  document.getElementById('he-btn2').value = 'À propos';
+  document.getElementById('he-btn2page').value = 'about';
+  document.getElementById('he-index').value = -1;
+  document.getElementById('hero-bg-img-preview').style.display = 'none';
+  delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo'];
+  document.getElementById('hero-edit-form-title').textContent = 'Nouvelle bannière';
+  document.getElementById('hero-edit-form').style.display = 'block';
+  document.getElementById('hero-edit-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function editHeroSlide(i) {
+  const h = heroSlides[i];
+  document.getElementById('he-title').value = h.title || '';
+  document.getElementById('he-desc').value = h.desc || '';
+  document.getElementById('he-badge').value = h.badge || '';
+  document.getElementById('he-btn1').value = h.btn1 || '';
+  document.getElementById('he-btn1page').value = h.btn1Page || 'games';
+  document.getElementById('he-btn2').value = h.btn2 || '';
+  document.getElementById('he-btn2page').value = h.btn2Page || 'about';
+  document.getElementById('he-index').value = i;
+  tempImgs['hero-bg'] = h.bg || '';
+  tempImgs['hero-bg-isVideo'] = !!h.bgIsVideo;
+  const preview = document.getElementById('hero-bg-img-preview');
+  if (h.bg && !h.bgIsVideo) { document.getElementById('hero-bg-img-preview-img').src = h.bg; preview.style.display = 'inline-block'; }
+  else preview.style.display = 'none';
+  document.getElementById('hero-edit-form-title').textContent = 'Éditer la bannière #' + (i + 1);
+  document.getElementById('hero-edit-form').style.display = 'block';
+  document.getElementById('hero-edit-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelHeroEdit() { document.getElementById('hero-edit-form').style.display = 'none'; delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo']; }
+
+async function saveHeroEdit() {
+  if (_saveInProgress) return;
+  const i = parseInt(document.getElementById('he-index').value);
+  const existing = (i >= 0 && i < heroSlides.length) ? heroSlides[i] : null;
+  const data = {
+    title: document.getElementById('he-title').value,
+    desc: document.getElementById('he-desc').value,
+    badge: document.getElementById('he-badge').value,
+    btn1: document.getElementById('he-btn1').value,
+    btn1Page: document.getElementById('he-btn1page').value || 'games',
+    btn2: document.getElementById('he-btn2').value,
+    btn2Page: document.getElementById('he-btn2page').value || 'about',
+    bg: ('hero-bg' in tempImgs) ? tempImgs['hero-bg'] : (existing ? existing.bg || '' : ''),
+    bgIsVideo: ('hero-bg-isVideo' in tempImgs) ? tempImgs['hero-bg-isVideo'] : (existing ? !!existing.bgIsVideo : false)
+  };
+  if (!data.title.trim()) { showToast('⚠️ Titre requis'); return; }
+  if (i === -1) heroSlides.push(data); else heroSlides[i] = data;
+  showToast('Sauvegarde en cours...');
+  try {
+    await saveHeroSlides();
+    currentHeroSlide = (i === -1) ? heroSlides.length - 1 : i;
+    renderHeroList(); renderHeroSlides(); cancelHeroEdit();
+    showToast('✅ Bannière sauvegardée !'); logChange('Bannière hero modifiée');
+  } catch(e) {
+    if (i === -1) heroSlides.pop();
+    showToast('❌ Erreur sauvegarde — vérifie ta connexion');
   }
-  if (h.desc) {
-    document.getElementById('hero-desc').textContent = h.desc;
-    document.getElementById('f-hero-desc').value = h.desc;
-  }
-  if (h.btn1) {
-    document.getElementById('hero-btn1').textContent = h.btn1;
-    document.getElementById('f-hero-btn1').value = h.btn1;
-  }
-  if (h.btn2) {
-    document.getElementById('hero-btn2').textContent = h.btn2;
-    document.getElementById('f-hero-btn2').value = h.btn2;
-  }
-  if (h.bg) {
-    tempImgs['hero-bg'] = h.bg;
-    const media = document.getElementById('hero-bg-media');
-    if (media) {
-      media.innerHTML = h.bgIsVideo
-        ? `<video autoplay muted loop playsinline src="${h.bg}"></video>`
-        : `<img src="${h.bg}" alt="hero background">`;
-    }
-  }
-};
+}
+
+function deleteHeroSlide(i) {
+  if (heroSlides.length <= 1) { showToast('⚠️ Il doit rester au moins 1 bannière'); return; }
+  showConfirm('Supprimer cette bannière ?', 'Cette action est irréversible.', async () => {
+    heroSlides.splice(i, 1);
+    if (currentHeroSlide >= heroSlides.length) currentHeroSlide = 0;
+    showToast('Suppression en cours...');
+    await saveHeroSlides();
+    renderHeroList(); renderHeroSlides();
+    showToast('Bannière supprimée ✅'); logChange('Bannière hero supprimée');
+  });
+}
+
 
 // ===== NAVBAR =====
 function addNavItem() {
@@ -2637,6 +2815,7 @@ function editGame(i) {
   document.getElementById('ge-color').value = games[i].color;
   document.getElementById('ge-dev').value = games[i].dev || '';
   document.getElementById('ge-date').value = games[i].date || '';
+  document.getElementById('ge-rating').value = games[i].rating || '';
   document.getElementById('ge-link').value = games[i].link || '';
   document.getElementById('ge-desc').value = games[i].desc || '';
   document.getElementById('ge-status').value = games[i].status || 'available';
@@ -2661,6 +2840,7 @@ async function saveGameEdit() {
     color: document.getElementById('ge-color').value,
     dev: document.getElementById('ge-dev').value,
     date: document.getElementById('ge-date').value,
+    rating: parseFloat(document.getElementById('ge-rating').value) || 0,
     link: document.getElementById('ge-link').value,
     desc: document.getElementById('ge-desc').value,
     status: document.getElementById('ge-status').value,
@@ -2705,6 +2885,7 @@ function deleteGameFromForm() {
 function addGame() {
   document.getElementById('ge-name').value = ''; document.getElementById('ge-color').value = 'linear-gradient(135deg, #1a1a2e, #533483)';
   document.getElementById('ge-dev').value = ''; document.getElementById('ge-date').value = '';
+  document.getElementById('ge-rating').value = '';
   document.getElementById('ge-link').value = '';
   document.getElementById('ge-desc').value = ''; document.getElementById('ge-status').value = 'available';
   document.getElementById('ge-index').value = -1; document.getElementById('game-img-preview').style.display = 'none';
@@ -3173,6 +3354,7 @@ function showToastPublic(msg) { showToast(msg); }
 // ===== INIT =====
 renderProductsOnSite();
 renderGamesOnSite();
+renderHeroSlides();
 document.addEventListener('DOMContentLoaded', () => { if (window.lucide) lucide.createIcons(); });
 setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 </script>
