@@ -163,6 +163,14 @@ nav {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
 }
 .btn-outline:hover { border-color: var(--lime); color: var(--lime); }
+.hero-toggle-btn {
+  width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+  background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); color: var(--white);
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+}
+.hero-toggle-btn:hover { background: var(--glass-highlight), var(--glass-bg-strong); color: var(--lime); border-color: rgba(var(--lime-rgb),0.4); }
+.hero-toggle-btn i, .hero-toggle-btn svg { width: 18px; height: 18px; }
 /* legacy portal classes – conservées pour ne pas casser le JS */
 .hero-right, .hero-portal, .portal-ring, .portal-inner, .portal-base, .portal-top-gem { display: none; }
 @keyframes portalPulse {}
@@ -1642,6 +1650,19 @@ window.fbSignOut      = async () => await signOut(auth);
               <button class="img-preview-remove" onclick="removeImg('hero-bg')"><i data-lucide="x"></i></button>
             </div>
           </div>
+          <div class="form-group">
+            <label class="form-label">Bannière du jeu (image) — optionnel</label>
+            <div class="img-upload-zone">
+              <input type="file" accept="image/*" onchange="handleImgUpload(this,'hero-banner')">
+              <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+              <strong>Cliquer pour uploader</strong>
+              <p>Si le fond ci-dessus est une vidéo (bande-annonce), cette bannière apparaît en cliquant sur le bouton de bascule dans le hero — la vidéo tourne en boucle, et un clic passe sur cette image.</p>
+            </div>
+            <div class="img-preview" id="hero-banner-img-preview" style="display:none">
+              <img id="hero-banner-img-preview-img" src="" alt="preview">
+              <button class="img-preview-remove" onclick="removeImg('hero-banner')"><i data-lucide="x"></i></button>
+            </div>
+          </div>
           <input type="hidden" id="he-index">
           <button class="btn-primary" style="font-size:12px" onclick="saveHeroEdit()">Sauvegarder</button>
         </div>
@@ -3059,26 +3080,26 @@ function renderGamesOnSite() {
 async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
-  // Upload hero-bg vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
-  if (key === 'hero-bg') {
+  // Upload hero-bg / hero-banner vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
+  if (key === 'hero-bg' || key === 'hero-banner') {
     showToast('Upload en cours...');
-    const isVideo = file.type.startsWith('video/');
+    const isVideo = key === 'hero-bg' && file.type.startsWith('video/');
     try {
       let url;
       if (window.fbUploadImage) {
-        url = await window.fbUploadImage(file, 'hero-bg');
+        url = await window.fbUploadImage(file, key);
       } else {
         url = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
       }
       tempImgs[key] = url;
-      tempImgs['hero-bg-isVideo'] = isVideo;
+      if (key === 'hero-bg') tempImgs['hero-bg-isVideo'] = isVideo;
       const preview = document.getElementById(key + '-img-preview');
       const previewImg = document.getElementById(key + '-img-preview-img');
       if (preview && previewImg) {
         if (isVideo) { preview.style.display = 'none'; }
         else { previewImg.src = url; preview.style.display = 'inline-block'; }
       }
-      showToast('Image uploadée — clique sur Sauvegarder ✅');
+      showToast('Uploadé — clique sur Sauvegarder ✅');
     } catch(e) {
       console.error('Upload error:', e);
       showToast('Erreur upload — vérifie les règles Firebase Storage');
@@ -3187,6 +3208,12 @@ function heroButtonAction(h, heroGame) {
   if (heroGame.index >= 0) return `openGameModal(${heroGame.index})`;
   return `showPage('${h.btn1Page || 'home'}')`;
 }
+let heroBannerToggle = {};
+function toggleHeroBanner(i, ev) {
+  if (ev) ev.stopPropagation();
+  heroBannerToggle[i] = !heroBannerToggle[i];
+  renderHeroSlides();
+}
 function renderHeroSlides() {
   const container = document.getElementById('hero-slides-container');
   if (!container) return;
@@ -3199,7 +3226,11 @@ function renderHeroSlides() {
     const desc = h.desc || g?.desc || '';
     const badge = h.badge || 'Featured Game';
     const bg = h.bg || g?.img || '';
-    const bgMarkup = bg ? (h.bgIsVideo ? `<video autoplay muted loop playsinline src="${bg}"></video>` : `<img src="${bg}" alt="">`) : `<div class="hero-bg-placeholder">${ctrlIconHero}</div>`;
+    const hasVideoBannerToggle = h.bgIsVideo && bg && h.bannerImg;
+    const showingBanner = hasVideoBannerToggle && !!heroBannerToggle[i];
+    const bgMarkup = showingBanner
+      ? `<img src="${h.bannerImg}" alt="">`
+      : (bg ? (h.bgIsVideo ? `<video autoplay muted loop playsinline src="${bg}"></video>` : `<img src="${bg}" alt="">`) : `<div class="hero-bg-placeholder">${ctrlIconHero}</div>`);
     return `<div class="hero-slide ${i === currentHeroSlide ? 'active' : ''}" data-slide="${i}">
       <div class="hero-bg-media">${bgMarkup}</div>
       <div class="hero-overlay"></div><div class="hero-overlay-bottom"></div>
@@ -3212,6 +3243,7 @@ function renderHeroSlides() {
           <button class="btn-primary" onclick="${heroButtonAction(h, heroGame)}"><i data-lucide="play"></i>${escapeHTML(h.btn1 || 'Voir details')}</button>
           ${h.btn2 ? `<button class="btn-outline" onclick="showPage('${h.btn2Page || 'about'}')"><i data-lucide="info"></i>${escapeHTML(h.btn2)}</button>` : ''}
           ${heroGame.index >= 0 ? `<button class="btn-ghost ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)"><i data-lucide="plus"></i> Ajouter</button>` : ''}
+          ${hasVideoBannerToggle ? `<button class="hero-toggle-btn" onclick="toggleHeroBanner(${i},event)" title="${showingBanner ? 'Revenir à la bande-annonce' : 'Voir la bannière'}" aria-label="Basculer vidéo / bannière"><i data-lucide="${showingBanner ? 'clapperboard' : 'image'}"></i></button>` : ''}
         </div>
       </div>
     </div>`;
@@ -3261,7 +3293,8 @@ function addHeroSlide() {
   document.getElementById('he-genres').value = '';
   document.getElementById('he-index').value = -1;
   document.getElementById('hero-bg-img-preview').style.display = 'none';
-  delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo'];
+  document.getElementById('hero-banner-img-preview').style.display = 'none';
+  delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo']; delete tempImgs['hero-banner'];
   document.getElementById('hero-edit-form-title').textContent = 'Nouvelle bannière';
   document.getElementById('hero-edit-form').style.display = 'block';
   document.getElementById('hero-edit-form').scrollIntoView({ behavior: 'smooth' });
@@ -3282,13 +3315,16 @@ function editHeroSlide(i) {
   document.getElementById('he-index').value = i;
   tempImgs['hero-bg'] = h.bg || '';
   tempImgs['hero-bg-isVideo'] = !!h.bgIsVideo;
+  tempImgs['hero-banner'] = h.bannerImg || '';
   const preview = document.getElementById('hero-bg-img-preview');
   if (h.bg && !h.bgIsVideo) { document.getElementById('hero-bg-img-preview-img').src = h.bg; preview.style.display = 'inline-block'; } else preview.style.display = 'none';
+  const bannerPreview = document.getElementById('hero-banner-img-preview');
+  if (h.bannerImg) { document.getElementById('hero-banner-img-preview-img').src = h.bannerImg; bannerPreview.style.display = 'inline-block'; } else bannerPreview.style.display = 'none';
   document.getElementById('hero-edit-form-title').textContent = 'Éditer la bannière #' + (i + 1);
   document.getElementById('hero-edit-form').style.display = 'block';
   document.getElementById('hero-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
-function cancelHeroEdit() { document.getElementById('hero-edit-form').style.display = 'none'; delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo']; }
+function cancelHeroEdit() { document.getElementById('hero-edit-form').style.display = 'none'; delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo']; delete tempImgs['hero-banner']; }
 async function saveHeroEdit() {
   if (_saveInProgress) return;
   const i = parseInt(document.getElementById('he-index').value);
@@ -3306,7 +3342,8 @@ async function saveHeroEdit() {
     ageLimit: document.getElementById('he-age')?.value || '',
     genres: document.getElementById('he-genres')?.value || '',
     bg: ('hero-bg' in tempImgs) ? tempImgs['hero-bg'] : (existing ? existing.bg || '' : ''),
-    bgIsVideo: ('hero-bg-isVideo' in tempImgs) ? tempImgs['hero-bg-isVideo'] : (existing ? !!existing.bgIsVideo : false)
+    bgIsVideo: ('hero-bg-isVideo' in tempImgs) ? tempImgs['hero-bg-isVideo'] : (existing ? !!existing.bgIsVideo : false),
+    bannerImg: ('hero-banner' in tempImgs) ? tempImgs['hero-banner'] : (existing ? existing.bannerImg || '' : '')
   };
   if (!data.title.trim() && !data.gameName) { showToast('Titre ou jeu requis'); return; }
   if (i === -1) heroSlides.push(data); else heroSlides[i] = data;
