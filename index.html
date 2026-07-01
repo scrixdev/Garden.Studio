@@ -239,7 +239,7 @@ nav {
 
 /* ===== STREAMING EXPERIENCE ===== */
 nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.22); gap: 24px; }
-.logo { color: var(--white); white-space: nowrap; }
+.logo { color: var(--lime); white-space: nowrap; }
 .logo::after { display: none; }
 .nav-links { gap: 24px; flex: 1; justify-content: center; }
 .nav-links a { color: rgba(255,255,255,0.85); font-size: 13px; }
@@ -463,6 +463,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
   border-radius: 14px;
 }
 .modal-overlay.open .modal-box { transform: translateY(0); }
+.apply-modal-box { height: auto !important; max-height: 90vh !important; overflow-y: auto !important; }
 /* full-bleed cover acts as the modal background */
 .modal-cover { position: absolute; inset: 0; overflow: hidden; height: auto; }
 .modal-cover-bg { width: 100%; height: 100%; object-fit: cover; }
@@ -965,6 +966,7 @@ window.fbSignOut      = async () => await signOut(auth);
   .modal-body { padding: 16px; }
   .modal-user-actions { gap: 8px; }
   .modal-box { height: 92vh; max-height: none; }
+  .apply-modal-box { height: auto !important; max-height: 92vh !important; }
   .modal-user-actions .btn-ghost { padding: 8px 12px; font-size: 12px; }
 
   .site-footer { padding: 36px 18px 20px; }
@@ -4233,7 +4235,7 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 
 <!-- ===== APPLY MODAL ===== -->
 <div class="modal-overlay" id="apply-modal" onclick="if(event.target===this)closeApplyModal()">
-  <div class="modal-box" style="max-width:480px;width:92%;max-height:95vh;overflow-y:auto;background:transparent;border:none;box-shadow:none;border-radius:0;scrollbar-width:none;-ms-overflow-style:none">
+  <div class="modal-box apply-modal-box" style="max-width:480px;width:92%;background:transparent;border:none;box-shadow:none;border-radius:0;scrollbar-width:none;-ms-overflow-style:none">
     <div class="authbox-container">
     <div class="authbox-login-box" style="padding:0">
     <button class="modal-close" onclick="closeApplyModal()" style="top:14px;right:14px;width:34px;height:34px;z-index:10">
