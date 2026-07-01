@@ -25,7 +25,7 @@
   --glass-bg: rgba(255,255,255,0.14);
   --glass-bg-strong: rgba(255,255,255,0.22);
   --glass-border: rgba(255,255,255,0.35);
-  --glass-highlight: linear-gradient(-45deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.12) 100%);
+  --glass-highlight: linear-gradient(-45deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.02) 45%, rgba(255,255,255,0.12) 100%);
   --glass-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(80,170,255,0.08), inset 1px 1px 0 rgba(255,90,160,0.06);
 }
 body.theme-light {
@@ -165,13 +165,14 @@ nav {
 }
 .btn-outline:hover { border-color: var(--lime); color: var(--lime); }
 .hero-toggle-btn {
-  width: 50px; height: 50px; border-radius: 50%; flex-shrink: 0;
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; align-self: center;
   background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
   box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); color: var(--white);
-  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
-.hero-toggle-btn:hover { background: var(--glass-highlight), var(--glass-bg-strong); color: var(--lime); border-color: rgba(var(--lime-rgb),0.4); }
-.hero-toggle-btn i, .hero-toggle-btn svg { width: 18px; height: 18px; }
+.hero-toggle-btn:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); color: var(--lime); border-color: rgba(var(--lime-rgb),0.4); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
+.hero-toggle-btn:active { transform: translateY(0); }
+.hero-toggle-btn i, .hero-toggle-btn svg { width: 16px; height: 16px; }
 /* legacy portal classes – conservées pour ne pas casser le JS */
 .hero-right, .hero-portal, .portal-ring, .portal-inner, .portal-base, .portal-top-gem { display: none; }
 @keyframes portalPulse {}
@@ -312,9 +313,12 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .btn-primary { background: var(--glass-highlight), var(--glass-bg-strong); color: var(--white); border: 1px solid var(--glass-border); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
 .btn-primary:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
 .btn-primary:active { transform: translateY(0); }
-.btn-outline { border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-outline:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
-.btn-ghost { background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.btn-outline { border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.btn-outline:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
+.btn-outline:active { transform: translateY(0); }
+.btn-ghost { background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.btn-ghost:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
+.btn-ghost:active { transform: translateY(0); }
 .btn-ghost.active { color: var(--white); border-color: rgba(255,255,255,0.5); background: var(--glass-highlight), var(--glass-bg-strong); }
 .btn-ghost.icon-only { width: 46px; height: 46px; padding: 0; justify-content: center; flex-shrink: 0; }
 .btn-ghost.icon-only.active { color: #ffd60a; border-color: rgba(255,214,10,0.4); background: rgba(255,214,10,0.13); }
@@ -424,7 +428,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 }
 .gamer-card:hover { border-color: rgba(var(--lime-rgb),0.3); transform: translateY(-3px); }
 .gamer-banner { height: 130px; position: relative; overflow: hidden; background: var(--gradient-accent); }
-.gamer-banner img { width: 100%; height: 100%; object-fit: cover; }
+.gamer-banner img, .gamer-banner video { width: 100%; height: 100%; object-fit: cover; }
 .gamer-banner-icons { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
 .gamer-banner-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--glass-highlight), rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.2s; }
 .gamer-banner-icon:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
@@ -560,7 +564,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .modal-meta-grid { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 .modal-meta-pill { background: var(--glass-highlight), rgba(255,255,255,0.1); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); border: 1px solid rgba(255,255,255,0.22); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.92); }
 .modal-meta-pill.age { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); color: var(--white); }
-.modal-meta-pill.rating { background: transparent; border: none; padding: 0; backdrop-filter: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
+.modal-meta-pill.rating { background: var(--glass-highlight), rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); padding: 6px 14px; backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
 .modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; }
 .modal-meta-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
@@ -1835,14 +1839,15 @@ window.fbSignOut      = async () => await signOut(auth);
           </div>
           <div class="form-group"><label class="form-label">Lien Roblox</label><input type="url" class="form-input" id="gme-roblox" placeholder="https://www.roblox.com/users/..."></div>
           <div class="form-group">
-            <label class="form-label">Bannière</label>
+            <label class="form-label">Bannière (image ou vidéo)</label>
             <div class="img-upload-zone">
-              <input type="file" accept="image/*" onchange="handleImgUpload(this,'gamer-banner')">
+              <input type="file" accept="image/*,video/*" onchange="handleImgUpload(this,'gamer-banner')">
               <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l4-4a2 2 0 0 1 2.8 0L14 15M14 13l1.5-1.5a2 2 0 0 1 2.8 0L21 14"/></svg></div>
-              <strong>Uploader bannière</strong><p>PNG, JPG — Format large recommandé</p>
+              <strong>Uploader bannière</strong><p>PNG, JPG ou MP4 — Format large recommandé</p>
             </div>
             <div class="img-preview" id="gamer-banner-img-preview" style="display:none">
               <img id="gamer-banner-img-preview-img" src="" alt="preview">
+              <video id="gamer-banner-video-preview" muted loop autoplay playsinline style="display:none"></video>
               <button class="img-preview-remove" onclick="removeImg('gamer-banner')"><i data-lucide="x"></i></button>
             </div>
           </div>
@@ -2945,7 +2950,7 @@ function renderGamersPage() {
   grid.innerHTML = topGamers.map((g, i) => `
     <div class="gamer-card">
       <div class="gamer-banner">
-        ${g.banner ? `<img src="${g.banner}" alt="">` : `<div class="gs-circle b"></div><div class="gs-circle c"></div>`}
+        ${g.banner ? (g.bannerIsVideo ? `<video src="${g.banner}" autoplay muted loop playsinline></video>` : `<img src="${g.banner}" alt="">`) : `<div class="gs-circle b"></div><div class="gs-circle c"></div>`}
         ${(g.youtube || g.discord || g.roblox) ? `<div class="gamer-banner-icons">
           ${g.youtube ? `<a class="gamer-banner-icon" href="${escapeHTML(g.youtube)}" target="_blank" rel="noopener" title="YouTube" onclick="event.stopPropagation()">${youtubeIcon}</a>` : ''}
           ${g.discord ? `<a class="gamer-banner-icon" href="${escapeHTML(g.discord)}" target="_blank" rel="noopener" title="Discord" onclick="event.stopPropagation()">${discordIcon}</a>` : ''}
@@ -3091,7 +3096,7 @@ function openGameModalDirect(i) {
   const realRating = getGameRating(g);
   const ratingCount = g.ratings ? Object.keys(g.ratings).length : 0;
   document.getElementById('modal-meta').innerHTML = `
-    <span class="modal-meta-pill rating">${realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>'}${ratingCount ? ` <span style="color:rgba(255,255,255,0.5);font-weight:400;font-size:11px">(${ratingCount})</span>` : ''}</span>
+    <span class="modal-meta-pill rating">${realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>'}</span>
     <span class="modal-meta-pill">${Number(g.plays || 0).toLocaleString('fr-FR')} joueurs</span>`;
   document.getElementById('modal-desc').textContent = g.desc || 'Aucune description disponible pour ce jeu.';
   const ratingPicker = document.getElementById('modal-rating-picker');
@@ -3346,7 +3351,7 @@ function renderHeroSlides() {
         <div class="hero-btns">
           <button class="btn-primary" onclick="${heroButtonAction(h, heroGame)}"><i data-lucide="play"></i>${escapeHTML(h.btn1 || 'Voir details')}</button>
           ${h.btn2 ? `<button class="btn-outline" onclick="showPage('${h.btn2Page || 'about'}')"><i data-lucide="info"></i>${escapeHTML(h.btn2)}</button>` : ''}
-          ${heroGame.index >= 0 ? `<button class="btn-ghost ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)"><i data-lucide="plus"></i> Ajouter</button>` : ''}
+          ${heroGame.index >= 0 ? `<button class="btn-ghost icon-only ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)" title="Ajouter"><i data-lucide="bookmark"></i></button>` : ''}
           ${hasVideoBannerToggle ? `<button class="hero-toggle-btn" onclick="toggleHeroBanner(${i},event)" title="${showingBanner ? 'Revenir à la bande-annonce' : 'Voir la bannière'}" aria-label="Basculer vidéo / bannière"><i data-lucide="${showingBanner ? 'clapperboard' : 'image'}"></i></button>` : ''}
         </div>
       </div>
@@ -3758,14 +3763,20 @@ function editGamer(i) {
   if (topGamers[i].img) { document.getElementById('gamer-img-preview-img').src = topGamers[i].img; preview.style.display = 'inline-block'; }
   else preview.style.display = 'none';
   tempImgs['gamer-banner'] = topGamers[i].banner || '';
+  tempImgs['gamer-banner-isVideo'] = !!topGamers[i].bannerIsVideo;
   const bannerPreview = document.getElementById('gamer-banner-img-preview');
-  if (topGamers[i].banner) { document.getElementById('gamer-banner-img-preview-img').src = topGamers[i].banner; bannerPreview.style.display = 'inline-block'; }
-  else bannerPreview.style.display = 'none';
+  const bannerPreviewImg = document.getElementById('gamer-banner-img-preview-img');
+  const bannerPreviewVideo = document.getElementById('gamer-banner-video-preview');
+  if (topGamers[i].banner) {
+    if (topGamers[i].bannerIsVideo) { bannerPreviewVideo.src = topGamers[i].banner; bannerPreviewVideo.style.display = 'block'; bannerPreviewImg.style.display = 'none'; }
+    else { bannerPreviewImg.src = topGamers[i].banner; bannerPreviewImg.style.display = 'block'; bannerPreviewVideo.style.display = 'none'; bannerPreviewVideo.removeAttribute('src'); }
+    bannerPreview.style.display = 'inline-block';
+  } else bannerPreview.style.display = 'none';
   document.getElementById('gamer-edit-form').style.display = 'block';
   document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; delete tempImgs['gamer-banner']; }
+function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; delete tempImgs['gamer-banner']; delete tempImgs['gamer-banner-isVideo']; }
 
 async function saveGamerEdit() {
   if (_saveInProgress) return;
@@ -3782,7 +3793,8 @@ async function saveGamerEdit() {
     discord: document.getElementById('gme-discord').value.trim(),
     roblox: document.getElementById('gme-roblox').value.trim(),
     img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : ''),
-    banner: ('gamer-banner' in tempImgs) ? tempImgs['gamer-banner'] : (i >= 0 && i < topGamers.length ? topGamers[i].banner || '' : '')
+    banner: ('gamer-banner' in tempImgs) ? tempImgs['gamer-banner'] : (i >= 0 && i < topGamers.length ? topGamers[i].banner || '' : ''),
+    bannerIsVideo: ('gamer-banner-isVideo' in tempImgs) ? tempImgs['gamer-banner-isVideo'] : (i >= 0 && i < topGamers.length ? !!topGamers[i].bannerIsVideo : false)
   };
   if (!data.name.trim()) { showToast('⚠️ Nom requis'); return; }
   if (i === -1) topGamers.push(data); else topGamers[i] = data;
