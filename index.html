@@ -25,6 +25,8 @@
   --glass-bg: rgba(255,255,255,0.14);
   --glass-bg-strong: rgba(255,255,255,0.22);
   --glass-border: rgba(255,255,255,0.35);
+  --glass-highlight: linear-gradient(-45deg, rgba(255,255,255,0.20) 0%, rgba(255,255,255,0.04) 45%, rgba(255,255,255,0.12) 100%);
+  --glass-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset -1px -1px 0 rgba(80,170,255,0.08), inset 1px 1px 0 rgba(255,90,160,0.06);
 }
 body.theme-light {
   filter: invert(1) hue-rotate(180deg);
@@ -43,8 +45,9 @@ body { font-family: 'Barlow', sans-serif; background: var(--dark); color: var(--
 nav {
   display: flex; align-items: center; justify-content: space-between;
   padding: 20px 60px; position: sticky; top: 0; z-index: 100;
-  background: rgba(20,20,24,0.45); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--glass-highlight), rgba(20,20,24,0.45); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border-bottom: 1px solid rgba(255,255,255,0.14);
+  box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
 }
 .logo {
   display: flex; align-items: center; gap: 10px;
@@ -60,20 +63,22 @@ nav {
 .nav-links a.active { border-bottom: 2px solid var(--lime); padding-bottom: 2px; }
 .nav-right { display: flex; gap: 12px; align-items: center; }
 .btn-signin {
-  border: 1px solid var(--glass-border); color: var(--white); background: var(--glass-bg);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border); color: var(--white); background: var(--glass-highlight), var(--glass-bg);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow);
   padding: 8px 20px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
   font-size: 13px; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; border-radius: 999px;
 }
-.btn-signin:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); color: var(--white); }
+.btn-signin:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); color: var(--white); }
 .btn-admin {
-  background: var(--glass-bg); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 18px;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px;
+  background: var(--glass-highlight), var(--glass-bg); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 18px;
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 999px;
+  box-shadow: var(--glass-shadow);
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px;
   letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
   display: flex; align-items: center; gap: 6px;
 }
-.btn-admin:hover { background: var(--glass-bg-strong); }
+.btn-admin:hover { background: var(--glass-highlight), var(--glass-bg-strong); }
 .btn-admin:hover { opacity: 0.9; }
 
 /* ===== PAGES ===== */
@@ -233,9 +238,9 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .nav-links a:hover, .nav-links a.active { color: var(--white); }
 .nav-links a.active { border-bottom-color: var(--white); }
 .nav-right { position: relative; gap: 10px; }
-.nav-icon-btn { width: 38px; height: 38px; position: relative; display: inline-flex; align-items: center; justify-content: center; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 50%; cursor: pointer; transition-duration: .3s; box-shadow: none; border: 1px solid var(--glass-border); color: rgba(255,255,255,0.92); }
+.nav-icon-btn { width: 38px; height: 38px; position: relative; display: inline-flex; align-items: center; justify-content: center; background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 50%; cursor: pointer; transition-duration: .3s; box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); color: rgba(255,255,255,0.92); }
 .nav-icon-btn i, .nav-icon-btn svg { width: 17px; height: 17px; }
-.nav-icon-btn:hover { background-color: var(--glass-bg-strong); color: var(--white); }
+.nav-icon-btn:hover { background: var(--glass-highlight), var(--glass-bg-strong); color: var(--white); }
 .nav-icon-btn:hover i, .nav-icon-btn:hover svg { animation: bellRing 0.9s both; }
 .nav-icon-btn:active { transform: scale(0.85); }
 @keyframes bellRing {
@@ -251,7 +256,9 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .nav-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.55); pointer-events: none; }
 .nav-search input { width: 100%; height: 38px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--white); padding: 0 12px 0 38px; border-radius: 6px; outline: none; font-size: 13px; }
 .nav-search input:focus { border-color: rgba(var(--lime-rgb),0.55); background: rgba(255,255,255,0.08); }
-.search-results, .notifications-panel { position: absolute; top: calc(100% + 12px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: 460px; overflow: auto; background: rgba(30,34,44,0.55); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 24px 70px rgba(0,0,0,0.55); border-radius: 18px; padding: 14px; display: none; z-index: 220; scrollbar-width: none; -ms-overflow-style: none; }
+.nav-search input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; height: 14px; width: 14px; margin-left: 6px; cursor: pointer; background: rgba(255,255,255,0.5); -webkit-mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>") center / contain no-repeat; mask: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round'><line x1='18' y1='6' x2='6' y2='18'/><line x1='6' y1='6' x2='18' y2='18'/></svg>") center / contain no-repeat; }
+.nav-search input::-webkit-search-cancel-button:hover { background: rgba(255,255,255,0.85); }
+.search-results, .notifications-panel { position: absolute; top: calc(100% + 22px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: 460px; overflow: auto; background: var(--glass-highlight), rgba(30,34,44,0.55); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.18); box-shadow: 0 24px 70px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.25); border-radius: 18px; padding: 14px; display: none; z-index: 220; scrollbar-width: none; -ms-overflow-style: none; }
 .search-results::-webkit-scrollbar, .notifications-panel::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .search-results.open, .notifications-panel.open { display: block; }
 .search-result, .notification-item { position: relative; display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09); margin-bottom: 8px; }
@@ -292,12 +299,28 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .hero-overlay-bottom { height: 280px; background: linear-gradient(to top, #08090b 0%, rgba(8,9,11,0.6) 45%, transparent 100%); }
 .hero-dots { left: 50%; transform: translateX(-50%); bottom: 28px; }
 .hero-dot { border-radius: 999px; height: 5px; }
-.btn-primary { background: var(--glass-bg-strong); color: var(--white); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-primary:hover { background: rgba(255,255,255,0.32); }
-.btn-outline { border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-outline:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
-.btn-ghost { background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--white); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.btn-ghost.active { color: var(--white); border-color: rgba(255,255,255,0.5); background: var(--glass-bg-strong); }
+.btn-primary { background: var(--glass-highlight), var(--glass-bg-strong); color: var(--white); border: 1px solid var(--glass-border); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.btn-primary:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
+.btn-primary:active { transform: translateY(0); }
+.btn-outline { border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-outline:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
+.btn-ghost { background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.btn-ghost.active { color: var(--white); border-color: rgba(255,255,255,0.5); background: var(--glass-highlight), var(--glass-bg-strong); }
+.glass-card {
+  position: relative;
+  background: linear-gradient(-45deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.09) 100%);
+  backdrop-filter: blur(5px) saturate(150%);
+  -webkit-backdrop-filter: blur(5px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.22);
+  box-shadow:
+    0 16px 40px -10px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(255,255,255,0.3),
+    inset -1px -1px 0 rgba(80,170,255,0.07),
+    inset 1px 1px 0 rgba(255,90,160,0.05);
+  overflow: hidden;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.glass-card:hover { border-color: rgba(255,255,255,0.35); }
 .stream-section { padding: 34px 0 14px; background: var(--dark); }
 .stream-section:first-of-type { padding-top: 46px; }
 .stream-section-header { padding: 0 48px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -325,7 +348,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .gs-circle.c { left: 65%; top: -35%; width: 30px; height: 30px; background: var(--lime-soft); animation-delay: -1800ms; }
 @keyframes gs-floating { 0% { transform: translateY(0px); } 50% { transform: translateY(10px); } 100% { transform: translateY(0px); } }
 
-.card-icon-btn { width: 26px; height: 26px; border: 1px solid rgba(255,255,255,0.25); border-radius: 999px; background: rgba(255,255,255,0.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: color 0.2s, background 0.2s, transform 0.2s; }
+.card-icon-btn { width: 26px; height: 26px; border: 1px solid rgba(255,255,255,0.3); border-radius: 999px; background: var(--glass-highlight), rgba(255,255,255,0.15); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); transition: color 0.2s, background 0.2s, transform 0.2s; }
 .card-icon-btn svg { width: 13px; height: 13px; }
 .card-icon-btn.active { color: #ffd60a; background: rgba(255,214,10,0.18); border-color: rgba(255,214,10,0.4); }
 .card-icon-btn.like-active { color: #ff3b30 !important; background: rgba(255,59,48,0.18) !important; border-color: rgba(255,59,48,0.4) !important; }
@@ -333,7 +356,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .card-icon-btn.like-active:hover, .card-icon-btn.fav-active:hover { transform: scale(1.1); }
 .btn-ghost.like-active { color: #ff3b30 !important; border-color: rgba(255,59,48,0.4) !important; background: rgba(255,59,48,0.13) !important; }
 .btn-ghost.fav-active { color: #ffd60a !important; border-color: rgba(255,214,10,0.4) !important; background: rgba(255,214,10,0.13) !important; }
-.card-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: fit-content; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.card-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 10px; border-radius: 999px; background: var(--glass-highlight), rgba(255,255,255,0.16); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); border: 1px solid rgba(255,255,255,0.32); color: #fff; width: fit-content; box-shadow: 0 2px 8px rgba(0,0,0,0.25), var(--glass-shadow); }
 .my-list-page { padding: 46px 48px 70px; background: var(--dark); }
 .library-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
 .library-title { font-family: 'Barlow Condensed', sans-serif; font-size: 52px; font-weight: 900; text-transform: uppercase; line-height: 0.95; }
@@ -391,7 +414,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .gamer-banner { height: 130px; position: relative; overflow: hidden; background: var(--gradient-accent); }
 .gamer-banner img { width: 100%; height: 100%; object-fit: cover; }
 .gamer-banner-icons { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
-.gamer-banner-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+.gamer-banner-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--glass-highlight), rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.2s; }
 .gamer-banner-icon:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
 .gamer-banner-icon svg { width: 13px; height: 13px; }
 .gamer-avatar { width: 88px; height: 88px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dark3); display: flex; align-items: center; justify-content: center; border: 4px solid var(--card-bg); position: relative; margin: -44px 0 0 20px; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
@@ -468,7 +491,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 }
 .modal-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
 .modal-meta-grid { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
-.modal-meta-pill { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.18); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.92); }
+.modal-meta-pill { background: var(--glass-highlight), rgba(255,255,255,0.1); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); border: 1px solid rgba(255,255,255,0.22); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.92); }
 .modal-meta-pill.age { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); color: var(--white); }
 .modal-meta-pill.rating { background: transparent; border: none; padding: 0; backdrop-filter: none; display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
 .modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; }
@@ -1095,11 +1118,15 @@ window.fbSignOut      = async () => await signOut(auth);
 <!-- ===== PAGE: ABOUT ===== -->
 <div class="page" id="page-about">
   <div class="page-hero" style="background:linear-gradient(to bottom,var(--dark2),var(--dark))">
-    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:5px 14px;margin-bottom:20px">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:6px 16px;border-radius:999px;margin-bottom:20px">
       <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">Notre histoire</span>
     </div>
     <h1>À propos de <span>Garden Studio</span></h1>
-    <p>Un studio fondé par passion, construit avec ambition. Voici qui nous sommes et ce qu'on veut créer.</p>
+    <p>Les développeurs, designers et créatifs derrière Garden Studio. Des passionnés qui construisent l'expérience gaming de demain.</p>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:0 60px">
+    <div style="border-top:1px solid rgba(255,255,255,0.08)"></div>
   </div>
 
   <div class="page-content">
@@ -1112,24 +1139,24 @@ window.fbSignOut      = async () => await signOut(auth);
         <p style="font-size:14px;color:var(--gray);line-height:1.9;margin-bottom:16px">Garden Studio est né d'une idée simple : faire des jeux Roblox qui ont quelque chose à dire. Pas juste du gameplay, mais une vraie expérience — des univers, des sensations qu'on n'oublie pas.</p>
         <p style="font-size:14px;color:var(--gray);line-height:1.9">On est une petite équipe passionnée, mais chaque projet est traité avec la même exigence qu'un grand studio. Parce qu'on pense que la taille ne définit pas la qualité.</p>
       </div>
-      <div style="background:var(--card-bg);border:1px solid rgba(var(--lime-rgb),0.15);padding:40px;position:relative;overflow:hidden">
-        <div style="position:absolute;top:-20px;right:-20px;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle,rgba(var(--lime-rgb),0.15),transparent);pointer-events:none"></div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:72px;color:rgba(var(--lime-rgb),0.12);line-height:1;margin-bottom:4px">GS</div>
+      <div class="glass-card" style="border-radius:16px;padding:32px">
+        <img src="data:image/png;base64,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" style="width:60px;height:60px;border-radius:12px;object-fit:cover;margin-bottom:24px">
+
         <div style="font-size:13px;color:var(--gray);line-height:1.8">
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05)">
-            <div style="width:4px;height:4px;background:var(--lime);border-radius:50%"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="width:5px;height:5px;background:var(--lime);border-radius:50%"></div>
             <span>Fondé en 2026</span>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05)">
-            <div style="width:4px;height:4px;background:var(--lime);border-radius:50%"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="width:5px;height:5px;background:var(--lime);border-radius:50%"></div>
             <span>Studio 100% indépendant</span>
           </div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.05)">
-            <div style="width:4px;height:4px;background:var(--lime);border-radius:50%"></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,0.06)">
+            <div style="width:5px;height:5px;background:var(--lime);border-radius:50%"></div>
             <span>Jeux sur Roblox</span>
           </div>
           <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:4px;height:4px;background:var(--lime);border-radius:50%"></div>
+            <div style="width:5px;height:5px;background:var(--lime);border-radius:50%"></div>
             <span>Communauté au cœur du projet</span>
           </div>
         </div>
@@ -1141,36 +1168,35 @@ window.fbSignOut      = async () => await signOut(auth);
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px;text-align:center">Ce qui nous guide</div>
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;text-transform:uppercase;text-align:center;margin-bottom:36px">Nos valeurs</h2>
       <div class="page-3col-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px">
-        <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:32px;transition:border-color 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
-          <div style="width:44px;height:44px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+        <div class="glass-card" style="border-radius:14px;padding:28px" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.22)'">
+          <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
           </div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;margin-bottom:10px">Qualité avant tout</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:10px">Qualité avant tout</div>
           <p style="font-size:13px;color:var(--gray);line-height:1.7">Chaque détail compte. On préfère sortir moins souvent mais sortir quelque chose qui vaut vraiment la peine d'être joué.</p>
         </div>
-        <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:32px;transition:border-color 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
-          <div style="width:44px;height:44px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div class="glass-card" style="border-radius:14px;padding:28px" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.22)'">
+          <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           </div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;margin-bottom:10px">Communauté d'abord</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:10px">Communauté d'abord</div>
           <p style="font-size:13px;color:var(--gray);line-height:1.7">Nos joueurs sont nos meilleurs testeurs et nos plus grandes sources d'inspiration. On construit avec eux, pas pour eux.</p>
         </div>
-        <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:32px;transition:border-color 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)'">
-          <div style="width:44px;height:44px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);display:flex;align-items:center;justify-content:center;margin-bottom:20px">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div class="glass-card" style="border-radius:14px;padding:28px" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.4)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.22)'">
+          <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:18px">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
           </div>
-          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;text-transform:uppercase;margin-bottom:10px">Authenticité</div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:10px">Authenticité</div>
           <p style="font-size:13px;color:var(--gray);line-height:1.7">On crée des jeux qu'on voudrait jouer soi-même. Pas de tendances forcées, pas de compromis sur la vision créative.</p>
         </div>
       </div>
     </div>
 
     <!-- CTA Recrutement -->
-    <div style="background:linear-gradient(135deg,rgba(var(--lime-rgb),0.1),rgba(var(--lime-rgb),0.03));border:1px solid rgba(var(--lime-rgb),0.2);padding:50px;text-align:center;position:relative;overflow:hidden">
-      <div style="position:absolute;top:-40px;left:50%;transform:translateX(-50%);width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(var(--lime-rgb),0.12),transparent);pointer-events:none"></div>
+    <div class="glass-card" style="border-radius:16px;padding:50px;text-align:center">
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px">On recrute</div>
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;text-transform:uppercase;margin-bottom:14px">Tu veux rejoindre l'équipe ?</h2>
-      <p style="font-size:14px;color:var(--gray);margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto;margin-bottom:28px;line-height:1.7">On cherche des passionnés qui veulent construire quelque chose de solide. Développeurs, designers, créatifs — on a de la place.</p>
+      <p style="font-size:14px;color:var(--gray);margin-bottom:28px;max-width:400px;margin-left:auto;margin-right:auto;line-height:1.7">On cherche des passionnés qui veulent construire quelque chose de solide. Développeurs, designers, créatifs — on a de la place.</p>
       <button class="btn-primary" onclick="showPage('recruit')" style="padding:14px 36px">Voir les postes ouverts</button>
     </div>
 
@@ -1180,7 +1206,7 @@ window.fbSignOut      = async () => await signOut(auth);
 <!-- ===== PAGE: RECRUIT ===== -->
 <div class="page" id="page-recruit">
   <div class="page-hero" style="background:linear-gradient(to bottom,var(--dark2),var(--dark))">
-    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:5px 14px;margin-bottom:20px">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:6px 16px;border-radius:999px;margin-bottom:20px">
       <span style="width:6px;height:6px;background:var(--lime);border-radius:50%;animation:gemPulse 2s ease-in-out infinite"></span>
       <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">On recrute</span>
     </div>
@@ -1192,22 +1218,32 @@ window.fbSignOut      = async () => await signOut(auth);
     </div>
   </div>
 
+  <div style="max-width:1180px;margin:0 auto;padding:0 60px">
+    <div style="border-top:1px solid rgba(255,255,255,0.08)"></div>
+  </div>
+
   <div class="page-content">
 
     <!-- Why join -->
     <div class="page-3col-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:60px">
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" style="margin-bottom:16px"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6.09 6.09l1.27-.79a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 18.37z"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px">
+        <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 14a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 3.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 10.9a16 16 0 0 0 6.09 6.09l1.27-.79a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 18.37z"/></svg>
+        </div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:8px">Liberté créative</div>
         <p style="font-size:13px;color:var(--gray);line-height:1.7">Tes idées ont de la valeur ici. On encourage l'initiative et les propositions originales.</p>
       </div>
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" style="margin-bottom:16px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px">
+        <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:8px">Apprendre vite</div>
         <p style="font-size:13px;color:var(--gray);line-height:1.7">On est un studio en croissance. Tu monteras en compétences rapidement sur de vrais projets.</p>
       </div>
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2" style="margin-bottom:16px"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px">
+        <div style="width:40px;height:40px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+        </div>
         <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;text-transform:uppercase;margin-bottom:8px">Impact réel</div>
         <p style="font-size:13px;color:var(--gray);line-height:1.7">Chez nous, ton travail se voit. Chaque contribution compte dans le produit final.</p>
       </div>
@@ -1221,65 +1257,65 @@ window.fbSignOut      = async () => await signOut(auth);
 
     <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:60px">
       <!-- Job card -->
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px 32px;display:flex;align-items:center;gap:24px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)';this.style.background='#131324'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--card-bg)'">
-        <div style="width:48px;height:48px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px 32px;display:flex;align-items:center;gap:24px">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
         </div>
         <div style="flex:1">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin-bottom:4px">Développeur·euse Roblox</div>
           <div style="font-size:13px;color:var(--gray)">Lua · Roblox Studio · Scripting · UI Roblox</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;text-transform:uppercase">Bénévolat</span>
+          <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:999px;text-transform:uppercase">Bénévolat</span>
           <button class="btn-primary" style="padding:9px 20px;font-size:11px;letter-spacing:1.5px" onclick="openApplyModal('Développeur·euse Roblox','Lua · Roblox Studio · Scripting · UI Roblox')">Postuler</button>
         </div>
       </div>
 
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px 32px;display:flex;align-items:center;gap:24px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)';this.style.background='#131324'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--card-bg)'">
-        <div style="width:48px;height:48px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px 32px;display:flex;align-items:center;gap:24px">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
         </div>
         <div style="flex:1">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin-bottom:4px">Designer UI/UX & Graphiste</div>
           <div style="font-size:13px;color:var(--gray)">Figma · Photoshop · Illustrator · Motion design</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;text-transform:uppercase">Bénévolat</span>
+          <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:999px;text-transform:uppercase">Bénévolat</span>
           <button class="btn-primary" style="padding:9px 20px;font-size:11px;letter-spacing:1.5px" onclick="openApplyModal('Designer UI/UX & Graphiste','Figma · Photoshop · Illustrator · Motion design')">Postuler</button>
         </div>
       </div>
 
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px 32px;display:flex;align-items:center;gap:24px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)';this.style.background='#131324'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--card-bg)'">
-        <div style="width:48px;height:48px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px 32px;display:flex;align-items:center;gap:24px">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
         </div>
         <div style="flex:1">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin-bottom:4px">Community Manager</div>
           <div style="font-size:13px;color:var(--gray)">Discord · Réseaux sociaux · Communication · Contenu</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;text-transform:uppercase">Bénévolat</span>
+          <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:999px;text-transform:uppercase">Bénévolat</span>
           <button class="btn-primary" style="padding:9px 20px;font-size:11px;letter-spacing:1.5px" onclick="openApplyModal('Community Manager','Discord · Réseaux sociaux · Communication · Contenu')">Postuler</button>
         </div>
       </div>
 
-      <div style="background:var(--card-bg);border:1px solid rgba(255,255,255,0.06);padding:24px 32px;display:flex;align-items:center;gap:24px;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.3)';this.style.background='#131324'" onmouseout="this.style.borderColor='rgba(255,255,255,0.06)';this.style.background='var(--card-bg)'">
-        <div style="width:48px;height:48px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
+      <div class="glass-card" style="border-radius:14px;padding:24px 32px;display:flex;align-items:center;gap:24px">
+        <div style="width:48px;height:48px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/></svg>
         </div>
         <div style="flex:1">
           <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;text-transform:uppercase;margin-bottom:4px">Game Designer Roblox</div>
           <div style="font-size:13px;color:var(--gray)">Roblox Studio · Game design · Level design · Narration</div>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <span style="background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.2);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;text-transform:uppercase">Bénévolat</span>
+          <span style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:var(--gray);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1.5px;padding:4px 12px;border-radius:999px;text-transform:uppercase">Bénévolat</span>
           <button class="btn-primary" style="padding:9px 20px;font-size:11px;letter-spacing:1.5px" onclick="openApplyModal('Game Designer Roblox','Roblox Studio · Game design · Level design · Narration')">Postuler</button>
         </div>
       </div>
     </div>
 
     <!-- Apply CTA -->
-    <div style="background:linear-gradient(135deg,rgba(var(--lime-rgb),0.1),rgba(var(--lime-rgb),0.03));border:1px solid rgba(var(--lime-rgb),0.2);padding:50px;text-align:center">
+    <div class="glass-card" style="border-radius:16px;padding:50px;text-align:center">
       <div style="font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:12px">Candidature libre</div>
       <h2 style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:32px;text-transform:uppercase;margin-bottom:14px">Ton profil n'est pas dans la liste ?</h2>
       <p style="font-size:14px;color:var(--gray);max-width:440px;margin:0 auto 28px;line-height:1.7">Si tu as du talent et de la passion pour le gaming, écris-nous quand même. On est ouverts aux profils atypiques.</p>
@@ -4216,98 +4252,228 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 <!-- APPLY SUCCESS NOTIFICATION -->
 <div class="apply-notif" id="apply-notif">Votre candidature a bien été envoyée. Merci pour votre intérêt envers Garden Studio.</div>
 
+<style>
+/* ===== AUTH BOX (login/register glass card) ===== */
+.authbox-container {
+  --authbox-input: #3a3a3a;
+  --authbox-button: #373737;
+  --authbox-footer: rgba(255,255,255,0.5);
+  position: relative;
+  width: 100%;
+  border-radius: 24px;
+  padding: 1px;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    0 4px 8px rgba(0,0,0,0.25),
+    0 8px 20px rgba(0,0,0,0.25);
+}
+.authbox-container::before {
+  content: "";
+  position: absolute;
+  inset: -50px;
+  z-index: -1;
+  background: conic-gradient(from 45deg, transparent 75%, #fff, transparent 100%);
+  animation: authbox-spin 4s ease-in-out infinite;
+}
+@keyframes authbox-spin { 100% { transform: rotate(360deg); } }
+.authbox-login-box {
+  position: relative;
+  background: rgba(30,30,30,0.97);
+  border-radius: 23px;
+  padding: 32px 36px 36px;
+  backdrop-filter: blur(4px) saturate(160%) contrast(1.05);
+  -webkit-backdrop-filter: blur(4px) saturate(160%) contrast(1.05);
+  backdrop-filter: url(#glass-refraction) blur(4px) saturate(160%) contrast(1.05);
+  -webkit-backdrop-filter: url(#glass-refraction) blur(4px) saturate(160%) contrast(1.05);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.25),
+    inset 0 40px 60px -8px rgba(255,255,255,0.12),
+    inset 4px 0 12px -6px rgba(255,255,255,0.10),
+    inset 0 0 20px -4px rgba(255,255,255,0.10),
+    inset 0 -20px 30px -14px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+.authbox-login-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(-45deg, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.04) 22%, transparent 45%);
+  opacity: 0.8;
+  mix-blend-mode: soft-light;
+}
+.authbox-login-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: 23px;
+  box-shadow:
+    inset 1.5px 0 0 rgba(255,80,80,0.08),
+    inset -1.5px 0 0 rgba(80,150,255,0.08);
+}
+.authbox-content { position: relative; z-index: 1; }
+.authbox-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--authbox-input);
+  color: #fff;
+  outline: none;
+  font-size: 14px;
+  font-family: 'Barlow', sans-serif;
+  transition: box-shadow 0.2s;
+}
+.authbox-input::placeholder { color: rgba(255,255,255,0.32); }
+.authbox-input:focus { box-shadow: 0 0 0 1px rgba(255,255,255,0.6) inset; }
+.authbox-btn {
+  width: 100%;
+  padding: 13px;
+  border: none;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif;
+  cursor: pointer;
+  background: var(--authbox-button);
+  color: #fff;
+  transition: 0.3s;
+  box-shadow:
+    inset 0px 3px 6px -4px rgba(255,255,255,0.6),
+    inset 0px -3px 6px -2px rgba(0,0,0,0.8);
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.authbox-btn:hover {
+  background: rgba(255,255,255,0.16);
+  box-shadow:
+    inset 0px 3px 6px rgba(255,255,255,0.6),
+    inset 0px -3px 6px rgba(0,0,0,0.8),
+    0px 0px 8px rgba(255,255,255,0.05);
+}
+.authbox-btn-google { background: #fff; color: #222; }
+.authbox-btn-google:hover { background: #f0f0f0; box-shadow: none; }
+.authbox-divider { display: flex; align-items: center; gap: 12px; margin: 16px 0; }
+.authbox-divider .line { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+.authbox-divider span { font-size: 11px; color: #777; font-weight: 600; letter-spacing: 1px; }
+.authbox-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 7px; }
+.authbox-eye { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: rgba(255,255,255,0.4); cursor: pointer; padding: 4px; }
+.authbox-eye:hover { color: #fff; }
+</style>
+<!-- Liquid-glass SVG filter: refraction 80 / dispersion 50 / frost 4 / splay 0 (Firefox-class browsers) -->
+<svg width="0" height="0" style="position:absolute;overflow:hidden">
+  <filter id="glass-refraction" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.012 0.014" numOctaves="2" seed="7" result="noise"/>
+    <feGaussianBlur in="noise" stdDeviation="1" result="softNoise"/>
+    <feDisplacementMap in="SourceGraphic" in2="softNoise" scale="16" xChannelSelector="R" yChannelSelector="G" result="refracted"/>
+    <feGaussianBlur in="refracted" stdDeviation="1.6" result="frosted"/>
+    <feColorMatrix in="frosted" type="matrix" values="1 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0" result="rCh"/>
+    <feOffset in="rCh" dx="1.2" dy="0" result="rChOff"/>
+    <feColorMatrix in="frosted" type="matrix" values="0 0 0 0 0  0 1 0 0 0  0 0 0 0 0  0 0 0 1 0" result="gCh"/>
+    <feColorMatrix in="frosted" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 1 0 0  0 0 0 1 0" result="bCh"/>
+    <feOffset in="bCh" dx="-1.2" dy="0" result="bChOff"/>
+    <feBlend in="rChOff" in2="gCh" mode="screen" result="rg"/>
+    <feBlend in="rg" in2="bChOff" mode="screen"/>
+  </filter>
+</svg>
 <!-- ===== SIGN IN / REGISTER MODAL ===== -->
 <div class="modal-overlay" id="signin-modal" onclick="closeSignIn(event)">
-  <div class="modal-box" style="max-width:460px;padding:0">
-    <button class="modal-close" onclick="closeSignInDirect()" style="z-index:10">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
+  <div class="modal-box" style="max-width:420px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box">
 
-    <!-- Logo -->
-    <div style="padding:36px 40px 0;display:flex;align-items:center;gap:10px;margin-bottom:28px">
-      <img src="data:image/png;base64,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" style="width:28px;height:28px;border-radius:6px;object-fit:cover">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--lime);letter-spacing:1px">GARDEN STUDIO</span>
-    </div>
+        <button class="modal-close" onclick="closeSignInDirect()" style="top:14px;right:14px;width:34px;height:34px;z-index:10">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
 
-    <!-- Tabs -->
-    <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);margin:0 40px">
-      <button id="tab-signin" onclick="switchAuthTab('signin')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid var(--lime);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:-1px">Connexion</button>
-      <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#555;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:-1px">Créer un compte</button>
-    </div>
+        <div class="authbox-content">
+        <!-- Logo -->
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+                <img src="data:image/png;base64,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" style="width:28px;height:28px;border-radius:6px;object-fit:cover">
+          <span style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:var(--lime);letter-spacing:1px">GARDEN STUDIO</span>
+        </div>
 
-    <!-- Error -->
-    <div id="signin-error" style="display:none;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.3);color:#ff6060;padding:10px 14px;font-size:13px;margin:16px 40px 0;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px"></div>
-    <!-- Success -->
-    <div id="signin-success" style="display:none;background:rgba(var(--lime-rgb),0.08);border:1px solid rgba(var(--lime-rgb),0.25);color:var(--lime);padding:10px 14px;font-size:13px;margin:16px 40px 0;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px"></div>
+        <!-- Tabs -->
+        <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.08);margin-bottom:20px">
+          <button id="tab-signin" onclick="switchAuthTab('signin')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid var(--lime);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:-1px">Connexion</button>
+          <button id="tab-register" onclick="switchAuthTab('register')" style="flex:1;padding:12px;background:none;border:none;border-bottom:2px solid transparent;color:#777;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;margin-bottom:-1px">Créer un compte</button>
+        </div>
 
-    <!-- SIGN IN FORM -->
-    <div id="form-signin" style="padding:24px 40px 40px">
-      <p style="font-size:13px;color:#666;margin-bottom:20px">Accède à ton espace joueur Garden Studio.</p>
-      <div style="margin-bottom:14px">
-        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Email</label>
-        <input type="email" id="si-email" class="form-input" placeholder="gamer@gardenstudio.gg" style="width:100%" onkeydown="if(event.key==='Enter')doSignIn()">
-      </div>
-      <div style="margin-bottom:24px">
-        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Mot de passe</label>
-        <div style="position:relative">
-          <input type="password" id="si-pwd" class="form-input" placeholder="••••••••" style="width:100%;padding-right:44px" onkeydown="if(event.key==='Enter')doSignIn()">
-          <button onclick="togglePwd('si-pwd')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;padding:4px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        <!-- Error -->
+        <div id="signin-error" style="display:none;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.3);color:#ff6060;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px"></div>
+        <!-- Success -->
+        <div id="signin-success" style="display:none;background:rgba(var(--lime-rgb),0.08);border:1px solid rgba(var(--lime-rgb),0.25);color:var(--lime);padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px"></div>
+
+        <!-- SIGN IN FORM -->
+        <div id="form-signin">
+          <p style="font-size:13px;color:#888;margin-bottom:18px">Accède à ton espace joueur Garden Studio.</p>
+          <div style="margin-bottom:14px">
+            <label class="authbox-label">Email</label>
+            <input type="email" id="si-email" class="authbox-input" placeholder="gamer@gardenstudio.gg" onkeydown="if(event.key==='Enter')doSignIn()">
+          </div>
+          <div style="margin-bottom:20px">
+            <label class="authbox-label">Mot de passe</label>
+            <div style="position:relative">
+              <input type="password" id="si-pwd" class="authbox-input" placeholder="••••••••" style="padding-right:44px" onkeydown="if(event.key==='Enter')doSignIn()">
+              <button onclick="togglePwd('si-pwd')" class="authbox-eye">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <button onclick="doSignIn()" class="authbox-btn">Se connecter</button>
+          <div class="authbox-divider"><div class="line"></div><span>OU</span><div class="line"></div></div>
+          <button onclick="doSignInGoogle()" class="authbox-btn authbox-btn-google">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            Continuer avec Google
           </button>
         </div>
-      </div>
-      <button onclick="doSignIn()" class="btn-primary" style="width:100%;padding:13px;font-size:13px;letter-spacing:2px">Se connecter</button>
-      <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
-        <span style="font-size:11px;color:#444;font-weight:600;letter-spacing:1px">OU</span>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
-      </div>
-      <button onclick="doSignInGoogle()" style="width:100%;padding:12px;background:#fff;border:none;color:#222;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity 0.2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        Continuer avec Google
-      </button>
-    </div>
-    <div id="form-register" style="display:none;padding:24px 40px 40px">
-      <p style="font-size:13px;color:#666;margin-bottom:20px">Rejoins la communauté Garden Studio gratuitement.</p>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-        <div>
-          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Prénom</label>
-          <input type="text" id="reg-fname" class="form-input" placeholder="Alex" style="width:100%">
-        </div>
-        <div>
-          <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Pseudo</label>
-          <input type="text" id="reg-username" class="form-input" placeholder="ShadowX_Pro" style="width:100%">
-        </div>
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Email</label>
-        <input type="email" id="reg-email" class="form-input" placeholder="gamer@gardenstudio.gg" style="width:100%">
-      </div>
-      <div style="margin-bottom:14px">
-        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Mot de passe</label>
-        <div style="position:relative">
-          <input type="password" id="reg-pwd" class="form-input" placeholder="Min. 6 caractères" style="width:100%;padding-right:44px">
-          <button onclick="togglePwd('reg-pwd')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:#555;cursor:pointer;padding:4px">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+
+        <!-- REGISTER FORM -->
+        <div id="form-register" style="display:none">
+          <p style="font-size:13px;color:#888;margin-bottom:18px">Rejoins la communauté Garden Studio gratuitement.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+            <div>
+              <label class="authbox-label">Prénom</label>
+              <input type="text" id="reg-fname" class="authbox-input" placeholder="Alex">
+            </div>
+            <div>
+              <label class="authbox-label">Pseudo</label>
+              <input type="text" id="reg-username" class="authbox-input" placeholder="ShadowX_Pro">
+            </div>
+          </div>
+          <div style="margin-bottom:14px">
+            <label class="authbox-label">Email</label>
+            <input type="email" id="reg-email" class="authbox-input" placeholder="gamer@gardenstudio.gg">
+          </div>
+          <div style="margin-bottom:14px">
+            <label class="authbox-label">Mot de passe</label>
+            <div style="position:relative">
+              <input type="password" id="reg-pwd" class="authbox-input" placeholder="Min. 6 caractères" style="padding-right:44px">
+              <button onclick="togglePwd('reg-pwd')" class="authbox-eye">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              </button>
+            </div>
+          </div>
+          <div style="margin-bottom:20px">
+            <label class="authbox-label">Confirmer le mot de passe</label>
+            <input type="password" id="reg-pwd2" class="authbox-input" placeholder="••••••••">
+          </div>
+          <button onclick="doRegister()" class="authbox-btn">Créer mon compte</button>
+          <div class="authbox-divider"><div class="line"></div><span>OU</span><div class="line"></div></div>
+          <button onclick="doSignInGoogle()" class="authbox-btn authbox-btn-google">
+            <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+            S'inscrire avec Google
           </button>
         </div>
-      </div>
-      <div style="margin-bottom:24px">
-        <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Confirmer le mot de passe</label>
-        <input type="password" id="reg-pwd2" class="form-input" placeholder="••••••••" style="width:100%">
-      </div>
-      <button onclick="doRegister()" class="btn-primary" style="width:100%;padding:13px;font-size:13px;letter-spacing:2px">Créer mon compte</button>
-      <div style="display:flex;align-items:center;gap:12px;margin:16px 0">
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
-        <span style="font-size:11px;color:#444;font-weight:600;letter-spacing:1px">OU</span>
-        <div style="flex:1;height:1px;background:rgba(255,255,255,0.07)"></div>
-      </div>
-      <button onclick="doSignInGoogle()" style="width:100%;padding:12px;background:#fff;border:none;color:#222;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:opacity 0.2s" onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-        <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
-        S'inscrire avec Google
-      </button>
-    </div>
+        </div>
 
+      </div>
+    </div>
   </div>
 </div>
 
@@ -4374,16 +4540,20 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 <!-- ===== CUSTOM CONFIRM MODAL ===== -->
 
 <div class="modal-overlay" id="confirm-modal" style="z-index:99999">
-  <div class="modal-box" style="max-width:380px;padding:0;text-align:center">
-    <div style="padding:40px 36px 32px">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-      </div>
-      <div id="confirm-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;margin-bottom:8px"></div>
-      <div id="confirm-subtitle" style="font-size:13px;color:#666;margin-bottom:28px"></div>
-      <div style="display:flex;gap:10px">
-        <button class="btn-outline" style="flex:1;padding:12px" onclick="closeConfirm()">Annuler</button>
-        <button id="confirm-ok-btn" style="flex:1;padding:12px;background:#ff4040;border:none;color:white;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer" onclick="confirmOk()">Supprimer</button>
+  <div class="modal-box" style="max-width:380px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:40px 36px 32px;text-align:center">
+        <div class="authbox-content">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </div>
+          <div id="confirm-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;margin-bottom:8px"></div>
+          <div id="confirm-subtitle" style="font-size:13px;color:#999;margin-bottom:28px"></div>
+          <div style="display:flex;gap:10px">
+            <button class="authbox-btn" style="flex:1" onclick="closeConfirm()">Annuler</button>
+            <button id="confirm-ok-btn" class="authbox-btn" style="flex:1;background:#ff4040" onclick="confirmOk()">Supprimer</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -4392,17 +4562,21 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 <!-- ===== CUSTOM PROMPT MODAL (remplace prompt() natif) ===== -->
 
 <div class="modal-overlay" id="prompt-modal" style="z-index:99999">
-  <div class="modal-box" style="max-width:380px;padding:0;text-align:center">
-    <div style="padding:40px 36px 32px">
-      <div style="width:56px;height:56px;border-radius:50%;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-      </div>
-      <div id="prompt-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:8px"></div>
-      <div id="prompt-subtitle" style="font-size:13px;color:#666;margin-bottom:20px"></div>
-      <input type="text" id="prompt-input" class="form-input" style="margin-bottom:24px;text-align:center" onkeydown="if(event.key==='Enter')promptOk()">
-      <div style="display:flex;gap:10px">
-        <button class="btn-outline" style="flex:1;padding:12px" onclick="closePrompt()">Annuler</button>
-        <button id="prompt-ok-btn" style="flex:1;padding:12px;background:var(--lime);border:none;color:var(--dark);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer" onclick="promptOk()">Valider</button>
+  <div class="modal-box" style="max-width:380px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:40px 36px 32px;text-align:center">
+        <div class="authbox-content">
+          <div style="width:56px;height:56px;border-radius:50%;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </div>
+          <div id="prompt-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:8px"></div>
+          <div id="prompt-subtitle" style="font-size:13px;color:#999;margin-bottom:20px"></div>
+          <input type="text" id="prompt-input" class="authbox-input" style="margin-bottom:24px;text-align:center" onkeydown="if(event.key==='Enter')promptOk()">
+          <div style="display:flex;gap:10px">
+            <button class="authbox-btn" style="flex:1" onclick="closePrompt()">Annuler</button>
+            <button id="prompt-ok-btn" class="authbox-btn" style="flex:1;background:var(--lime);color:var(--dark)" onclick="promptOk()">Valider</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
