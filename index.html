@@ -366,8 +366,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; }
 .category-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 20px; }
 .category-toolbar input, .category-toolbar select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; height: 38px; border-radius: 6px; padding: 0 12px; }
-.library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 6px; cursor: pointer; font-size: 14px; color: #1a1a1a; }
-.library-picker-row:hover { background: rgba(0,0,0,0.05); }
+.library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
+.library-picker-row:hover { background: rgba(255,255,255,0.06); }
 .library-picker-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--lime); cursor: pointer; }
 .modal-actions { flex-wrap: wrap; }
 .modal-user-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: -8px; margin-bottom: 24px; }
@@ -4615,16 +4615,20 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 
 <!-- ===== LIBRARY PICKER MODAL (choix de catégorie) ===== -->
 <div class="modal-overlay" id="library-picker-modal" style="z-index:99999" onclick="closeLibraryPicker(event)">
-  <div class="modal-box" style="max-width:380px;padding:0;text-align:left">
-    <div style="padding:32px 32px 28px">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:6px">Ajouter ce jeu</div>
-      <div style="font-size:13px;color:#666;margin-bottom:18px">Choisis où ranger ce jeu (tu peux cocher plusieurs cases).</div>
-      <div id="library-picker-list" style="display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto;margin-bottom:16px"></div>
-      <div style="display:flex;gap:8px;margin-bottom:22px">
-        <input type="text" id="library-picker-new-cat" class="form-input" placeholder="Nouvelle catégorie..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();createCategoryFromPicker();}">
-        <button class="btn-outline" style="padding:0 16px" onclick="createCategoryFromPicker()">+</button>
+  <div class="modal-box" style="max-width:380px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:32px 32px 28px;text-align:left">
+        <div class="authbox-content">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:6px;color:#fff">Ajouter ce jeu</div>
+          <div style="font-size:13px;color:#999;margin-bottom:18px">Choisis où ranger ce jeu (tu peux cocher plusieurs cases).</div>
+          <div id="library-picker-list" style="display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto;margin-bottom:16px"></div>
+          <div style="display:flex;gap:8px;margin-bottom:22px">
+            <input type="text" id="library-picker-new-cat" class="authbox-input" placeholder="Nouvelle catégorie..." style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();createCategoryFromPicker();}">
+            <button class="authbox-btn" style="width:44px;flex:none;padding:0" onclick="createCategoryFromPicker()">+</button>
+          </div>
+          <button class="authbox-btn" onclick="closeLibraryPickerDone()">Terminé</button>
+        </div>
       </div>
-      <button class="btn-primary" style="width:100%;padding:12px" onclick="closeLibraryPickerDone()">Terminé</button>
     </div>
   </div>
 </div>
