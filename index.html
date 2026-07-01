@@ -9,9 +9,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&family=Anton&family=Bebas+Neue&family=Oswald:wght@400;600;700&family=Russo+One&family=Orbitron:wght@600;800&family=Montserrat:wght@700;800;900&family=Teko:wght@500;700&display=swap" rel="stylesheet">
 <style>
 :root {
-  --lime: #ff6a21;
-  --lime-rgb: 255,106,33;
-  --lime-soft: #ffb078;
+  --lime: #2f7dfa;
+  --lime-rgb: 47,125,250;
+  --lime-soft: #8fb9ff;
   --lime-dim: rgba(var(--lime-rgb),0.13);
   --lime-border: rgba(var(--lime-rgb),0.28);
   --dark: #08090b;
@@ -22,6 +22,9 @@
   --white: #ffffff;
   --card-bg: #111319;
   --gradient-accent: linear-gradient(135deg, #1a1a2e, #533483);
+  --glass-bg: rgba(255,255,255,0.14);
+  --glass-bg-strong: rgba(255,255,255,0.22);
+  --glass-border: rgba(255,255,255,0.35);
 }
 body.theme-light {
   filter: invert(1) hue-rotate(180deg);
@@ -57,21 +60,21 @@ nav {
 .nav-links a.active { border-bottom: 2px solid var(--lime); padding-bottom: 2px; }
 .nav-right { display: flex; gap: 12px; align-items: center; }
 .btn-signin {
-  border: 1px solid rgba(255,255,255,0.22); color: var(--white); background: rgba(255,255,255,0.1);
+  border: 1px solid var(--glass-border); color: var(--white); background: var(--glass-bg);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
   padding: 8px 20px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-  font-size: 13px; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; border-radius: 6px;
+  font-size: 13px; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; border-radius: 999px;
 }
-.btn-signin:hover { background: rgba(255,255,255,0.16); border-color: rgba(255,255,255,0.35); color: var(--white); }
+.btn-signin:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); color: var(--white); }
 .btn-admin {
-  background: rgba(255,255,255,0.1); color: var(--white); border: 1px solid rgba(255,255,255,0.22); padding: 8px 18px;
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 6px;
+  background: var(--glass-bg); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 18px;
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 999px;
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px;
   letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
   display: flex; align-items: center; gap: 6px;
 }
-.btn-admin:hover { background: rgba(255,255,255,0.18); }
-.btn-admin:hover { opacity: 0.85; }
+.btn-admin:hover { background: var(--glass-bg-strong); }
+.btn-admin:hover { opacity: 0.9; }
 
 /* ===== PAGES ===== */
 .page { display: none; }
@@ -222,17 +225,17 @@ nav {
 
 
 /* ===== STREAMING EXPERIENCE ===== */
-nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid rgba(255,255,255,0.06); gap: 24px; }
+nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.22); gap: 24px; }
 .logo { color: var(--white); white-space: nowrap; }
 .logo::after { display: none; }
 .nav-links { gap: 24px; flex: 1; justify-content: center; }
-.nav-links a { color: rgba(255,255,255,0.72); font-size: 13px; }
-.nav-links a:hover, .nav-links a.active { color: var(--lime); }
-.nav-links a.active { border-bottom-color: var(--lime); }
+.nav-links a { color: rgba(255,255,255,0.85); font-size: 13px; }
+.nav-links a:hover, .nav-links a.active { color: var(--white); }
+.nav-links a.active { border-bottom-color: var(--white); }
 .nav-right { position: relative; gap: 10px; }
-.nav-icon-btn { width: 38px; height: 38px; position: relative; display: inline-flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.07); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 50%; cursor: pointer; transition-duration: .3s; box-shadow: none; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.78); }
+.nav-icon-btn { width: 38px; height: 38px; position: relative; display: inline-flex; align-items: center; justify-content: center; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-radius: 50%; cursor: pointer; transition-duration: .3s; box-shadow: none; border: 1px solid var(--glass-border); color: rgba(255,255,255,0.92); }
 .nav-icon-btn i, .nav-icon-btn svg { width: 17px; height: 17px; }
-.nav-icon-btn:hover { background-color: rgb(var(--lime-rgb)); color: #08090b; }
+.nav-icon-btn:hover { background-color: var(--glass-bg-strong); color: var(--white); }
 .nav-icon-btn:hover i, .nav-icon-btn:hover svg { animation: bellRing 0.9s both; }
 .nav-icon-btn:active { transform: scale(0.85); }
 @keyframes bellRing {
@@ -248,18 +251,20 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
 .nav-search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.55); pointer-events: none; }
 .nav-search input { width: 100%; height: 38px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--white); padding: 0 12px 0 38px; border-radius: 6px; outline: none; font-size: 13px; }
 .nav-search input:focus { border-color: rgba(var(--lime-rgb),0.55); background: rgba(255,255,255,0.08); }
-.search-results, .notifications-panel { position: absolute; top: calc(100% + 12px); right: 0; width: min(390px, calc(100vw - 32px)); max-height: 440px; overflow: auto; background: rgba(12,13,17,0.98); border: 1px solid rgba(255,255,255,0.09); box-shadow: 0 24px 70px rgba(0,0,0,0.55); border-radius: 8px; padding: 10px; display: none; z-index: 220; scrollbar-width: none; -ms-overflow-style: none; }
+.search-results, .notifications-panel { position: absolute; top: calc(100% + 12px); right: 0; width: min(400px, calc(100vw - 32px)); max-height: 460px; overflow: auto; background: rgba(30,34,44,0.55); backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%); border: 1px solid rgba(255,255,255,0.16); box-shadow: 0 24px 70px rgba(0,0,0,0.55); border-radius: 18px; padding: 14px; display: none; z-index: 220; scrollbar-width: none; -ms-overflow-style: none; }
 .search-results::-webkit-scrollbar, .notifications-panel::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .search-results.open, .notifications-panel.open { display: block; }
-.search-result, .notification-item { display: flex; gap: 12px; padding: 10px; border-radius: 6px; cursor: pointer; border: 1px solid transparent; }
-.search-result:hover, .notification-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(var(--lime-rgb),0.22); }
-.search-thumb, .notif-icon { width: 54px; height: 42px; flex-shrink: 0; border-radius: 5px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--dark3); }
+.search-result, .notification-item { position: relative; display: flex; gap: 14px; align-items: center; padding: 12px; border-radius: 12px; cursor: pointer; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.09); margin-bottom: 8px; }
+.search-result:last-child, .notification-item:last-child { margin-bottom: 0; }
+.search-result:hover, .notification-item:hover { background: rgba(255,255,255,0.11); border-color: rgba(var(--lime-rgb),0.35); }
+.search-thumb, .notif-icon { width: 60px; height: 46px; flex-shrink: 0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; background: var(--dark3); }
 .search-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.notification-item.unread { background: rgba(var(--lime-rgb),0.08); }
+.notification-item.unread { background: rgba(var(--lime-rgb),0.1); border-color: rgba(var(--lime-rgb),0.25); }
+.notification-item.unread::before { content: ''; position: absolute; left: -1px; top: 50%; transform: translateY(-50%); width: 6px; height: 60%; border-radius: 4px; background: var(--lime); box-shadow: 0 0 10px var(--lime); }
 .notification-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
 .notification-time, .search-meta { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .search-result { min-width: 0; }
-.search-result > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
+.search-result > div:last-child, .notification-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
 .gs-rating { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; gap: 0.05rem; --stroke: rgba(255,255,255,0.35); --fill: var(--lime); }
 .gs-rating input { appearance: none; position: absolute; opacity: 0; width: 0; height: 0; }
 .gs-rating label { cursor: pointer; }
@@ -276,23 +281,23 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
 .hero { min-height: 78vh; }
 .hero-content { padding: 0 60px 94px; max-width: 720px; }
 .hero-kicker { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; color: rgba(255,255,255,0.74); font-weight: 700; font-size: 14px; }
-.hero-rating { display: inline-flex; align-items: center; gap: 10px; margin-bottom: 18px; color: rgba(255,255,255,0.76); font-size: 13px; }
+.hero-rating { display: inline-flex; align-items: center; gap: 5px; color: #fff; font-weight: 800; font-size: 14px; }
 .hero-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
 .hero-genre-tag { padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; font-weight: 700; letter-spacing: 0.3px; color: rgba(255,255,255,0.85); }
 .hero-age-tag { padding: 5px 10px; border-radius: 5px; background: rgba(var(--lime-rgb),0.16); border: 1px solid rgba(var(--lime-rgb),0.5); color: var(--lime); font-size: 12px; font-weight: 800; }
 .hero-title { font-size: clamp(46px, 6.2vw, 76px); letter-spacing: 0; margin-bottom: 18px; }
 .hero-desc { font-size: 16px; max-width: 520px; margin-bottom: 24px; color: rgba(255,255,255,0.78); }
 .hero-btns { flex-wrap: wrap; align-items: center; }
-.hero-overlay { background: linear-gradient(to right, rgba(5,6,8,0.98) 0%, rgba(5,6,8,0.78) 42%, rgba(5,6,8,0.24) 100%); }
-.hero-overlay-bottom { height: 250px; background: linear-gradient(to top, #08090b 0%, rgba(8,9,11,0.75) 40%, transparent 100%); }
+.hero-overlay { background: linear-gradient(to right, rgba(5,6,8,0.62) 0%, rgba(5,6,8,0.32) 42%, rgba(5,6,8,0.05) 100%); }
+.hero-overlay-bottom { height: 280px; background: linear-gradient(to top, #08090b 0%, rgba(8,9,11,0.6) 45%, transparent 100%); }
 .hero-dots { left: 50%; transform: translateX(-50%); bottom: 28px; }
 .hero-dot { border-radius: 999px; height: 5px; }
-.btn-primary { background: rgba(255,255,255,0.12); color: var(--white); border: 1px solid rgba(255,255,255,0.28); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 6px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 20px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-primary:hover { background: rgba(255,255,255,0.2); }
-.btn-outline { border-radius: 6px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 20px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-.btn-outline:hover { background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.3); }
-.btn-ghost { background: rgba(255,255,255,0.06); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--white); border: 1px solid rgba(255,255,255,0.12); padding: 10px 14px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
-.btn-ghost.active { color: var(--lime); border-color: rgba(var(--lime-rgb),0.38); background: rgba(var(--lime-rgb),0.13); }
+.btn-primary { background: var(--glass-bg-strong); color: var(--white); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-primary:hover { background: rgba(255,255,255,0.32); }
+.btn-outline { border-radius: 999px; letter-spacing: 0.5px; text-transform: none; font-family: 'Barlow', sans-serif; font-size: 14px; padding: 12px 22px; background: var(--glass-bg); border: 1px solid var(--glass-border); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: var(--white); display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.btn-outline:hover { background: var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
+.btn-ghost { background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); color: var(--white); border: 1px solid var(--glass-border); padding: 10px 16px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; font-weight: 700; }
+.btn-ghost.active { color: var(--white); border-color: rgba(255,255,255,0.5); background: var(--glass-bg-strong); }
 .stream-section { padding: 34px 0 14px; background: var(--dark); }
 .stream-section:first-of-type { padding-top: 46px; }
 .stream-section-header { padding: 0 48px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
@@ -304,41 +309,16 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
 .stream-row::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); border-radius: 999px; }
 .stream-card { scroll-snap-align: start; cursor: pointer; position: relative; min-width: 0; overflow: visible; }
 
-/* ===== CARD ===== */
-.gs-flip { position: relative; width: 100%; aspect-ratio: 2 / 2.5; transition: transform 0.25s ease; transform-origin: top center; }
-.stream-row.wide .gs-flip { aspect-ratio: 16 / 9; }
-.stream-card:hover .gs-flip { transform: scale(1.02); z-index: 5; }
-.gs-flip-content {
-  width: 100%; height: 100%;
-  border-radius: 8px;
-  border: 1px solid rgba(255,255,255,0.07);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-}
-.gs-flip-front, .gs-flip-back {
-  position: absolute; inset: 0; width: 100%; height: 100%;
-  border-radius: 8px; overflow: hidden; background: var(--dark3);
-}
-.gs-flip-back { display: none; }
-/* --- FRONT --- */
-.gs-flip-front-img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.gs-flip-front-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.gs-flip-front-content {
-  position: absolute; inset: 0; padding: 10px;
-  display: flex; flex-direction: column; justify-content: space-between;
-  background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.05) 55%, rgba(0,0,0,0.6) 100%);
-}
-.gs-flip-top-row { display: flex; justify-content: space-between; align-items: flex-start; }
-.gs-flip-actions { display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; }
-.stream-card:hover .gs-flip-actions { opacity: 1; }
-.gs-flip-desc {
-  width: 100%; padding: 10px 12px; background: rgba(20,20,24,0.45);
-  backdrop-filter: blur(14px) saturate(160%); -webkit-backdrop-filter: blur(14px) saturate(160%); border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.16);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.3);
-}
-.gs-flip-title-row { display: flex; justify-content: space-between; align-items: center; gap: 6px; }
-.gs-flip-title-row strong { font-size: 12px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.gs-flip-footer { color: rgba(255,255,255,0.55); margin-top: 3px; font-size: 10px; }
+/* ===== CARD (image + titre/note en dessous, comme la maquette) ===== */
+.game-card-thumb { position: relative; width: 100%; aspect-ratio: 3 / 4; border-radius: 8px; overflow: hidden; background: var(--dark3); border: 1px solid rgba(255,255,255,0.07); transition: transform 0.25s ease; }
+.stream-row.wide .game-card-thumb { aspect-ratio: 16 / 10; }
+.game-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.stream-card:hover .game-card-thumb { transform: scale(1.02); }
+.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; }
+.stream-card:hover .game-card-actions { opacity: 1; }
+.game-card-info { padding: 10px 2px 0; }
+.game-card-info strong { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-card-meta { display: flex; align-items: center; font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
 /* --- floating glow circles (used as fallback art when no image) --- */
 .gs-circle { width: 90px; height: 90px; border-radius: 50%; background: var(--lime); position: absolute; filter: blur(15px); animation: gs-floating 2600ms infinite linear; opacity: 0.55; }
 .gs-circle.b { left: 35%; top: -10%; width: 130px; height: 130px; animation-delay: -800ms; }
@@ -353,7 +333,7 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
 .card-icon-btn.like-active:hover, .card-icon-btn.fav-active:hover { transform: scale(1.1); }
 .btn-ghost.like-active { color: #ff3b30 !important; border-color: rgba(255,59,48,0.4) !important; background: rgba(255,59,48,0.13) !important; }
 .btn-ghost.fav-active { color: #ffd60a !important; border-color: rgba(255,214,10,0.4) !important; background: rgba(255,214,10,0.13) !important; }
-.card-badge { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: fit-content; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+.card-badge { position: absolute; top: 8px; left: 8px; z-index: 2; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px; padding: 5px 10px; border-radius: 999px; background: rgba(255,255,255,0.16); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); color: #fff; width: fit-content; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
 .my-list-page { padding: 46px 48px 70px; background: var(--dark); }
 .library-header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
 .library-title { font-family: 'Barlow Condensed', sans-serif; font-size: 52px; font-weight: 900; text-transform: uppercase; line-height: 0.95; }
@@ -402,30 +382,30 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
 .page-content { padding: 50px 60px; }
 
 /* Gamers ranking */
-.gamers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.gamers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .gamer-card {
-  background: var(--card-bg); border: 1px solid rgba(255,255,255,0.06); padding: 24px;
-  display: flex; align-items: center; gap: 16px; transition: all 0.2s; cursor: pointer;
-  position: relative;
+  background: var(--card-bg); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
+  overflow: hidden; transition: border-color 0.25s, transform 0.25s;
 }
-.gamer-card:hover { border-color: rgba(var(--lime-rgb),0.25); background: #161616; }
-.gamer-rank {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 36px;
-  color: rgba(255,255,255,0.08); min-width: 50px; text-align: center; line-height: 1;
-}
-.gamer-rank.top { color: var(--lime); }
-.gamer-avatar {
-  width: 52px; height: 52px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
-  background: var(--gradient-accent);
-  display: flex; align-items: center; justify-content: center;
-  border: 2px solid rgba(var(--lime-rgb),0.15);
-}
+.gamer-card:hover { border-color: rgba(var(--lime-rgb),0.3); transform: translateY(-3px); }
+.gamer-banner { height: 130px; position: relative; overflow: hidden; background: var(--gradient-accent); }
+.gamer-banner img { width: 100%; height: 100%; object-fit: cover; }
+.gamer-banner-icons { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
+.gamer-banner-icon { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.2s; }
+.gamer-banner-icon:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
+.gamer-banner-icon svg { width: 13px; height: 13px; }
+.gamer-avatar { width: 88px; height: 88px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dark3); display: flex; align-items: center; justify-content: center; border: 4px solid var(--card-bg); position: relative; margin: -44px 0 0 20px; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
 .gamer-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .gamer-avatar svg { color: rgba(255,255,255,0.5); }
-.gamer-info { flex: 1; }
-.gamer-name { font-weight: 700; font-size: 15px; margin-bottom: 4px; }
-.gamer-meta { font-size: 12px; color: var(--gray); }
-.gamer-score { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 20px; color: var(--lime); }
+.gamer-info { padding: 14px 20px 0; }
+.gamer-name { font-weight: 800; font-size: 16px; margin-bottom: 2px; }
+.gamer-meta { font-size: 12px; color: var(--gray); margin-bottom: 12px; }
+.gamer-desc { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.65; padding: 0 20px; margin-bottom: 16px; }
+.gamer-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; padding: 0 20px 18px; }
+.gamer-stat { display: flex; align-items: baseline; gap: 5px; }
+.gamer-stat-value { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 14px; color: var(--white); }
+.gamer-stat-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; }
+.gamer-stat-game { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.75); }
 
 /* Games page */
 .games-page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
@@ -434,32 +414,7 @@ nav { padding: 14px 48px; background: rgba(5,6,8,0.96); border-bottom: 1px solid
   transition: all 0.25s; border: 1px solid rgba(255,255,255,0.05);
 }
 .game-card:hover { transform: translateY(-4px); border-color: rgba(var(--lime-rgb),0.2); }
-.game-card-cover {
-  height: 160px; display: flex; align-items: center; justify-content: center;
-  overflow: hidden; position: relative;
-}
-.game-card-cover img { width: 100%; height: 100%; object-fit: cover; }
-.game-card-cover svg { color: rgba(255,255,255,0.3); }
-.game-card-status {
-  position: absolute; top: 10px; right: 10px;
-  background: rgba(0,0,0,0.7); border: 1px solid;
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 10px;
-  letter-spacing: 1px; padding: 3px 10px; text-transform: uppercase;
-}
-.status-available { border-color: rgba(var(--lime-rgb),0.5); color: var(--lime); }
-.status-coming { border-color: rgba(255,150,50,0.5); color: #ff9632; }
-.status-new { border-color: rgba(100,150,255,0.5); color: #6496ff; }
-.game-card-info { padding: 16px; }
-.game-card-name {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 17px;
-  text-transform: uppercase; margin-bottom: 6px;
-}
-.game-card-dev { font-size: 12px; color: var(--gray); margin-bottom: 8px; }
-.game-card-desc { font-size: 12px; color: rgba(255,255,255,0.5); line-height: 1.5; }
-.game-card-footer {
-  padding: 10px 16px; border-top: 1px solid rgba(255,255,255,0.05);
-  display: flex; justify-content: space-between; align-items: center;
-}
+
 .game-card-date { font-size: 11px; color: var(--gray); }
 
 /* ===== GAME DETAIL MODAL ===== */
@@ -727,33 +682,6 @@ footer {
 }
 .gamer-list-avatar img { width: 100%; height: 100%; object-fit: cover; }
 
-
-/* ===== STAFF CARD REDESIGN ===== */
-.staff-card {
-  flex-direction: column !important;
-  align-items: center !important;
-  text-align: center;
-  padding: 28px 20px 20px !important;
-  position: relative;
-  gap: 12px !important;
-  transition: all 0.25s !important;
-  cursor: pointer;
-}
-.staff-card:hover {
-  border-color: rgba(var(--lime-rgb),0.35) !important;
-  background: #191919 !important;
-  transform: translateY(-4px);
-}
-.staff-avatar {
-  width: 72px !important;
-  height: 72px !important;
-  border-radius: 50% !important;
-  border: 2px solid rgba(var(--lime-rgb),0.25) !important;
-  background: var(--gradient-accent) !important;
-  margin: 0 auto;
-  transition: border-color 0.25s;
-}
-.staff-card:hover .staff-avatar { border-color: rgba(var(--lime-rgb),0.6) !important; }
 
 /* ===== HAMBURGER ===== */
 .hamburger { display: none; }
@@ -1091,6 +1019,13 @@ window.fbSignOut      = async () => await signOut(auth);
   </section>
 
     <!-- STREAMING ROWS -->
+  <section class="stream-section" id="home-recent-games">
+    <div class="stream-section-header">
+      <div><h2 class="stream-section-title">Jeux recents</h2></div>
+    </div>
+    <div class="stream-row wide" id="recent-games-row"></div>
+  </section>
+
   <section class="stream-section" id="home-popular-games">
     <div class="stream-section-header">
       <div><h2 class="stream-section-title">Jeux populaires</h2></div>
@@ -1103,13 +1038,6 @@ window.fbSignOut      = async () => await signOut(auth);
       <div><h2 class="stream-section-title">Trending now</h2></div>
     </div>
     <div class="stream-row" id="trending-games-row"></div>
-  </section>
-
-  <section class="stream-section" id="home-recent-games">
-    <div class="stream-section-header">
-      <div><h2 class="stream-section-title">Jeux recents</h2></div>
-    </div>
-    <div class="stream-row wide" id="recent-games-row"></div>
   </section>
 
 </div>
@@ -1133,9 +1061,7 @@ window.fbSignOut      = async () => await signOut(auth);
 <!-- ===== PAGE: TOP GAMERS ===== -->
 <div class="page" id="page-top-gamers">
   <div class="page-hero">
-    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:5px 14px;margin-bottom:20px">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">L'équipe</span>
-    </div>
+    <div class="badge" style="display:inline-block;width:fit-content;margin-bottom:20px;color:var(--lime);background:rgba(var(--lime-rgb),0.1);border-color:rgba(var(--lime-rgb),0.25)">L'équipe</div>
     <h1>Notre <span>Équipe</span></h1>
     <p>Les développeurs, designers et créatifs derrière Garden Studio. Des passionnés qui construisent l'expérience gaming de demain.</p>
     <div class="page-hero-sub">
@@ -1516,11 +1442,6 @@ window.fbSignOut      = async () => await signOut(auth);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Candidatures <span id="cand-badge" style="background:var(--lime);color:var(--dark);font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
       </div>
-      <div class="sidebar-section">Style</div>
-      <div class="sidebar-item" onclick="showSection('colors',this)">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
-        Couleurs
-      </div>
       <div class="sidebar-item" onclick="showSection('settings',this)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         Paramètres
@@ -1547,7 +1468,6 @@ window.fbSignOut      = async () => await signOut(auth);
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('hero',null)">Éditer Hero</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('games',null)">Gérer Jeux</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('top-gamers-admin',null)">Gérer Gamers</button>
-            <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('colors',null)">Couleurs</button>
           </div>
         </div>
       </div>
@@ -1735,15 +1655,37 @@ window.fbSignOut      = async () => await signOut(auth);
             <button class="btn-delete" onclick="cancelGamerEdit()"><i data-lucide="x"></i> Annuler</button>
           </div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">Pseudo</label><input type="text" class="form-input" id="gme-name"></div>
-            <div class="form-group"><label class="form-label">Score</label><input type="text" class="form-input" id="gme-score" placeholder="ex: 148,250"></div>
+            <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="gme-name"></div>
+            <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="gme-username" placeholder="ex: Suco_TheShadow"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">Jeu favori</label><input type="text" class="form-input" id="gme-game" placeholder="ex: Space Journey"></div>
+            <div class="form-group"><label class="form-label">Score</label><input type="text" class="form-input" id="gme-score" placeholder="ex: 99.5K"></div>
+            <div class="form-group"><label class="form-label">Victoires</label><input type="text" class="form-input" id="gme-victory" placeholder="ex: 9.5K"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Jeu favori</label><input type="text" class="form-input" id="gme-game" placeholder="ex: The Shadow Army"></div>
             <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" id="gme-country" placeholder="ex: 🇫🇷 France"></div>
           </div>
+          <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="gme-desc" rows="3" placeholder="ex: Owner & Lead Developer at Shadow Army Studios..."></textarea></div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Lien YouTube</label><input type="url" class="form-input" id="gme-youtube" placeholder="https://www.youtube.com/@..."></div>
+            <div class="form-group"><label class="form-label">Lien Discord</label><input type="url" class="form-input" id="gme-discord" placeholder="https://discord.gg/..."></div>
+          </div>
+          <div class="form-group"><label class="form-label">Lien Roblox</label><input type="url" class="form-input" id="gme-roblox" placeholder="https://www.roblox.com/users/..."></div>
           <div class="form-group">
-            <label class="form-label">Avatar</label>
+            <label class="form-label">Bannière</label>
+            <div class="img-upload-zone">
+              <input type="file" accept="image/*" onchange="handleImgUpload(this,'gamer-banner')">
+              <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l4-4a2 2 0 0 1 2.8 0L14 15M14 13l1.5-1.5a2 2 0 0 1 2.8 0L21 14"/></svg></div>
+              <strong>Uploader bannière</strong><p>PNG, JPG — Format large recommandé</p>
+            </div>
+            <div class="img-preview" id="gamer-banner-img-preview" style="display:none">
+              <img id="gamer-banner-img-preview-img" src="" alt="preview">
+              <button class="img-preview-remove" onclick="removeImg('gamer-banner')"><i data-lucide="x"></i></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Photo de profil</label>
             <div class="img-upload-zone">
               <input type="file" accept="image/*" onchange="handleImgUpload(this,'gamer')">
               <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg></div>
@@ -1821,74 +1763,6 @@ window.fbSignOut      = async () => await signOut(auth);
           </div>
         </div>
       </div>
-
-      <!-- COLORS / THEMES -->
-      <div class="admin-section" id="section-colors">
-        <div class="admin-section-title">Thèmes & Couleurs</div>
-        <div class="admin-section-sub">Choisis un thème prêt à l'emploi ou personnalise ta propre palette</div>
-
-        <!-- Light/Dark toggle -->
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Apparence générale</span></div>
-          <div class="toggle-row">
-            <span class="toggle-label">Mode clair (au lieu de sombre)</span>
-            <button class="toggle" id="light-mode-toggle" onclick="toggleLightMode(this)"></button>
-          </div>
-        </div>
-
-        <!-- Theme presets -->
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Thèmes prédéfinis</span></div>
-          <div id="theme-presets-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:12px;margin-top:12px"></div>
-        </div>
-
-        <!-- Custom colors -->
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Couleurs personnalisées</span></div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#ff6a21" id="c-lime" onchange="applyColor('--lime',this.value);document.getElementById('cv-lime').textContent=this.value">
-            <span class="color-label">Couleur accent</span>
-            <span class="color-value" id="cv-lime">#ff6a21</span>
-          </div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#08090b" id="c-dark" onchange="applyColor('--dark',this.value);document.getElementById('cv-dark').textContent=this.value">
-            <span class="color-label">Fond principal</span>
-            <span class="color-value" id="cv-dark">#08090b</span>
-          </div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#0c0d11" id="c-dark2" onchange="applyColor('--dark2',this.value);document.getElementById('cv-dark2').textContent=this.value">
-            <span class="color-label">Fond secondaire</span>
-            <span class="color-value" id="cv-dark2">#0c0d11</span>
-          </div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#111319" id="c-card" onchange="applyColor('--card-bg',this.value);document.getElementById('cv-card').textContent=this.value">
-            <span class="color-label">Fond des cartes</span>
-            <span class="color-value" id="cv-card">#111319</span>
-          </div>
-        </div>
-
-        <!-- Custom gradient builder -->
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Gradient personnalisé (avatars, vignettes)</span></div>
-          <div id="gradient-preview" style="height:60px;border-radius:8px;margin:12px 0;background:linear-gradient(135deg,#1a1a2e,#533483);border:1px solid rgba(255,255,255,0.08)"></div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#1a1a2e" id="g-color1" oninput="updateGradientPreviewLive()">
-            <span class="color-label">Couleur 1</span>
-          </div>
-          <div class="color-row">
-            <input type="color" class="color-swatch" value="#533483" id="g-color2" oninput="updateGradientPreviewLive()">
-            <span class="color-label">Couleur 2</span>
-          </div>
-          <div style="margin:14px 0">
-            <label class="form-label">Angle : <span id="gradient-angle-val">135°</span></label>
-            <input type="range" min="0" max="360" value="135" id="g-angle" style="width:100%" oninput="updateGradientPreviewLive()">
-          </div>
-          <button class="btn-primary" style="font-size:12px" onclick="applyCustomGradient()">Appliquer le gradient</button>
-        </div>
-
-        <button class="btn-primary" style="font-size:12px;background:rgba(255,60,60,0.15);color:#ff6060;border:1px solid rgba(255,60,60,0.3)" onclick="resetColors()">Réinitialiser tout</button>
-      </div>
-
 
       <!-- SETTINGS -->
       <div class="admin-section" id="section-settings">
@@ -2702,7 +2576,7 @@ function renderNotifications() {
     panel.innerHTML = `<div style="padding:18px;color:rgba(255,255,255,0.55);font-size:13px">Aucune notification pour l'instant.</div>`;
     return;
   }
-  panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px 12px"><strong>Notifications</strong><button class="btn-ghost" style="padding:7px 10px;font-size:12px" onclick="markNotificationsRead()">Tout lire</button></div>` + notifications.map(n => {
+  panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 16px"><strong style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.3px">Notifications</strong><button class="btn-outline" style="padding:8px 14px;font-size:11px" onclick="markNotificationsRead()">Tout lire</button></div>` + notifications.map(n => {
     const isUnread = !read.includes(n.id);
     return `<div class="notification-item ${isUnread ? 'unread' : ''}" onclick="openNotificationGame('${escapeHTML(n.gameName)}')"><div class="notif-icon">${n.img ? `<img src="${n.img}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="bell"></i>`}</div><div><div class="notification-title">${escapeHTML(n.title)}</div><div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.45">${escapeHTML(n.detail)}</div><div class="notification-time">${formatNotifTime(n.date)}</div></div></div>`;
   }).join('');
@@ -2878,6 +2752,16 @@ function starsHTML(rating, size) {
   }
   return `<span style="display:inline-flex;align-items:center;gap:2px">${svgs}<span style="margin-left:4px;font-size:${size}px;font-weight:700;color:#ffb800">${rating.toFixed(1)}</span></span>`;
 }
+// Version compacte : une seule étoile + note (utilisée dans le hero et les cartes de jeu)
+function starCompactHTML(rating, size) {
+  rating = parseFloat(rating) || 0;
+  size = size || 16;
+  if (!rating) return '';
+  return `<span style="display:inline-flex;align-items:center;gap:4px">
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb800" stroke="#ffb800" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+    <span style="font-weight:700;color:#ffb800">${rating.toFixed(1)}</span>
+  </span>`;
+}
 
 function renderGamesPage() {
   const grid = document.getElementById('games-page-grid');
@@ -2892,24 +2776,35 @@ function renderGamesPage() {
 // ===== RENDER: GAMERS PAGE =====
 function renderGamersPage() {
   const grid = document.getElementById('gamers-grid');
-  const avatarIcon = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
+  const avatarIcon = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
+  const youtubeIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.582 7.186a2.78 2.78 0 0 0-1.95-1.96C17.92 4.77 12 4.77 12 4.77s-5.92 0-7.632.456a2.78 2.78 0 0 0-1.95 1.96A29 29 0 0 0 2 12a29 29 0 0 0 .418 4.814 2.78 2.78 0 0 0 1.95 1.96C6.08 19.23 12 19.23 12 19.23s5.92 0 7.632-.456a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 22 12a29 29 0 0 0-.418-4.814zM9.955 15.27V8.73L15.818 12l-5.863 3.27z"/></svg>`;
+  const discordIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.955 2.419-2.157 2.419zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.418 2.157-2.418 1.21 0 2.176 1.094 2.157 2.418 0 1.334-.946 2.419-2.157 2.419z"/></svg>`;
+  const robloxIcon = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M5.398 1.151 18.844 4.66l-3.508 13.447L1.89 14.6 5.398 1.151zm3.07 6.5-1.443 5.537 5.537 1.443 1.443-5.537-5.537-1.443z"/></svg>`;
   grid.innerHTML = topGamers.map((g, i) => `
-    <div class="gamer-card staff-card" onclick="openGamerModal(${i})" title="Voir le profil">
-      <div style="position:absolute;top:12px;right:12px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:13px;color:${i<3?'var(--lime)':'rgba(255,255,255,0.15)'}">#${i+1}</div>
-      <div class="gamer-avatar staff-avatar">${g.img ? `<img src="${g.img}" alt="${g.name}">` : avatarIcon}</div>
-      <div class="gamer-info" style="text-align:center">
-        <div class="gamer-name" style="font-size:16px;margin-bottom:2px">${g.name}</div>
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--lime);margin-bottom:6px">${g.role||''}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.3);letter-spacing:0.3px">${g.skills||g.country}</div>
+    <div class="gamer-card">
+      <div class="gamer-banner">
+        ${g.banner ? `<img src="${g.banner}" alt="">` : `<div class="gs-circle b"></div><div class="gs-circle c"></div>`}
+        ${(g.youtube || g.discord || g.roblox) ? `<div class="gamer-banner-icons">
+          ${g.youtube ? `<a class="gamer-banner-icon" href="${escapeHTML(g.youtube)}" target="_blank" rel="noopener" title="YouTube" onclick="event.stopPropagation()">${youtubeIcon}</a>` : ''}
+          ${g.discord ? `<a class="gamer-banner-icon" href="${escapeHTML(g.discord)}" target="_blank" rel="noopener" title="Discord" onclick="event.stopPropagation()">${discordIcon}</a>` : ''}
+          ${g.roblox ? `<a class="gamer-banner-icon" href="${escapeHTML(g.roblox)}" target="_blank" rel="noopener" title="Roblox" onclick="event.stopPropagation()">${robloxIcon}</a>` : ''}
+        </div>` : ''}
       </div>
-      <div style="width:100%;height:1px;background:rgba(255,255,255,0.05);margin:10px 0"></div>
-      <div style="display:flex;justify-content:space-between;width:100%;align-items:center">
-        <span style="font-size:10px;color:#555;text-transform:uppercase;letter-spacing:1px">${g.country}</span>
-        <span style="font-size:10px;color:rgba(var(--lime-rgb),0.5);font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:1px">PROFIL →</span>
+      <div class="gamer-avatar">${g.img ? `<img src="${g.img}" alt="${escapeHTML(g.name)}">` : avatarIcon}</div>
+      <div class="gamer-info">
+        <div class="gamer-name">${escapeHTML(g.name)}</div>
+        <div class="gamer-meta">${g.username ? '@' + escapeHTML(g.username) : ''}</div>
+      </div>
+      ${g.desc ? `<p class="gamer-desc">${escapeHTML(g.desc)}</p>` : ''}
+      <div class="gamer-stats">
+        ${g.score ? `<div class="gamer-stat"><span class="gamer-stat-value">${escapeHTML(g.score)}</span><span class="gamer-stat-label">Score</span></div>` : ''}
+        ${g.victory ? `<div class="gamer-stat"><span class="gamer-stat-value">${escapeHTML(g.victory)}</span><span class="gamer-stat-label">Victory</span></div>` : ''}
+        ${g.game ? `<div class="gamer-stat-game">${escapeHTML(g.game)}</div>` : ''}
       </div>
     </div>
   `).join('');
   document.getElementById('gamers-count-badge').textContent = `— ${topGamers.length} membres`;
+  if (window.lucide) lucide.createIcons();
 }
 
 // ===== RENDER: COMMUNITY PAGE =====
@@ -3061,22 +2956,14 @@ function renderStreamCard(g, i, wide, extraActionHTML) {
         <button class="card-icon-btn ${(hasList || hasFav) ? 'active' : ''}" onclick="event.stopPropagation();openLibraryPicker(${i},event)" title="Ajouter"><i data-lucide="plus"></i></button>
         <button class="card-icon-btn ${vote === 'like' ? 'like-active' : ''}" onclick="event.stopPropagation();toggleVote(${i},'like',event)" title="Like"><i data-lucide="thumbs-up"></i></button>`;
   return `<div class="stream-card" onclick="openGameModal(${i})">
-    <div class="gs-flip">
-      <div class="gs-flip-content">
-        <div class="gs-flip-front">
-          <div class="gs-flip-front-img">${art}</div>
-          <div class="gs-flip-front-content">
-            <div class="gs-flip-top-row">
-              <span class="card-badge">${escapeHTML(status)}</span>
-              <div class="gs-flip-actions" onclick="event.stopPropagation()">${actions}</div>
-            </div>
-            <div class="gs-flip-desc">
-              <div class="gs-flip-title-row"><strong>${escapeHTML(g.name)}</strong></div>
-              <p class="gs-flip-footer">${escapeHTML(g.date || '2026')} &nbsp;|&nbsp; ${starsHTML(getGameRating(g), 14)}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="game-card-thumb">
+      ${art}
+      <span class="card-badge">${escapeHTML(status)}</span>
+      <div class="game-card-actions" onclick="event.stopPropagation()">${actions}</div>
+    </div>
+    <div class="game-card-info">
+      <strong>${escapeHTML(g.name)}</strong>
+      <p class="game-card-meta">${starCompactHTML(getGameRating(g), 12)} &nbsp;·&nbsp; ${escapeHTML(g.date || '2026')}</p>
     </div>
   </div>`;
 }
@@ -3251,9 +3138,8 @@ function renderHeroSlides() {
       <div class="hero-overlay"></div><div class="hero-overlay-bottom"></div>
       <div class="hero-content">
         <div class="hero-kicker"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)"></span>${escapeHTML(badge)}</div>
-        <div class="hero-rating">${g ? `${escapeHTML(gameStatusLabel(g.status))} · ${escapeHTML(g.dev || 'Garden Studio')} · ${starsHTML(getGameRating(g), 18)}` : ''}</div>
-        ${(h.genres || h.ageLimit) ? `<div class="hero-tags">${(h.genres || '').split(',').map(x => x.trim()).filter(Boolean).map(genre => `<span class="hero-genre-tag">${escapeHTML(genre)}</span>`).join('')}${h.ageLimit ? `<span class="hero-age-tag">${escapeHTML(h.ageLimit)}</span>` : ''}</div>` : ''}
         <h1 class="hero-title" style="font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"}">${escapeHTML(title).replace(/\n/g, '<br>')}</h1>
+        ${(h.genres || h.ageLimit || g) ? `<div class="hero-tags">${(h.genres || '').split(',').map(x => x.trim()).filter(Boolean).map(genre => `<span class="hero-genre-tag">${escapeHTML(genre)}</span>`).join('')}${h.ageLimit ? `<span class="hero-age-tag">${escapeHTML(h.ageLimit)}</span>` : ''}${g ? `<span class="hero-rating">${starCompactHTML(getGameRating(g), 15)}</span>` : ''}</div>` : ''}
         <p class="hero-desc">${escapeHTML(desc)}</p>
         <div class="hero-btns">
           <button class="btn-primary" onclick="${heroButtonAction(h, heroGame)}"><i data-lucide="play"></i>${escapeHTML(h.btn1 || 'Voir details')}</button>
@@ -3633,29 +3519,46 @@ function renderGamersList() {
 
 function editGamer(i) {
   document.getElementById('gme-name').value = topGamers[i].name;
+  document.getElementById('gme-username').value = topGamers[i].username || '';
   document.getElementById('gme-score').value = topGamers[i].score;
+  document.getElementById('gme-victory').value = topGamers[i].victory || '';
   document.getElementById('gme-game').value = topGamers[i].game;
   document.getElementById('gme-country').value = topGamers[i].country;
+  document.getElementById('gme-desc').value = topGamers[i].desc || '';
+  document.getElementById('gme-youtube').value = topGamers[i].youtube || '';
+  document.getElementById('gme-discord').value = topGamers[i].discord || '';
+  document.getElementById('gme-roblox').value = topGamers[i].roblox || '';
   document.getElementById('gme-index').value = i;
   tempImgs['gamer'] = topGamers[i].img || '';
   const preview = document.getElementById('gamer-img-preview');
   if (topGamers[i].img) { document.getElementById('gamer-img-preview-img').src = topGamers[i].img; preview.style.display = 'inline-block'; }
   else preview.style.display = 'none';
+  tempImgs['gamer-banner'] = topGamers[i].banner || '';
+  const bannerPreview = document.getElementById('gamer-banner-img-preview');
+  if (topGamers[i].banner) { document.getElementById('gamer-banner-img-preview-img').src = topGamers[i].banner; bannerPreview.style.display = 'inline-block'; }
+  else bannerPreview.style.display = 'none';
   document.getElementById('gamer-edit-form').style.display = 'block';
   document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; }
+function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; delete tempImgs['gamer-banner']; }
 
 async function saveGamerEdit() {
   if (_saveInProgress) return;
   const i = parseInt(document.getElementById('gme-index').value);
   const data = {
     name: document.getElementById('gme-name').value,
+    username: document.getElementById('gme-username').value,
     score: document.getElementById('gme-score').value,
+    victory: document.getElementById('gme-victory').value,
     game: document.getElementById('gme-game').value,
     country: document.getElementById('gme-country').value,
-    img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : '')
+    desc: document.getElementById('gme-desc').value,
+    youtube: document.getElementById('gme-youtube').value.trim(),
+    discord: document.getElementById('gme-discord').value.trim(),
+    roblox: document.getElementById('gme-roblox').value.trim(),
+    img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : ''),
+    banner: ('gamer-banner' in tempImgs) ? tempImgs['gamer-banner'] : (i >= 0 && i < topGamers.length ? topGamers[i].banner || '' : '')
   };
   if (!data.name.trim()) { showToast('⚠️ Nom requis'); return; }
   if (i === -1) topGamers.push(data); else topGamers[i] = data;
@@ -3681,10 +3584,14 @@ function deleteGamer(i) {
 }
 
 function addGamer() {
-  document.getElementById('gme-name').value = ''; document.getElementById('gme-score').value = '';
+  document.getElementById('gme-name').value = ''; document.getElementById('gme-username').value = '';
+  document.getElementById('gme-score').value = ''; document.getElementById('gme-victory').value = '';
   document.getElementById('gme-game').value = ''; document.getElementById('gme-country').value = '';
+  document.getElementById('gme-desc').value = '';
+  document.getElementById('gme-youtube').value = ''; document.getElementById('gme-discord').value = ''; document.getElementById('gme-roblox').value = '';
   document.getElementById('gme-index').value = -1; document.getElementById('gamer-img-preview').style.display = 'none';
-  delete tempImgs['gamer']; document.getElementById('gamer-edit-form').style.display = 'block';
+  document.getElementById('gamer-banner-img-preview').style.display = 'none';
+  delete tempImgs['gamer']; delete tempImgs['gamer-banner']; document.getElementById('gamer-edit-form').style.display = 'block';
   document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -3770,9 +3677,9 @@ function applyColor(varName, value) {
 }
 
 const THEME_PRESETS = [
-  { name: 'Orange (défaut)', lime: '#ff6a21', dark: '#08090b', dark2: '#0c0d11', dark3: '#12141a', dark4: '#1b1d24', card: '#111319', gradient: 'linear-gradient(135deg, #1a1a2e, #533483)' },
+  { name: 'Bleu (défaut)', lime: '#2f7dfa', dark: '#08090b', dark2: '#0c0d11', dark3: '#12141a', dark4: '#1b1d24', card: '#111319', gradient: 'linear-gradient(135deg, #1a1a2e, #533483)' },
   { name: 'Violet', lime: '#a259ff', dark: '#08080f', dark2: '#0c0c16', dark3: '#13131f', dark4: '#1c1c2b', card: '#121220', gradient: 'linear-gradient(135deg, #2e1a3e, #4a2f6e)' },
-  { name: 'Bleu Néon', lime: '#3b9dff', dark: '#070a0f', dark2: '#0a0e15', dark3: '#10151e', dark4: '#1a212e', card: '#0f141c', gradient: 'linear-gradient(135deg, #0f2942, #1e3799)' },
+  { name: 'Orange', lime: '#ff6a21', dark: '#070a0f', dark2: '#0a0e15', dark3: '#10151e', dark4: '#1a212e', card: '#0f141c', gradient: 'linear-gradient(135deg, #0f2942, #1e3799)' },
   { name: 'Vert Émeraude', lime: '#2ee6a8', dark: '#070b09', dark2: '#0a0f0c', dark3: '#0f1611', dark4: '#19231c', card: '#0e1612', gradient: 'linear-gradient(135deg, #0d2b1f, #1a6650)' },
   { name: 'Rose Sunset', lime: '#ff4d8d', dark: '#0b0709', dark2: '#0f0a0d', dark3: '#171012', dark4: '#241a1e', card: '#160f13', gradient: 'linear-gradient(135deg, #3d1430, #8d2b6c)' },
   { name: 'Or Royal', lime: '#ffb800', dark: '#0a0907', dark2: '#0e0c0a', dark3: '#15120e', dark4: '#211c15', card: '#130f0b', gradient: 'linear-gradient(135deg, #2e2410, #5e4413)' },
@@ -3900,29 +3807,9 @@ function _debounceSaveSettings() {
 }
 
 window.applySettingsFromData = function(s) {
-  const map = { '--lime': s.lime, '--dark': s.dark, '--dark2': s.dark2, '--card-bg': s.card };
-  const ids = { '--lime': 'lime', '--dark': 'dark', '--dark2': 'dark2', '--card-bg': 'card' };
-  Object.entries(map).forEach(([v, val]) => {
-    if (!val) return;
-    document.documentElement.style.setProperty(v, val);
-    const inp = document.getElementById('c-' + ids[v]);
-    const lbl = document.getElementById('cv-' + ids[v]);
-    if (inp) inp.value = val;
-    if (lbl) lbl.textContent = val;
-  });
-  if (s.lime) document.documentElement.style.setProperty('--lime-rgb', hexToRgbStr(s.lime));
-  if (s.dark3) document.documentElement.style.setProperty('--dark3', s.dark3);
-  if (s.dark4) document.documentElement.style.setProperty('--dark4', s.dark4);
-  if (s.gradient) {
-    document.documentElement.style.setProperty('--gradient-accent', s.gradient);
-    const prev = document.getElementById('gradient-preview');
-    if (prev) prev.style.background = s.gradient;
-  }
-  // Mode clair désactivé : le site reste toujours en thème sombre
+  // Les couleurs sont désormais fixes (thème noir/bleu) : on ignore les anciennes couleurs sauvegardées.
   document.body.classList.remove('theme-light');
-  const lightBtn = document.getElementById('light-mode-toggle');
-  if (lightBtn) lightBtn.classList.remove('on');
-  if (s.title) {
+  if (s && s.title) {
     document.title = s.title;
     const inp = document.getElementById('f-page-title');
     if (inp) inp.value = s.title;
