@@ -3731,6 +3731,9 @@ function renderHeroFontDropdown() {
 function toggleFontDropdown(ev) {
   if (ev) ev.stopPropagation();
   const dd = document.getElementById('he-font-dropdown');
+  // Téléporte le dropdown dans <body> pour échapper au backdrop-filter/overflow/z-index
+  // piégés de .admin-card (qui créent un containing block pour les éléments "fixed").
+  if (dd.parentElement !== document.body) document.body.appendChild(dd);
   const willOpen = !dd.classList.contains('open');
   document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
   if (willOpen) {
@@ -3767,7 +3770,10 @@ window.addEventListener('resize', () => {
 });
 document.addEventListener('click', (e) => {
   const picker = document.querySelector('.hero-font-picker');
-  if (picker && !picker.contains(e.target)) document.getElementById('he-font-dropdown')?.classList.remove('open');
+  const dd = document.getElementById('he-font-dropdown');
+  const insidePicker = picker && picker.contains(e.target);
+  const insideDropdown = dd && dd.contains(e.target);
+  if (!insidePicker && !insideDropdown) dd?.classList.remove('open');
 });
 function selectHeroFont(value) {
   setHeroFontValue(value);
