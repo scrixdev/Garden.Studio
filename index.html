@@ -383,7 +383,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .search-result > div:last-child, .notification-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
 .gs-rating { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; }
 .gs-rating input { position: absolute; appearance: none; -webkit-appearance: none; width: 0; height: 0; opacity: 0; }
-.gs-rating label { cursor: pointer; font-size: var(--gs-star-size, 1.6rem); line-height: 1; color: rgba(255,255,255,0.35); transition: color 0.15s; }
+.gs-rating label { cursor: pointer; font-size: var(--gs-star-size, 1.6rem); line-height: 1; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 6px 2px; }
 .gs-rating label:before { content: '★'; }
 .gs-rating label:hover, .gs-rating label:hover ~ label { color: #ff9e0b; }
 .gs-rating input:checked ~ label { color: #ffa723; }
@@ -1909,6 +1909,7 @@ window.fbSignOut      = async () => await signOut(auth);
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('hero',null)">Éditer Hero</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('games',null)">Gérer Jeux</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('top-gamers-admin',null)">Gérer Gamers</button>
+            <button class="btn-primary" style="font-size:12px;padding:10px 18px;background:#c0392b" onclick="confirmResetAllPlays()">Réinitialiser compteurs joueurs</button>
           </div>
         </div>
       </div>
@@ -2480,7 +2481,7 @@ function normalizeGame(g, index) {
     likesAt: (g.likesAt && typeof g.likesAt === 'object') ? g.likesAt : {},
     ratings: (g.ratings && typeof g.ratings === 'object') ? g.ratings : {},
     ratingsAt: (g.ratingsAt && typeof g.ratingsAt === 'object') ? g.ratingsAt : {},
-    plays: Number(g.plays) || (98000 - index * 6400),
+    plays: Number(g.plays) || 0,
     publishedAt: g.publishedAt || g.date || '',
     status: g.status || 'available'
   };
@@ -3549,7 +3550,7 @@ function openGameModalDirect(i) {
   const ratingCount = g.ratings ? Object.keys(g.ratings).length : 0;
   document.getElementById('modal-meta').innerHTML = `
     <span class="modal-meta-pill rating">${realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>'}</span>
-    <span class="modal-meta-pill">${Number(g.plays || 0).toLocaleString('fr-FR')} joueurs</span>`;
+    <span class="modal-meta-pill" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye" style="width:14px;height:14px"></i>${Number(g.plays || 0).toLocaleString('fr-FR')}</span>`;
   document.getElementById('modal-desc').textContent = g.desc || 'Aucune description disponible pour ce jeu.';
   const ratingPicker = document.getElementById('modal-rating-picker');
   if (ratingPicker) ratingPicker.innerHTML = `<div class="modal-meta-label" style="margin-bottom:8px">Ta note</div>${ratingPickerHTML(g, i, 28)}`;
@@ -5568,11 +5569,38 @@ function playGame() {
   if (g && g.link) {
     g.plays = Number(g.plays || 0) + 1;
     const metaPlays = document.querySelector('#modal-meta .modal-meta-pill:last-child');
-    if (metaPlays) metaPlays.textContent = `${g.plays.toLocaleString('fr-FR')} joueurs`;
+    if (metaPlays) {
+      metaPlays.innerHTML = `<i data-lucide="eye" style="width:14px;height:14px"></i>${g.plays.toLocaleString('fr-FR')}`;
+      if (window.lucide) lucide.createIcons();
+    }
     saveData().catch(e => console.error('Erreur sauvegarde compteur joueurs:', e));
     window.open(g.link, '_blank');
   } else {
     showToast('Aucun lien disponible pour ce jeu');
+  }
+}
+
+// ===== RESET COMPTEURS JOUEURS =====
+function confirmResetAllPlays() {
+  showConfirm(
+    'Réinitialiser les compteurs ?',
+    `Cette action va remettre le compteur "joueurs" de tous les ${games.length} jeux à 0 et sauvegarder sur Firebase. Impossible à annuler.`,
+    resetAllPlays
+  );
+}
+async function resetAllPlays() {
+  games.forEach(g => g.plays = 0);
+  try {
+    await saveData();
+    showToast('✅ Tous les compteurs ont été remis à 0');
+    if (typeof renderGamesList === 'function') renderGamesList();
+    renderGamesOnSite();
+    if (document.getElementById('game-modal').classList.contains('open')) {
+      openGameModalDirect(parseInt(document.getElementById('game-modal').dataset.index));
+    }
+  } catch (e) {
+    console.error('Erreur reset compteurs:', e);
+    showToast('❌ Erreur lors de la sauvegarde');
   }
 }
 
