@@ -2389,10 +2389,30 @@ function closeCandDetail(e) {
 
 function setCandStatus(status) {
   if (currentCandIndex < 0) return;
-  candidatures[currentCandIndex].status = status;
+  const c = candidatures[currentCandIndex];
+  c.status = status;
   saveCandidatures();
   renderCandidatures();
   openCandDetail(currentCandIndex);
+  if (c.userId) {
+    if (status === 'accepted') {
+      publishNotification(
+        'candidature-accepted',
+        'Candidature acceptée 🎉',
+        `Ta candidature pour "${c.poste}" a été acceptée ! On va te contacter très prochainement via Discord et une demande d'ami Roblox — accepte bien les demandes venant de nos comptes officiels.`,
+        null,
+        c.userId
+      );
+    } else if (status === 'refused') {
+      publishNotification(
+        'candidature-refused',
+        'Réponse à ta candidature',
+        `Merci pour ton intérêt envers Garden Studio. Ta candidature pour "${c.poste}" n'a pas été retenue cette fois-ci, mais n'hésite pas à retenter ta chance sur une prochaine ouverture de poste !`,
+        null,
+        c.userId
+      );
+    }
+  }
   showToast(status === 'accepted' ? 'Candidature acceptée !' : 'Candidature refusée.');
 }
 
@@ -2858,9 +2878,9 @@ function formatNotifTime(value) {
   return d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 async function saveNotifications() { if (window.fbSaveNotifications) await window.fbSaveNotifications(notifications.slice(0, 60)); }
-async function publishNotification(type, title, detail, gameName) {
+async function publishNotification(type, title, detail, gameName, targetUserId) {
   const linkedGame = (gameName && typeof games !== 'undefined') ? games.find(g => g.name === gameName) : null;
-  const item = { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), type, title, detail, gameName: gameName || '', img: linkedGame?.img || '', date: new Date().toISOString() };
+  const item = { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), type, title, detail, gameName: gameName || '', img: linkedGame?.img || '', date: new Date().toISOString(), targetUserId: targetUserId || null };
   notifications.unshift(item);
   renderNotifications();
   try { await saveNotifications(); } catch(e) { console.warn('Notification non sauvegardée', e); }
@@ -2869,20 +2889,23 @@ function renderNotifications() {
   const panel = document.getElementById('notifications-panel');
   const dot = document.getElementById('notif-dot');
   if (!panel || !dot) return;
+  // Notifications publiques (pour tout le monde) + notifications privées adressées à l'utilisateur connecté
+  const visible = notifications.filter(n => !n.targetUserId || (currentUser && n.targetUserId === currentUser.email));
   const read = getReadNotificationIds();
-  const unread = notifications.filter(n => !read.includes(n.id)).length;
+  const unread = visible.filter(n => !read.includes(n.id)).length;
   dot.style.display = unread ? '' : 'none';
-  if (!notifications.length) {
+  if (!visible.length) {
     panel.innerHTML = `<div style="padding:18px;color:rgba(255,255,255,0.55);font-size:13px">Aucune notification pour l'instant.</div>`;
     return;
   }
-  panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 16px"><strong style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.3px">Notifications</strong><button class="btn-outline" style="padding:8px 14px;font-size:11px" onclick="markNotificationsRead()">Tout lire</button></div>` + notifications.map(n => {
+  panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 16px"><strong style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.3px">Notifications</strong><button class="btn-outline" style="padding:8px 14px;font-size:11px" onclick="markNotificationsRead()">Tout lire</button></div>` + visible.map(n => {
     const isUnread = !read.includes(n.id);
-    return `<div class="notification-item ${isUnread ? 'unread' : ''}" onclick="openNotificationGame('${escapeHTML(n.gameName)}')"><div class="notif-icon">${n.img ? `<img src="${n.img}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="bell"></i>`}</div><div><div class="notification-title">${escapeHTML(n.title)}</div><div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.45">${escapeHTML(n.detail)}</div><div class="notification-time">${formatNotifTime(n.date)}</div></div></div>`;
+    const isPrivate = !!n.targetUserId;
+    return `<div class="notification-item ${isUnread ? 'unread' : ''}" onclick="${isPrivate ? '' : `openNotificationGame('${escapeHTML(n.gameName)}')`}"><div class="notif-icon">${n.img ? `<img src="${n.img}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="${isPrivate ? 'user-check' : 'bell'}"></i>`}</div><div><div class="notification-title">${escapeHTML(n.title)}</div><div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.45">${escapeHTML(n.detail)}</div><div class="notification-time">${formatNotifTime(n.date)}</div></div></div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
 }
-function markNotificationsRead() { setReadNotificationIds(notifications.map(n => n.id)); renderNotifications(); }
+function markNotificationsRead() { const visible = notifications.filter(n => !n.targetUserId || (currentUser && n.targetUserId === currentUser.email)); setReadNotificationIds(visible.map(n => n.id)); renderNotifications(); }
 function toggleNotifications(ev) {
   if (ev) ev.stopPropagation();
   const panel = document.getElementById('notifications-panel');
