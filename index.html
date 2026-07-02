@@ -2808,6 +2808,12 @@ let currentPage = 'home';
 function escapeHTML(value) {
   return String(value || '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch]));
 }
+// Pour les valeurs injectées dans un attribut style="" via setAttribute (pas d'entités HTML décodées) :
+// on retire juste les caractères dangereux (guillemets, chevrons) sans toucher aux apostrophes,
+// nécessaires pour les noms de police type 'Metal Mania'.
+function escapeCSSValue(value) {
+  return String(value || '').replace(/["<>]/g, '');
+}
 function gameKey(g) { return (g && g.name ? g.name : '').toLowerCase().trim(); }
 function gameIndexByKey(key) { return games.findIndex(g => gameKey(g) === key); }
 function getGameIndexByName(name) { return games.findIndex(g => (g.name || '') === name); }
@@ -4016,11 +4022,11 @@ function findHeroForGame(name) {
 function heroTitleStyleCSS(h) {
   if (!h) return `font-family:'Barlow Condensed', sans-serif;font-weight:900;font-style:normal;color:var(--white);--title-scale:1;`;
   const scale = (parseInt(h.titleSize) || 100) / 100;
-  const font = `font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(h.titleWeight || '900'))};font-style:${h.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
+  const font = `font-family:${h.titleFont ? escapeCSSValue(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeCSSValue(String(h.titleWeight || '900'))};font-style:${h.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
   if (h.titleGradient) {
-    return `${font}background:linear-gradient(${escapeHTML(String(h.titleGradientAngle || 90))}deg, ${escapeHTML(h.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
+    return `${font}background:linear-gradient(${escapeCSSValue(String(h.titleGradientAngle || 90))}deg, ${escapeCSSValue(h.titleGradientFrom || '#ff5f6d')}, ${escapeCSSValue(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
-  return `${font}color:${escapeHTML(h.titleColor || 'var(--white)')};`;
+  return `${font}color:${escapeCSSValue(h.titleColor || 'var(--white)')};`;
 }
 // ===== GRAISSE / ITALIQUE / TAILLE — dropdowns génériques (hero "he" + jeu "ge") =====
 const WEIGHT_OPTIONS = [
@@ -4693,11 +4699,11 @@ function gameTitleStyleCSS(g) {
     if (hero) return heroTitleStyleCSS(hero);
   }
   const scale = (parseInt(g.titleSize) || 100) / 100;
-  const font = `font-family:${g.titleFont ? escapeHTML(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
+  const font = `font-family:${g.titleFont ? escapeCSSValue(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeCSSValue(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
   if (g.titleGradient) {
-    return `${font}background:linear-gradient(${escapeHTML(String(g.titleGradientAngle || 90))}deg, ${escapeHTML(g.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(g.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
+    return `${font}background:linear-gradient(${escapeCSSValue(String(g.titleGradientAngle || 90))}deg, ${escapeCSSValue(g.titleGradientFrom || '#ff5f6d')}, ${escapeCSSValue(g.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
-  return `${font}color:${escapeHTML(g.titleColor || 'var(--white)')};`;
+  return `${font}color:${escapeCSSValue(g.titleColor || 'var(--white)')};`;
 }
 
 async function saveGameEdit() {
