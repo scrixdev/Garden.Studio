@@ -720,21 +720,58 @@ footer {
 .game-list-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
 .game-list-meta { font-size: 12px; color: var(--gray); }
 .game-list-actions { display: flex; gap: 8px; }
+.cand-item {
+  display: flex; align-items: center; gap: 16px; padding: 16px 18px; margin-bottom: 8px;
+  background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
+  cursor: pointer; transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+}
+.cand-item:last-child { margin-bottom: 0; }
+.cand-item:hover { border-color: rgba(var(--lime-rgb),0.3); background: rgba(var(--lime-rgb),0.04); transform: translateY(-1px); }
+.cand-avatar {
+  width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(var(--lime-rgb),0.12); border: 1px solid rgba(var(--lime-rgb),0.25);
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; color: var(--lime);
+}
+.cand-info { flex: 1; min-width: 0; }
+.cand-name { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+.cand-name span { font-weight: 400; }
+.cand-meta { font-size: 12px; color: var(--gray); }
+.cand-status {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 10px; letter-spacing: 1px;
+  padding: 5px 12px; border-radius: 999px; text-transform: uppercase; flex-shrink: 0;
+}
 .btn-edit, .btn-delete {
-  padding: 6px 14px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; border-radius: 8px;
-  font-size: 11px; letter-spacing: 1px; text-transform: uppercase; cursor: pointer; border: none;
-  transition: opacity 0.2s; display: flex; align-items: center; gap: 4px;
+  border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px;
+  padding: 7px 16px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+  background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.btn-edit { background: rgba(var(--lime-rgb),0.12); color: var(--lime); border: 1px solid rgba(var(--lime-rgb),0.2); }
-.btn-delete { background: rgba(255,60,60,0.1); color: #ff6060; border: 1px solid rgba(255,60,60,0.2); }
-.btn-edit:hover, .btn-delete:hover { opacity: 0.75; }
+.btn-edit { color: var(--lime); }
+.btn-delete { color: #ff6060; }
+.btn-edit:hover, .btn-delete:hover {
+  background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5);
+  transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35);
+}
+.btn-edit:active, .btn-delete:active { transform: translateY(0); }
 .btn-add-new {
-  background: rgba(var(--lime-rgb),0.1); border: 1px dashed rgba(var(--lime-rgb),0.3); color: var(--lime); border-radius: 12px;
-  padding: 10px 20px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700;
-  font-size: 12px; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; width: 100%;
-  margin-top: 12px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 999px; letter-spacing: 0.5px; text-transform: none;
+  font-family: 'Barlow', sans-serif; font-weight: 700; font-size: 13px;
+  padding: 11px 20px; width: 100%; margin-top: 12px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  color: var(--lime); background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.btn-add-new:hover { background: rgba(var(--lime-rgb),0.18); }
+.btn-add-new:hover {
+  background: var(--glass-highlight), rgba(255,255,255,0.32); border-color: rgba(255,255,255,0.5);
+  transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35);
+}
+.btn-add-new:active { transform: translateY(0); }
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
 .stat-card {
   position: relative; background: rgba(26,26,26,0.55); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px;
@@ -825,13 +862,6 @@ footer {
 }
 .apply-modal-box::-webkit-scrollbar { display: none; }
 .apply-modal-overlay.open .apply-modal-box { transform: translateY(0); }
-.apply-notif {
-  position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%) translateY(80px);
-  background: var(--dark3); border: 1px solid rgba(var(--lime-rgb),0.3); color: var(--white);
-  padding: 14px 24px; font-size: 13px; line-height: 1.6; max-width: 380px; text-align: center;
-  z-index: 99999; opacity: 0; transition: all 0.35s; pointer-events: none;
-}
-.apply-notif.show { transform: translateX(-50%) translateY(0); opacity: 1; }
 .nav-item-editor { display: flex; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .nav-item-editor:last-child { border-bottom: none; }
 .drag-handle { color: rgba(255,255,255,0.2); cursor: grab; }
@@ -2259,16 +2289,14 @@ function renderCandidatures() {
 
   list.innerHTML = filtered.map((c, i) => {
     const realIdx = candidatures.indexOf(c);
-    return `<div class="game-list-item" style="cursor:pointer;border:1px solid rgba(255,255,255,0.04);margin-bottom:4px;transition:border-color 0.2s" onclick="openCandDetail(${realIdx})" onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.25)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.04)'">
-      <div class="game-list-thumb" style="background:rgba(var(--lime-rgb),0.08);display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:18px;color:var(--lime)">${c.roblox.charAt(0).toUpperCase()}</div>
-      <div class="game-list-info">
-        <div class="game-list-name">${c.roblox} <span style="font-size:12px;font-weight:400;color:var(--gray)">· ${c.discord}</span></div>
-        <div class="game-list-meta">${c.poste} · ${c.date}</div>
+    return `<div class="cand-item" onclick="openCandDetail(${realIdx})">
+      <div class="cand-avatar">${c.roblox.charAt(0).toUpperCase()}</div>
+      <div class="cand-info">
+        <div class="cand-name">${c.roblox} <span style="color:var(--gray)">· ${c.discord}</span></div>
+        <div class="cand-meta">${c.poste} · ${c.date}</div>
       </div>
-      <div class="game-list-actions" style="align-items:center;gap:10px">
-        <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;padding:4px 10px;border:1px solid ${statusColor[c.status]}33;color:${statusColor[c.status]};text-transform:uppercase">${statusLabel[c.status]}</span>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
+      <span class="cand-status" style="background:${statusColor[c.status]}1a;color:${statusColor[c.status]}">${statusLabel[c.status]}</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }).join('');
 }
@@ -2478,13 +2506,7 @@ function submitApplyModal() {
   updateCandBadge();
 
   closeApplyModal();
-  showApplyNotif();
-}
-
-function showApplyNotif() {
-  const el = document.getElementById('apply-notif');
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 4500);
+  showToast('Candidature envoyée', 'Merci pour ton intérêt envers Garden Studio.');
 }
 
 let products = loadData();
@@ -4454,8 +4476,12 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
       <div id="apply-modal-skills" style="font-size:13px;color:var(--gray);margin-bottom:20px"></div>
 
       <!-- Already applied notice -->
-      <div id="apply-already" style="display:none;background:rgba(var(--lime-rgb),0.08);border:1px solid rgba(var(--lime-rgb),0.25);color:var(--lime);padding:14px 16px;font-size:13px;margin-bottom:20px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:0.5px;text-align:center">
-        <i data-lucide="check"></i> Vous avez déjà envoyé une candidature pour ce poste.
+      <div id="apply-already" style="display:none;text-align:center;padding:8px 4px 30px">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 18px">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:19px;text-transform:uppercase;margin-bottom:8px;letter-spacing:0.5px">Candidature déjà envoyée</div>
+        <p style="font-size:13px;color:var(--gray);line-height:1.8;max-width:320px;margin:0 auto">Tu as déjà postulé pour ce poste. Notre équipe reviendra vers toi rapidement, merci pour ta patience !</p>
       </div>
 
       <div id="apply-form-fields">
@@ -4541,8 +4567,6 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
   </div>
 </div>
 
-<!-- APPLY SUCCESS NOTIFICATION -->
-<div class="apply-notif" id="apply-notif">Votre candidature a bien été envoyée. Merci pour votre intérêt envers Garden Studio.</div>
 
 <style>
 /* ===== AUTH BOX (login/register glass card) ===== */
@@ -4555,6 +4579,7 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
   border-radius: 24px;
   padding: 1px;
   overflow: hidden;
+  clip-path: inset(0 round 24px);
   isolation: isolate;
   box-shadow:
     0 4px 8px rgba(0,0,0,0.18),
