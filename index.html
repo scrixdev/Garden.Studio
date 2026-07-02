@@ -1793,8 +1793,11 @@ window.fbSignOut      = async () => await signOut(auth);
             <input type="text" class="form-input" id="he-badge" placeholder="ex: Studio Indépendant">
           </div>
           <div class="form-group">
-            <label class="form-label">Titre principal</label>
-            <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne" oninput="updateHeroPreview()"></textarea>
+            <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+              <span>Titre principal</span>
+              <button type="button" class="btn-ghost" style="font-size:11px;padding:4px 8px" onclick="syncHeroTitleWithGame()">🔄 Utiliser le nom du jeu</button>
+            </label>
+            <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne (laisse vide pour toujours suivre le nom du jeu lié)" oninput="updateHeroPreview()"></textarea>
           </div>
           <div id="he-own-style-zone" style="transition:opacity 0.2s">
           <div class="form-row">
@@ -4134,7 +4137,18 @@ document.addEventListener('click', (e) => {
   });
 });
 function onHeroGameSelectChange() {
+  const titleField = document.getElementById('he-title');
+  const gameName = document.getElementById('he-game')?.value || '';
+  if (titleField && !titleField.value.trim() && gameName) titleField.value = gameName;
   updateHeroPreview();
+}
+function syncHeroTitleWithGame() {
+  const gameName = document.getElementById('he-game')?.value || '';
+  if (!gameName) { showToast('Choisis d\'abord un jeu lié'); return; }
+  const titleField = document.getElementById('he-title');
+  if (titleField) titleField.value = gameName;
+  updateHeroPreview();
+  showToast('Titre synchronisé avec le nom du jeu');
 }
 function updateHeroPreview() {
   const box = document.getElementById('he-live-preview');
@@ -4725,8 +4739,14 @@ async function saveGameEdit() {
     showToast('Jeu sauvegardé !'); logChange('Jeu "' + data.name + '" ' + (wasNew ? 'publié' : 'modifié'));
     await publishNotification(wasNew ? 'game-created' : 'game-updated', wasNew ? 'Nouveau jeu publié' : 'Jeu modifié', data.name + (wasNew ? ' vient d’être publié.' : ' a été mis à jour.'), data.name);
     if (!wasNew && previousName && previousName !== data.name) {
-      heroSlides.forEach(h => { if (h.gameName === previousName) h.gameName = data.name; });
+      heroSlides.forEach(h => {
+        if (h.gameName === previousName) {
+          h.gameName = data.name;
+          if ((h.title || '').trim() === previousName.trim()) h.title = data.name;
+        }
+      });
       await saveHeroSlides();
+      renderHeroSlides();
     }
   } catch(e) {
     if (wasNew) games.pop();
