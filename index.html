@@ -166,14 +166,112 @@ nav {
 }
 .btn-outline:hover { border-color: var(--lime); color: var(--lime); }
 .hero-toggle-btn {
-  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; align-self: center;
+  width: 46px; height: 46px; border-radius: 50%; flex-shrink: 0; align-self: center;
   background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
   box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); color: var(--white);
   display: inline-flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
 }
 .hero-toggle-btn:hover { background: var(--glass-highlight), rgba(255,255,255,0.32); color: var(--lime); border-color: rgba(var(--lime-rgb),0.4); transform: translateY(-2px); box-shadow: var(--glass-shadow), 0 8px 20px rgba(0,0,0,0.35); }
 .hero-toggle-btn:active { transform: translateY(0); }
-.hero-toggle-btn i, .hero-toggle-btn svg { width: 16px; height: 16px; }
+.hero-toggle-btn i, .hero-toggle-btn svg { width: 20px; height: 20px; }
+
+/* ===== HERO TOGGLE GROUP (bouton bascule + bouton lecture, toujours visibles, sans hover) ===== */
+.hero-toggle-group { display: inline-flex; gap: 10px; align-self: center; }
+.hero-trailer-btn { background: var(--glass-highlight), var(--lime-dim); border-color: var(--lime-border); color: var(--lime); }
+.hero-trailer-btn:hover { background: var(--glass-highlight), rgba(var(--lime-rgb),0.32); border-color: rgba(var(--lime-rgb),0.55); color: var(--white); }
+
+/* ===== TRAILER-ONLY MODAL (juste la video, sans les infos du jeu, cadre glass) ===== */
+#trailer-modal { background: rgba(4,4,8,0.65); backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%); }
+#trailer-modal .modal-box {
+  width: 92%; max-width: 1200px; height: 82vh; max-height: 800px;
+  padding: 14px; border-radius: 30px;
+  background: var(--glass-highlight), rgba(255,255,255,0.05);
+  backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  transform: scale(0.94); opacity: 0; overflow: hidden;
+  transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
+  box-shadow: var(--glass-shadow), 0 40px 120px rgba(0,0,0,0.65);
+  display: flex; align-items: center; justify-content: center;
+}
+#trailer-modal.open .modal-box { transform: scale(1); opacity: 1; }
+#trailer-modal video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; border-radius: 20px; }
+#trailer-modal .modal-close { display: flex; }
+
+/* ===== TRAILER PLAYER (liquid glass, style Apple TV) ===== */
+.trailer-player { position: relative; width: 100%; height: 100%; cursor: default; }
+.trailer-controls {
+  position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: space-between;
+  padding: 22px 26px; opacity: 1; transition: opacity 0.35s ease; pointer-events: none; border-radius: 20px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.4) 0%, transparent 20%, transparent 75%, rgba(0,0,0,0.5) 100%);
+}
+.trailer-controls.hidden { opacity: 0; }
+.trailer-controls > * { pointer-events: all; }
+
+.trailer-glass-btn {
+  display: flex; align-items: center; justify-content: center; flex-direction: column;
+  background: var(--glass-highlight), rgba(30,31,38,0.4);
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border); color: var(--white);
+  box-shadow: var(--glass-shadow), 0 8px 22px rgba(0,0,0,0.4);
+  cursor: pointer; transition: transform 0.18s ease, background 0.18s ease; border-radius: 50%;
+}
+.trailer-glass-btn:hover { background: var(--glass-highlight), rgba(255,255,255,0.16); transform: scale(1.06); }
+.trailer-glass-btn:active { transform: scale(0.97); }
+
+.trailer-top-bar { display: flex; align-items: center; justify-content: space-between; }
+.trailer-top-bar .trailer-glass-btn { width: 38px; height: 38px; }
+.trailer-top-bar .trailer-glass-btn svg { width: 15px; height: 15px; }
+
+.trailer-volume { display: flex; align-items: center; gap: 10px; padding: 8px 18px 8px 14px; border-radius: 999px;
+  background: var(--glass-highlight), rgba(30,31,38,0.4);
+  backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow), 0 8px 22px rgba(0,0,0,0.4);
+}
+.trailer-volume i { width: 16px; height: 16px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+.trailer-volume input[type=range] {
+  -webkit-appearance: none; appearance: none; width: 90px; height: 4px; border-radius: 999px;
+  background: rgba(255,255,255,0.25); outline: none; cursor: pointer;
+}
+.trailer-volume input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--white); cursor: pointer;
+  box-shadow: 0 0 8px rgba(0,0,0,0.45);
+}
+.trailer-volume input[type=range]::-moz-range-thumb {
+  width: 12px; height: 12px; border-radius: 50%; background: var(--white); border: none; cursor: pointer;
+}
+
+.trailer-center-controls { display: flex; align-items: center; justify-content: center; gap: 36px; margin: auto 0; }
+.trailer-skip-btn { position: relative; width: 54px; height: 54px; color: rgba(255,255,255,0.92); }
+.trailer-skip-btn svg { width: 25px; height: 25px; }
+.trailer-skip-btn span {
+  position: absolute; font-size: 9.5px; font-weight: 800; font-family: 'Barlow Condensed', sans-serif;
+  transform: translateY(1px);
+}
+.trailer-play-btn { width: 72px; height: 72px; }
+.trailer-play-btn i, .trailer-play-btn svg { width: 28px; height: 28px; }
+
+.trailer-bottom-bar { display: flex; flex-direction: column; gap: 12px; }
+.trailer-title-group { display: flex; flex-direction: column; gap: 3px; }
+.trailer-kicker { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+.trailer-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px; text-transform: uppercase; color: var(--white); }
+.trailer-progress-track {
+  position: relative; width: 100%; height: 5px; border-radius: 999px;
+  background: rgba(255,255,255,0.25); cursor: pointer;
+}
+.trailer-progress-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0%; border-radius: 999px; background: var(--white); }
+.trailer-progress-handle {
+  position: absolute; top: 50%; width: 13px; height: 13px; border-radius: 50%; background: var(--white);
+  transform: translate(-50%, -50%); left: 0%; box-shadow: 0 0 8px rgba(0,0,0,0.45); transition: left 0.05s linear;
+}
+@media (max-width: 640px) {
+  .trailer-center-controls { gap: 20px; }
+  .trailer-play-btn { width: 60px; height: 60px; }
+  .trailer-play-btn i, .trailer-play-btn svg { width: 24px; height: 24px; }
+  .trailer-skip-btn { width: 44px; height: 44px; }
+  .trailer-skip-btn svg { width: 20px; height: 20px; }
+  .trailer-volume input[type=range] { width: 60px; }
+  .trailer-title { font-size: 17px; }
+}
 /* legacy portal classes – conservées pour ne pas casser le JS */
 .hero-right, .hero-portal, .portal-ring, .portal-inner, .portal-base, .portal-top-gem { display: none; }
 @keyframes portalPulse {}
@@ -303,7 +401,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .hero-rating { display: inline-flex; align-items: center; gap: 5px; color: #fff; font-weight: 800; font-size: 14px; }
 .hero-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
 .hero-genre-tag { padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; font-weight: 700; letter-spacing: 0.3px; color: rgba(255,255,255,0.85); }
-.hero-age-tag { padding: 5px 10px; border-radius: 5px; background: rgba(var(--lime-rgb),0.16); border: 1px solid rgba(var(--lime-rgb),0.5); color: var(--lime); font-size: 12px; font-weight: 800; }
+.hero-age-tag { padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); color: var(--lime); font-size: 12px; font-weight: 800; letter-spacing: 0.3px; }
 .hero-title { font-size: calc(clamp(46px, 6.2vw, 76px) * var(--title-scale, 1)); letter-spacing: 0; margin-bottom: 18px; }
 .hero-desc { font-size: 16px; max-width: 520px; margin-bottom: 24px; color: rgba(255,255,255,0.78); }
 .hero-btns { flex-wrap: wrap; align-items: center; }
@@ -1614,6 +1712,50 @@ window.fbSignOut      = async () => await signOut(auth);
         <button class="btn-primary" id="modal-play-btn" onclick="playGame()"><i data-lucide="play"></i> Jouer maintenant</button>
         <div class="modal-user-actions" id="modal-user-actions"></div>
         <button class="btn-outline" onclick="closeModalDirect()">Retour</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRAILER MODAL (bande-annonce seule, lecteur custom liquid glass) ===== -->
+<div class="modal-overlay" id="trailer-modal" onclick="closeTrailerModal(event)">
+  <div class="modal-box">
+    <div class="trailer-player" id="trailer-player" onmousemove="trailerShowControls()" onclick="event.stopPropagation()">
+      <video id="trailer-modal-video" playsinline onclick="trailerTogglePlay()"></video>
+      <div class="trailer-controls" id="trailer-controls">
+        <div class="trailer-top-bar">
+          <button class="trailer-glass-btn" onclick="closeTrailerModalDirect()" title="Fermer">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <div class="trailer-volume">
+            <i data-lucide="volume-2"></i>
+            <input type="range" id="trailer-volume-slider" min="0" max="1" step="0.01" value="1" oninput="trailerSetVolume(this.value)">
+          </div>
+        </div>
+        <div class="trailer-center-controls">
+          <button class="trailer-glass-btn trailer-skip-btn" onclick="trailerSkip(-10)" title="Reculer de 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>
+            <span>10</span>
+          </button>
+          <button class="trailer-glass-btn trailer-play-btn" id="trailer-play-btn" onclick="trailerTogglePlay()" title="Lecture / Pause">
+            <i data-lucide="pause" id="trailer-pause-icon"></i>
+            <i data-lucide="play" id="trailer-play-icon" style="display:none"></i>
+          </button>
+          <button class="trailer-glass-btn trailer-skip-btn" onclick="trailerSkip(10)" title="Avancer de 10s">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+            <span>10</span>
+          </button>
+        </div>
+        <div class="trailer-bottom-bar">
+          <div class="trailer-title-group">
+            <div class="trailer-kicker">Bande-annonce</div>
+            <div class="trailer-title" id="trailer-title"></div>
+          </div>
+          <div class="trailer-progress-track" id="trailer-progress-track" onclick="trailerSeek(event)">
+            <div class="trailer-progress-fill" id="trailer-progress-fill"></div>
+            <div class="trailer-progress-handle" id="trailer-progress-handle"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -3430,6 +3572,119 @@ function closeModalDirect() {
   document.body.style.overflow = '';
 }
 
+// ===== TRAILER MODAL (bande-annonce plein écran, lecteur custom liquid glass) =====
+function openTrailerModal(i) {
+  const h = heroSlides[i];
+  if (!h || !h.bgIsVideo || !h.bg) return;
+  if (document.getElementById('trailer-modal').classList.contains('open')) {
+    openTrailerModalDirect(i);
+    return;
+  }
+  playCurtainTransition(() => openTrailerModalDirect(i));
+}
+
+function openTrailerModalDirect(i) {
+  const h = heroSlides[i];
+  if (!h) return;
+  const heroGame = getGameByHero(h, i);
+  const video = document.getElementById('trailer-modal-video');
+  trailerBindVideoEvents(video);
+  video.src = h.bg;
+  video.currentTime = 0;
+  video.volume = 1;
+  document.getElementById('trailer-volume-slider').value = 1;
+  document.getElementById('trailer-title').textContent = h.title || heroGame.game?.name || 'Garden Studio';
+  document.getElementById('trailer-progress-fill').style.width = '0%';
+  document.getElementById('trailer-progress-handle').style.left = '0%';
+  document.getElementById('trailer-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  trailerShowControls();
+  video.play().catch(() => {});
+  if (window.lucide) lucide.createIcons();
+}
+
+function closeTrailerModal(e) {
+  if (e.target === document.getElementById('trailer-modal')) closeTrailerModalDirect();
+}
+
+function closeTrailerModalDirect() {
+  const video = document.getElementById('trailer-modal-video');
+  video.pause();
+  video.removeAttribute('src');
+  video.load();
+  clearTimeout(_trailerHideTimer);
+  document.getElementById('trailer-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+let _trailerHideTimer = null;
+function trailerShowControls() {
+  const controls = document.getElementById('trailer-controls');
+  if (!controls) return;
+  controls.classList.remove('hidden');
+  clearTimeout(_trailerHideTimer);
+  const video = document.getElementById('trailer-modal-video');
+  if (video && !video.paused) {
+    _trailerHideTimer = setTimeout(() => controls.classList.add('hidden'), 2800);
+  }
+}
+
+function trailerTogglePlay() {
+  const video = document.getElementById('trailer-modal-video');
+  if (!video) return;
+  if (video.paused) video.play().catch(() => {});
+  else video.pause();
+}
+
+function trailerSetPlayIcon(isPlaying) {
+  const playIcon = document.getElementById('trailer-play-icon');
+  const pauseIcon = document.getElementById('trailer-pause-icon');
+  if (playIcon) playIcon.style.display = isPlaying ? 'none' : '';
+  if (pauseIcon) pauseIcon.style.display = isPlaying ? '' : 'none';
+}
+
+function trailerSkip(seconds) {
+  const video = document.getElementById('trailer-modal-video');
+  if (!video) return;
+  video.currentTime = Math.min(Math.max(0, video.currentTime + seconds), video.duration || Infinity);
+  trailerShowControls();
+}
+
+function trailerSetVolume(value) {
+  const video = document.getElementById('trailer-modal-video');
+  if (video) video.volume = parseFloat(value);
+}
+
+function trailerSeek(e) {
+  const video = document.getElementById('trailer-modal-video');
+  const track = document.getElementById('trailer-progress-track');
+  if (!video || !track || !video.duration) return;
+  const rect = track.getBoundingClientRect();
+  const ratio = Math.min(Math.max((e.clientX - rect.left) / rect.width, 0), 1);
+  video.currentTime = ratio * video.duration;
+  trailerShowControls();
+}
+
+function trailerUpdateProgress() {
+  const video = document.getElementById('trailer-modal-video');
+  const fill = document.getElementById('trailer-progress-fill');
+  const handle = document.getElementById('trailer-progress-handle');
+  if (!video || !fill || !handle || !video.duration) return;
+  const pct = (video.currentTime / video.duration) * 100;
+  fill.style.width = pct + '%';
+  handle.style.left = pct + '%';
+}
+
+function trailerBindVideoEvents(video) {
+  if (!video || video.dataset.trailerBound) return;
+  video.dataset.trailerBound = '1';
+  video.addEventListener('play', () => { trailerSetPlayIcon(true); trailerShowControls(); });
+  video.addEventListener('pause', () => { trailerSetPlayIcon(false); trailerShowControls(); });
+  video.addEventListener('ended', () => { trailerSetPlayIcon(false); trailerShowControls(); });
+  video.addEventListener('timeupdate', trailerUpdateProgress);
+  video.addEventListener('loadedmetadata', trailerUpdateProgress);
+}
+
 // ===== RENDER: PRODUCTS on SITE =====
 function renderProductsOnSite() {
   const grid = document.getElementById('products-grid');
@@ -3693,7 +3948,10 @@ function renderHeroSlides() {
           <button class="btn-primary" onclick="${heroButtonAction(h, heroGame)}"><i data-lucide="play"></i>${escapeHTML(h.btn1 || 'Voir details')}</button>
           ${h.btn2 ? `<button class="btn-outline" onclick="showPage('${h.btn2Page || 'about'}')"><i data-lucide="info"></i>${escapeHTML(h.btn2)}</button>` : ''}
           ${heroGame.index >= 0 ? `<button class="btn-ghost icon-only ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)" title="Ajouter"><i data-lucide="bookmark"></i></button>` : ''}
-          ${hasVideoBannerToggle ? `<button class="hero-toggle-btn" onclick="toggleHeroBanner(${i},event)" title="${showingBanner ? 'Revenir à la bande-annonce' : 'Voir la bannière'}" aria-label="Basculer vidéo / bannière"><i data-lucide="${showingBanner ? 'clapperboard' : 'image'}"></i></button>` : ''}
+          ${hasVideoBannerToggle ? `<div class="hero-toggle-group">
+            <button class="hero-toggle-btn" onclick="toggleHeroBanner(${i},event)" title="${showingBanner ? 'Revenir à la bande-annonce' : 'Voir la bannière'}" aria-label="Basculer vidéo / bannière"><i data-lucide="${showingBanner ? 'clapperboard' : 'image'}"></i></button>
+            <button class="hero-toggle-btn hero-trailer-btn" onclick="event.stopPropagation();openTrailerModal(${i})" title="Lire la bande-annonce" aria-label="Lire la bande-annonce en plein écran"><i data-lucide="play"></i></button>
+          </div>` : ''}
         </div>
       </div>
     </div>`;
@@ -5224,6 +5482,7 @@ window.applySettingsFromData = function(s) {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('game-modal').classList.contains('open')) { closeModalDirect(); return; }
+    if (document.getElementById('trailer-modal').classList.contains('open')) { closeTrailerModalDirect(); return; }
     if (document.getElementById('gamer-modal').classList.contains('open')) { closeGamerModalDirect(); return; }
     if (document.getElementById('product-modal').classList.contains('open')) { closeProductModalDirect(); return; }
     if (document.getElementById('signin-modal').classList.contains('open')) { closeSignInDirect(); return; }
