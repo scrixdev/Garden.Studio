@@ -5566,6 +5566,10 @@ function playGame() {
   const i = parseInt(document.getElementById('game-modal').dataset.index);
   const g = games[i];
   if (g && g.link) {
+    g.plays = Number(g.plays || 0) + 1;
+    const metaPlays = document.querySelector('#modal-meta .modal-meta-pill:last-child');
+    if (metaPlays) metaPlays.textContent = `${g.plays.toLocaleString('fr-FR')} joueurs`;
+    saveData().catch(e => console.error('Erreur sauvegarde compteur joueurs:', e));
     window.open(g.link, '_blank');
   } else {
     showToast('Aucun lien disponible pour ce jeu');
