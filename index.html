@@ -2431,8 +2431,9 @@ function selectRole(role) {
     const circle = document.getElementById('radio-' + r.toLowerCase());
     if (opt && dot && circle) {
       const active = r === role;
-      opt.style.borderColor = active ? 'rgba(var(--lime-rgb),0.6)' : 'rgba(255,255,255,0.08)';
-      opt.style.background = active ? 'rgba(var(--lime-rgb),0.08)' : 'var(--dark3)';
+      opt.style.borderColor = active ? 'var(--lime)' : 'var(--glass-border)';
+      opt.style.background = active ? 'var(--glass-highlight), rgba(var(--lime-rgb),0.16)' : 'var(--glass-highlight), var(--glass-bg)';
+      opt.style.transform = active ? 'translateY(-2px)' : 'translateY(0)';
       dot.style.display = active ? 'block' : 'none';
       circle.style.borderColor = active ? 'var(--lime)' : 'rgba(var(--lime-rgb),0.4)';
     }
@@ -4574,7 +4575,7 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
           <div style="margin-bottom:12px">
             <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Rôle souhaité *</label>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="apm-role-choices">
-              <label id="role-opt-testeur" style="display:flex;align-items:flex-start;gap:10px;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);padding:14px;cursor:pointer;transition:border-color 0.2s" onclick="selectRole('Testeur')">
+              <label id="role-opt-testeur" style="display:flex;align-items:flex-start;gap:10px;background:var(--glass-highlight), var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:var(--glass-shadow);border-radius:12px;padding:14px;cursor:pointer;transition:transform 0.2s ease, border-color 0.2s ease, background 0.2s ease" onclick="selectRole('Testeur')">
                 <input type="radio" name="apm-role" value="Testeur" style="display:none">
                 <div style="width:16px;height:16px;border:2px solid rgba(var(--lime-rgb),0.4);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center" id="radio-testeur">
                   <div style="width:8px;height:8px;border-radius:50%;background:var(--lime);display:none" id="radio-dot-testeur"></div>
@@ -4584,7 +4585,7 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
                   <div style="font-size:11px;color:var(--gray);line-height:1.5">Tu joues aux jeux du studio, tu remontes les bugs et partages ton avis.</div>
                 </div>
               </label>
-              <label id="role-opt-helper" style="display:flex;align-items:flex-start;gap:10px;background:var(--dark3);border:1px solid rgba(255,255,255,0.08);padding:14px;cursor:pointer;transition:border-color 0.2s" onclick="selectRole('Helper')">
+              <label id="role-opt-helper" style="display:flex;align-items:flex-start;gap:10px;background:var(--glass-highlight), var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:var(--glass-shadow);border-radius:12px;padding:14px;cursor:pointer;transition:transform 0.2s ease, border-color 0.2s ease, background 0.2s ease" onclick="selectRole('Helper')">
                 <input type="radio" name="apm-role" value="Helper" style="display:none">
                 <div style="width:16px;height:16px;border:2px solid rgba(var(--lime-rgb),0.4);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center" id="radio-helper">
                   <div style="width:8px;height:8px;border-radius:50%;background:var(--lime);display:none" id="radio-dot-helper"></div>
