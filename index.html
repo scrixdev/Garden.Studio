@@ -1277,10 +1277,20 @@ window.fbSignOut      = async () => await signOut(auth);
   .logo { font-size: 12px; gap: 6px; letter-spacing: 0.3px; }
   .logo img { width: 22px; height: 22px; }
   .logo::after { width: 5px; height: 5px; }
-  .nav-right { flex: 1; min-width: 0; gap: 6px; justify-content: flex-end; }
-  .nav-search { flex: 1 1 auto; width: auto; min-width: 0; max-width: none; }
-  .nav-search input { padding-left: 32px; font-size: 12px; height: 32px; }
-  .nav-search svg { left: 9px; width: 14px; height: 14px; }
+  .nav-right { flex: none; min-width: 0; gap: 6px; justify-content: flex-end; }
+  .nav-search {
+    flex: none; width: 32px; height: 32px; min-width: 0; max-width: none;
+    border-radius: 50%; background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    transition: width 0.25s ease, border-radius 0.25s ease, background 0.25s ease;
+  }
+  .nav-search svg { position: static; left: auto; top: auto; transform: none; width: 15px; height: 15px; flex-shrink: 0; }
+  .nav-search input {
+    width: 0; padding: 0; border: none; opacity: 0; pointer-events: none; height: 32px; font-size: 12px;
+    transition: width 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
+  }
+  .nav-search.expanded { width: min(58vw, 220px); border-radius: 17px; background: rgba(255,255,255,0.08); justify-content: flex-start; padding-left: 10px; }
+  .nav-search.expanded input { width: 100%; opacity: 1; pointer-events: auto; padding-left: 8px; }
   .nav-icon-btn { width: 32px; height: 32px; flex-shrink: 0; }
   .search-results, .notifications-panel { width: calc(100vw - 20px); right: -8px; max-height: 60vh; }
 
@@ -1533,6 +1543,50 @@ window.fbSignOut      = async () => await signOut(auth);
 @media (max-width: 600px) {
   .loader { --main-size: 2.4em; }
 }
+
+/* ===== OPTIMISATION MOBILE / TABLETTE GLOBALE ===== */
+@media (max-width: 900px) {
+  /* Formulaires & grilles multi-colonnes -> 1 colonne (empêche les champs/textes écrasés qui débordent) */
+  .form-row, .form-row-3,
+  .page-2col-grid, .page-3col-grid,
+  .site-footer-grid, .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+
+  /* Panneau admin : la sidebar fixe de 220px devient une barre horizontale scrollable */
+  .admin-body { flex-direction: column; }
+  .admin-sidebar {
+    width: 100% !important; display: flex; overflow-x: auto; overflow-y: hidden;
+    padding: 8px 10px; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.06);
+    -webkit-overflow-scrolling: touch; white-space: nowrap;
+  }
+  .admin-sidebar .sidebar-section { display: none; }
+  .admin-sidebar .sidebar-item {
+    flex-shrink: 0; padding: 8px 14px; border-left: none;
+    border-bottom: 3px solid transparent; border-radius: 8px 8px 0 0;
+  }
+  .admin-sidebar .sidebar-item.active { border-left-color: transparent; border-bottom-color: var(--lime); }
+  .admin-content { padding: 20px 16px; }
+  .admin-topbar { padding: 0 14px; flex-wrap: wrap; height: auto; min-height: 56px; gap: 8px; }
+  .admin-topbar-right { flex-wrap: wrap; }
+
+  /* Sections publiques avec gros padding fixe (60px) -> réduit pour ne pas manger l'espace utile */
+  .top-products, .site-footer, .page-content { padding-left: 20px !important; padding-right: 20px !important; }
+  .newsletter { margin-left: 16px !important; margin-right: 16px !important; padding: 40px 24px !important; }
+
+  /* Groupes de boutons : autoriser le retour à la ligne au lieu de déborder */
+  .game-list-actions, .nav-item-editor { flex-wrap: wrap; }
+
+  /* HERO : les flèches prev/next (centrées verticalement, position absolute) chevauchent
+     les boutons "Voir mes jeux / À propos" en bas du hero sur petit écran -> on les masque,
+     les points de pagination + le swipe tactile suffisent pour naviguer entre les slides. */
+  .hero-arrow { display: none !important; }
+  .hero-content { max-width: 100%; }
+  .hero-toggle-group { margin-top: 4px; }
+}
+@media (max-width: 480px) {
+  .admin-content { padding: 16px 12px; }
+  .btn-save-all, .btn-close-admin { padding: 8px 14px; font-size: 11px; }
+  .admin-section-title { font-size: 20px; }
+}
 </style>
 </head>
 <body>
@@ -1571,7 +1625,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <li><a onclick="showPage('my-list')" id="nav-my-list">My List</a></li>
   </ul>
     <div class="nav-right">
-    <div class="nav-search">
+    <div class="nav-search" onclick="toggleMobileSearch(event)">
       <i data-lucide="search"></i>
       <input id="game-search-input" type="search" placeholder="Rechercher un jeu" oninput="handleGameSearch(this.value)" onfocus="handleGameSearch(this.value)">
       <div class="search-results" id="search-results"></div>
@@ -3475,9 +3529,19 @@ function openSearchGame(index) {
   openGameModal(index);
 }
 document.addEventListener('click', (ev) => {
-  if (!ev.target.closest('.nav-search')) document.getElementById('search-results')?.classList.remove('open');
+  if (!ev.target.closest('.nav-search')) { document.getElementById('search-results')?.classList.remove('open'); document.querySelector('.nav-search')?.classList.remove('expanded'); }
   if (!ev.target.closest('.nav-icon-btn') && !ev.target.closest('.notifications-panel')) document.getElementById('notifications-panel')?.classList.remove('open');
 });
+function toggleMobileSearch(ev) {
+  if (window.innerWidth > 480) return;
+  const box = document.querySelector('.nav-search');
+  if (!box) return;
+  if (!box.classList.contains('expanded')) {
+    ev.preventDefault();
+    box.classList.add('expanded');
+    setTimeout(() => document.getElementById('game-search-input')?.focus(), 50);
+  }
+}
 // ===== NAVIGATION =====
 function showPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
