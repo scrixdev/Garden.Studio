@@ -842,46 +842,6 @@ footer {
 .toggle.on { background: var(--lime); }
 .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
 .toggle.on::after { left: 23px; }
-
-/* ===== Figma-style gradient / HSB color picker ===== */
-.grad-editor { user-select: none; }
-.grad-bar {
-  position: relative; height: 28px; border-radius: 8px; margin-top: 4px;
-  background-image: linear-gradient(45deg, #555 25%, transparent 25%), linear-gradient(-45deg, #555 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #555 75%), linear-gradient(-45deg, transparent 75%, #555 75%);
-  background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px;
-  border: 1px solid rgba(255,255,255,0.15); cursor: crosshair;
-}
-.grad-bar-fill { position: absolute; inset: 0; border-radius: 7px; pointer-events: none; }
-.grad-stops-layer { position: absolute; inset: 0; }
-.grad-stop-handle {
-  position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%;
-  border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.5);
-  transform: translate(-50%, -50%); cursor: grab; z-index: 1;
-}
-.grad-stop-handle.active { box-shadow: 0 0 0 2px var(--lime), 0 2px 6px rgba(0,0,0,0.5); z-index: 2; }
-.hsb-picker { margin-top: 12px; }
-.hsb-square {
-  position: relative; width: 100%; height: 140px; border-radius: 8px; cursor: crosshair;
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.hsb-square-white, .hsb-square-black { position: absolute; inset: 0; border-radius: 7px; pointer-events: none; }
-.hsb-square-white { background: linear-gradient(to right, #fff, rgba(255,255,255,0)); }
-.hsb-square-black { background: linear-gradient(to top, #000, rgba(0,0,0,0)); }
-.hsb-cursor {
-  position: absolute; width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.5); transform: translate(-50%, -50%); pointer-events: none;
-}
-.hsb-hue-slider {
-  position: relative; height: 14px; border-radius: 7px; margin-top: 10px; cursor: pointer;
-  background: linear-gradient(to right, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
-  border: 1px solid rgba(255,255,255,0.15);
-}
-.hsb-hue-cursor {
-  position: absolute; top: 50%; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.4); transform: translate(-50%, -50%); pointer-events: none;
-}
-.hsb-swatch { width: 36px; height: 36px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.2); flex-shrink: 0; }
-
 .toast {
   position: fixed; bottom: 30px; right: 30px; z-index: 99999;
   display: flex; align-items: center; gap: 14px;
@@ -1884,33 +1844,14 @@ window.fbSignOut      = async () => await signOut(auth);
                 <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetHeroColor()">Réinitialiser</button>
               </div>
               <div id="he-color-gradient-row" style="display:none;flex-direction:column;gap:10px">
-                <div class="grad-editor" data-prefix="he">
-                  <div class="grad-bar" id="he-grad-bar" onmousedown="onGradBarMouseDown(event,'he')">
-                    <div class="grad-bar-fill" id="he-grad-bar-fill"></div>
-                    <div class="grad-stops-layer" id="he-grad-stops-layer"></div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <input type="color" id="he-grad-from" value="#ff5f6d" oninput="updateHeroPreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <input type="color" id="he-grad-to" value="#ffc371" oninput="updateHeroPreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" class="form-input" id="he-grad-angle" value="90" min="0" max="360" style="max-width:70px" oninput="updateHeroPreview()">
+                    <span style="font-size:12px;color:var(--gray)">°</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
-                    <div style="display:flex;align-items:center;gap:6px">
-                      <input type="number" class="form-input" id="he-grad-angle" value="90" min="0" max="360" style="max-width:70px" oninput="onGradAngleInput('he')">
-                      <span style="font-size:12px;color:var(--gray)">° angle</span>
-                    </div>
-                    <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" id="he-grad-remove-btn" onclick="removeActiveGradStop('he')">Supprimer le point</button>
-                    <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetHeroGradient()">Réinitialiser</button>
-                  </div>
-                  <div class="hsb-picker">
-                    <div class="hsb-square" id="he-hsb-square" onmousedown="onHSBSquareDown(event,'he')">
-                      <div class="hsb-square-white"></div>
-                      <div class="hsb-square-black"></div>
-                      <div class="hsb-cursor" id="he-hsb-cursor"></div>
-                    </div>
-                    <div class="hsb-hue-slider" id="he-hsb-hue" onmousedown="onHueSliderDown(event,'he')">
-                      <div class="hsb-hue-cursor" id="he-hsb-hue-cursor"></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-                      <div class="hsb-swatch" id="he-hsb-swatch"></div>
-                      <input type="text" class="form-input" id="he-hsb-hex" value="#ff5f6d" style="max-width:110px" oninput="onHexInputChange('he')">
-                    </div>
-                  </div>
+                  <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetHeroGradient()">Réinitialiser</button>
                 </div>
                 <div id="he-grad-presets" style="display:flex;gap:8px;flex-wrap:wrap"></div>
               </div>
@@ -2099,33 +2040,14 @@ window.fbSignOut      = async () => await signOut(auth);
                 <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetGameColor()">Réinitialiser</button>
               </div>
               <div id="ge-color-gradient-row" style="display:none;flex-direction:column;gap:10px">
-                <div class="grad-editor" data-prefix="ge">
-                  <div class="grad-bar" id="ge-grad-bar" onmousedown="onGradBarMouseDown(event,'ge')">
-                    <div class="grad-bar-fill" id="ge-grad-bar-fill"></div>
-                    <div class="grad-stops-layer" id="ge-grad-stops-layer"></div>
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <input type="color" id="ge-grad-from" value="#ff5f6d" oninput="updateGameTitlePreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <input type="color" id="ge-grad-to" value="#ffc371" oninput="updateGameTitlePreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" class="form-input" id="ge-grad-angle" value="90" min="0" max="360" style="max-width:70px" oninput="updateGameTitlePreview()">
+                    <span style="font-size:12px;color:var(--gray)">°</span>
                   </div>
-                  <div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
-                    <div style="display:flex;align-items:center;gap:6px">
-                      <input type="number" class="form-input" id="ge-grad-angle" value="90" min="0" max="360" style="max-width:70px" oninput="onGradAngleInput('ge')">
-                      <span style="font-size:12px;color:var(--gray)">° angle</span>
-                    </div>
-                    <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" id="ge-grad-remove-btn" onclick="removeActiveGradStop('ge')">Supprimer le point</button>
-                    <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetGameGradient()">Réinitialiser</button>
-                  </div>
-                  <div class="hsb-picker">
-                    <div class="hsb-square" id="ge-hsb-square" onmousedown="onHSBSquareDown(event,'ge')">
-                      <div class="hsb-square-white"></div>
-                      <div class="hsb-square-black"></div>
-                      <div class="hsb-cursor" id="ge-hsb-cursor"></div>
-                    </div>
-                    <div class="hsb-hue-slider" id="ge-hsb-hue" onmousedown="onHueSliderDown(event,'ge')">
-                      <div class="hsb-hue-cursor" id="ge-hsb-hue-cursor"></div>
-                    </div>
-                    <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-                      <div class="hsb-swatch" id="ge-hsb-swatch"></div>
-                      <input type="text" class="form-input" id="ge-hsb-hex" value="#ff5f6d" style="max-width:110px" oninput="onHexInputChange('ge')">
-                    </div>
-                  </div>
+                  <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetGameGradient()">Réinitialiser</button>
                 </div>
                 <div id="ge-grad-presets" style="display:flex;gap:8px;flex-wrap:wrap"></div>
               </div>
@@ -2892,256 +2814,6 @@ function escapeHTML(value) {
 function escapeCSSValue(value) {
   return String(value || '').replace(/["<>]/g, '');
 }
-
-// ===== FIGMA-STYLE GRADIENT / HSB COLOR PICKER ENGINE =====
-// Etat d'édition en mémoire pour chaque éditeur de dégradé ("he" = hero, "ge" = jeu)
-const GRAD_STATE = {};
-
-function clampNum(v, min, max) { return Math.min(max, Math.max(min, v)); }
-function hexToRgb(hex) {
-  let h = String(hex || '#ffffff').replace('#', '');
-  if (h.length === 3) h = h.split('').map(c => c + c).join('');
-  const num = parseInt(h, 16) || 0;
-  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
-}
-function rgbToHex(r, g, b) {
-  return '#' + [r, g, b].map(v => clampNum(Math.round(v), 0, 255).toString(16).padStart(2, '0')).join('');
-}
-function rgbToHsv(r, g, b) {
-  r /= 255; g /= 255; b /= 255;
-  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
-  let h = 0;
-  if (d !== 0) {
-    if (max === r) h = ((g - b) / d) % 6;
-    else if (max === g) h = (b - r) / d + 2;
-    else h = (r - g) / d + 4;
-    h *= 60; if (h < 0) h += 360;
-  }
-  const s = max === 0 ? 0 : d / max;
-  return { h, s, v: max };
-}
-function hsvToRgb(h, s, v) {
-  const c = v * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = v - c;
-  let r = 0, g = 0, b = 0;
-  if (h < 60) [r, g, b] = [c, x, 0];
-  else if (h < 120) [r, g, b] = [x, c, 0];
-  else if (h < 180) [r, g, b] = [0, c, x];
-  else if (h < 240) [r, g, b] = [0, x, c];
-  else if (h < 300) [r, g, b] = [x, 0, c];
-  else [r, g, b] = [c, 0, x];
-  return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
-}
-function interpolateGradColor(stops, pos) {
-  const sorted = [...stops].sort((a, b) => a.pos - b.pos);
-  if (!sorted.length) return '#ffffff';
-  if (pos <= sorted[0].pos) return sorted[0].color;
-  if (pos >= sorted[sorted.length - 1].pos) return sorted[sorted.length - 1].color;
-  for (let i = 0; i < sorted.length - 1; i++) {
-    const a = sorted[i], b = sorted[i + 1];
-    if (pos >= a.pos && pos <= b.pos) {
-      const t = (pos - a.pos) / ((b.pos - a.pos) || 1);
-      const ca = hexToRgb(a.color), cb = hexToRgb(b.color);
-      return rgbToHex(ca.r + (cb.r - ca.r) * t, ca.g + (cb.g - ca.g) * t, ca.b + (cb.b - ca.b) * t);
-    }
-  }
-  return sorted[0].color;
-}
-// Construit un CSS linear-gradient() à partir de données SAUVEGARDÉES (jeu / hero en base),
-// avec repli sur l'ancien système à 2 couleurs (titleGradientFrom/To) si pas de "stops".
-function gradientCSSFromData(data) {
-  const angle = escapeCSSValue(String(data?.titleGradientAngle || 90));
-  let stops = (Array.isArray(data?.titleGradientStops) && data.titleGradientStops.length >= 2)
-    ? data.titleGradientStops
-    : [{ pos: 0, color: data?.titleGradientFrom || '#ff5f6d' }, { pos: 100, color: data?.titleGradientTo || '#ffc371' }];
-  const sorted = [...stops].sort((a, b) => a.pos - b.pos);
-  return `linear-gradient(${angle}deg, ${sorted.map(s => `${escapeCSSValue(s.color)} ${clampNum(Number(s.pos) || 0, 0, 100)}%`).join(', ')})`;
-}
-// Construit un CSS linear-gradient() à partir de l'état LIVE en cours d'édition dans le formulaire admin
-function gradientCSSFromState(prefix) {
-  const st = GRAD_STATE[prefix];
-  if (!st || !st.stops.length) return 'linear-gradient(90deg, #ff5f6d, #ffc371)';
-  const sorted = [...st.stops].sort((a, b) => a.pos - b.pos);
-  return `linear-gradient(${st.angle}deg, ${sorted.map(s => `${s.color} ${s.pos}%`).join(', ')})`;
-}
-// Initialise / réinitialise l'éditeur pour un préfixe donné à partir de données sauvegardées (ou null pour un nouvel élément)
-function initGradEditor(prefix, data) {
-  const stops = (data && Array.isArray(data.titleGradientStops) && data.titleGradientStops.length >= 2)
-    ? data.titleGradientStops.map(s => ({ pos: clampNum(Number(s.pos) || 0, 0, 100), color: s.color || '#ffffff' }))
-    : [
-        { pos: 0, color: (data && data.titleGradientFrom) || '#ff5f6d' },
-        { pos: 100, color: (data && data.titleGradientTo) || '#ffc371' }
-      ];
-  GRAD_STATE[prefix] = { stops, angle: (data && data.titleGradientAngle) || 90, active: 0 };
-  const angleInput = document.getElementById(prefix + '-grad-angle');
-  if (angleInput) angleInput.value = GRAD_STATE[prefix].angle;
-  renderGradBar(prefix);
-  renderHSBFromActive(prefix);
-}
-function renderGradBar(prefix) {
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  const sorted = [...st.stops].sort((a, b) => a.pos - b.pos);
-  const fillEl = document.getElementById(prefix + '-grad-bar-fill');
-  if (fillEl) fillEl.style.background = `linear-gradient(90deg, ${sorted.map(s => `${s.color} ${s.pos}%`).join(', ')})`;
-  const layer = document.getElementById(prefix + '-grad-stops-layer');
-  if (layer) {
-    layer.innerHTML = st.stops.map((s, i) =>
-      `<div class="grad-stop-handle ${i === st.active ? 'active' : ''}" style="left:${s.pos}%;background:${s.color}" onmousedown="onGradStopMouseDown(event,'${prefix}',${i})" title="${s.pos}%"></div>`
-    ).join('');
-  }
-  const removeBtn = document.getElementById(prefix + '-grad-remove-btn');
-  if (removeBtn) removeBtn.style.opacity = st.stops.length <= 2 ? '0.4' : '1';
-}
-function onGradStopMouseDown(e, prefix, i) {
-  e.stopPropagation(); e.preventDefault();
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  st.active = i;
-  renderGradBar(prefix);
-  renderHSBFromActive(prefix);
-  const bar = document.getElementById(prefix + '-grad-bar');
-  const onMove = (ev) => {
-    const rect = bar.getBoundingClientRect();
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const pos = clampNum(((clientX - rect.left) / rect.width) * 100, 0, 100);
-    st.stops[i].pos = Math.round(pos);
-    renderGradBar(prefix);
-    commitGrad(prefix);
-  };
-  const onUp = () => {
-    document.removeEventListener('mousemove', onMove);
-    document.removeEventListener('mouseup', onUp);
-  };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-}
-function onGradBarMouseDown(e, prefix) {
-  if (e.target.classList.contains('grad-stop-handle')) return;
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  const bar = document.getElementById(prefix + '-grad-bar');
-  const rect = bar.getBoundingClientRect();
-  const pos = clampNum(((e.clientX - rect.left) / rect.width) * 100, 0, 100);
-  const color = interpolateGradColor(st.stops, pos);
-  st.stops.push({ pos: Math.round(pos), color });
-  st.active = st.stops.length - 1;
-  renderGradBar(prefix);
-  renderHSBFromActive(prefix);
-  commitGrad(prefix);
-}
-function removeActiveGradStop(prefix) {
-  const st = GRAD_STATE[prefix];
-  if (!st || st.stops.length <= 2) { showToast('Minimum 2 points sur le dégradé'); return; }
-  st.stops.splice(st.active, 1);
-  st.active = Math.max(0, st.active - 1);
-  renderGradBar(prefix);
-  renderHSBFromActive(prefix);
-  commitGrad(prefix);
-}
-function onGradAngleInput(prefix) {
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  st.angle = parseInt(document.getElementById(prefix + '-grad-angle')?.value) || 0;
-  commitGrad(prefix);
-}
-function renderHSBFromActive(prefix) {
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  const stop = st.stops[st.active];
-  if (!stop) return;
-  const rgb = hexToRgb(stop.color);
-  const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-  updateHSBUI(prefix, hsv.h, hsv.s, hsv.v);
-  const hexInput = document.getElementById(prefix + '-hsb-hex');
-  if (hexInput) hexInput.value = stop.color;
-}
-function updateHSBUI(prefix, h, s, v) {
-  const square = document.getElementById(prefix + '-hsb-square');
-  const cursor = document.getElementById(prefix + '-hsb-cursor');
-  const hueCursor = document.getElementById(prefix + '-hsb-hue-cursor');
-  const swatch = document.getElementById(prefix + '-hsb-swatch');
-  if (!square) return;
-  const pureHue = hsvToRgb(h, 1, 1);
-  square.style.background = rgbToHex(pureHue.r, pureHue.g, pureHue.b);
-  if (cursor) { cursor.style.left = (s * 100) + '%'; cursor.style.top = ((1 - v) * 100) + '%'; }
-  if (hueCursor) hueCursor.style.left = (h / 360 * 100) + '%';
-  if (swatch) {
-    const rgb = hsvToRgb(h, s, v);
-    swatch.style.background = rgbToHex(rgb.r, rgb.g, rgb.b);
-  }
-}
-function onHSBSquareDown(e, prefix) {
-  e.preventDefault();
-  const square = document.getElementById(prefix + '-hsb-square');
-  const update = (ev) => {
-    const rect = square.getBoundingClientRect();
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const clientY = ev.touches ? ev.touches[0].clientY : ev.clientY;
-    const s = clampNum((clientX - rect.left) / rect.width, 0, 1);
-    const v = clampNum(1 - (clientY - rect.top) / rect.height, 0, 1);
-    applyHSBChange(prefix, null, s, v);
-  };
-  update(e);
-  const onMove = (ev) => update(ev);
-  const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-}
-function onHueSliderDown(e, prefix) {
-  e.preventDefault();
-  const slider = document.getElementById(prefix + '-hsb-hue');
-  const update = (ev) => {
-    const rect = slider.getBoundingClientRect();
-    const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const h = clampNum((clientX - rect.left) / rect.width, 0, 1) * 360;
-    applyHSBChange(prefix, h, null, null);
-  };
-  update(e);
-  const onMove = (ev) => update(ev);
-  const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('mouseup', onUp);
-}
-function applyHSBChange(prefix, h, s, v) {
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  const stop = st.stops[st.active];
-  if (!stop) return;
-  const rgb0 = hexToRgb(stop.color);
-  const hsv0 = rgbToHsv(rgb0.r, rgb0.g, rgb0.b);
-  const nh = h === null ? hsv0.h : h;
-  const ns = s === null ? hsv0.s : s;
-  const nv = v === null ? hsv0.v : v;
-  const rgb = hsvToRgb(nh, ns, nv);
-  const hex = rgbToHex(rgb.r, rgb.g, rgb.b);
-  stop.color = hex;
-  updateHSBUI(prefix, nh, ns, nv);
-  const hexInput = document.getElementById(prefix + '-hsb-hex');
-  if (hexInput) hexInput.value = hex;
-  renderGradBar(prefix);
-  commitGrad(prefix);
-}
-function onHexInputChange(prefix) {
-  const input = document.getElementById(prefix + '-hsb-hex');
-  const val = (input?.value || '').trim();
-  if (!/^#?[0-9a-fA-F]{6}$/.test(val)) return;
-  const hex = val.startsWith('#') ? val : '#' + val;
-  const st = GRAD_STATE[prefix];
-  if (!st) return;
-  const stop = st.stops[st.active];
-  if (!stop) return;
-  stop.color = hex;
-  const rgb = hexToRgb(hex);
-  const hsv = rgbToHsv(rgb.r, rgb.g, rgb.b);
-  updateHSBUI(prefix, hsv.h, hsv.s, hsv.v);
-  renderGradBar(prefix);
-  commitGrad(prefix);
-}
-function commitGrad(prefix) {
-  if (prefix === 'he') updateHeroPreview();
-  else updateGameTitlePreview();
-}
-
 function gameKey(g) { return (g && g.name ? g.name : '').toLowerCase().trim(); }
 function gameIndexByKey(key) { return games.findIndex(g => gameKey(g) === key); }
 function getGameIndexByName(name) { return games.findIndex(g => (g.name || '') === name); }
@@ -4352,7 +4024,7 @@ function heroTitleStyleCSS(h) {
   const scale = (parseInt(h.titleSize) || 100) / 100;
   const font = `font-family:${h.titleFont ? escapeCSSValue(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeCSSValue(String(h.titleWeight || '900'))};font-style:${h.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
   if (h.titleGradient) {
-    return `${font}background:${gradientCSSFromData(h)};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
+    return `${font}background:linear-gradient(${escapeCSSValue(String(h.titleGradientAngle || 90))}deg, ${escapeCSSValue(h.titleGradientFrom || '#ff5f6d')}, ${escapeCSSValue(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
   return `${font}color:${escapeCSSValue(h.titleColor || 'var(--white)')};`;
 }
@@ -4496,7 +4168,10 @@ function updateHeroPreview() {
   box.style.fontStyle = document.getElementById('he-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
   const isGradient = document.getElementById('he-gradient-toggle')?.classList.contains('on');
   if (isGradient) {
-    box.style.background = gradientCSSFromState('he');
+    const from = document.getElementById('he-grad-from')?.value || '#ff5f6d';
+    const to = document.getElementById('he-grad-to')?.value || '#ffc371';
+    const angle = document.getElementById('he-grad-angle')?.value || 90;
+    box.style.background = `linear-gradient(${angle}deg, ${from}, ${to})`;
     box.style.webkitBackgroundClip = 'text';
     box.style.backgroundClip = 'text';
     box.style.color = 'transparent';
@@ -4945,14 +4620,10 @@ function refreshGameOwnStyleInputsState() {
   const useHeroStyle = document.getElementById('ge-use-hero-style-toggle')?.classList.contains('on');
   const zone = document.getElementById('ge-own-style-zone');
   if (zone) zone.style.opacity = useHeroStyle ? '0.4' : '1';
-  ['ge-font-btn', 'ge-weight-btn', 'ge-size-btn', 'ge-title-color', 'ge-title-color-hex', 'ge-gradient-toggle', 'ge-grad-angle', 'ge-hsb-hex'].forEach(id => {
+  ['ge-font-btn', 'ge-weight-btn', 'ge-size-btn', 'ge-title-color', 'ge-title-color-hex', 'ge-gradient-toggle', 'ge-grad-from', 'ge-grad-to', 'ge-grad-angle'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.disabled = !!useHeroStyle;
     if (el && el.tagName === 'BUTTON') el.style.pointerEvents = useHeroStyle ? 'none' : '';
-  });
-  ['ge-grad-bar', 'ge-hsb-square', 'ge-hsb-hue'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.style.pointerEvents = useHeroStyle ? 'none' : '';
   });
 }
 function updateGameTitlePreview() {
@@ -4969,7 +4640,7 @@ function updateGameTitlePreview() {
     box.style.fontWeight = linkedHero.titleWeight || '900';
     box.style.fontStyle = linkedHero.titleItalic ? 'italic' : 'normal';
     if (linkedHero.titleGradient) {
-      box.style.background = gradientCSSFromData(linkedHero);
+      box.style.background = `linear-gradient(${linkedHero.titleGradientAngle || 90}deg, ${linkedHero.titleGradientFrom || '#ff5f6d'}, ${linkedHero.titleGradientTo || '#ffc371'})`;
       box.style.webkitBackgroundClip = 'text';
       box.style.backgroundClip = 'text';
       box.style.color = 'transparent';
@@ -4988,7 +4659,10 @@ function updateGameTitlePreview() {
   box.style.fontStyle = document.getElementById('ge-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
   const isGradient = document.getElementById('ge-gradient-toggle')?.classList.contains('on');
   if (isGradient) {
-    box.style.background = gradientCSSFromState('ge');
+    const from = document.getElementById('ge-grad-from')?.value || '#ff5f6d';
+    const to = document.getElementById('ge-grad-to')?.value || '#ffc371';
+    const angle = document.getElementById('ge-grad-angle')?.value || 90;
+    box.style.background = `linear-gradient(${angle}deg, ${from}, ${to})`;
     box.style.webkitBackgroundClip = 'text';
     box.style.backgroundClip = 'text';
     box.style.color = 'transparent';
@@ -5009,8 +4683,10 @@ function applyGameTitleStyleToForm(g) {
   document.getElementById('ge-gradient-toggle').classList.toggle('on', !!g?.titleGradient);
   document.getElementById('ge-color-solid-row').style.display = g?.titleGradient ? 'none' : 'flex';
   document.getElementById('ge-color-gradient-row').style.display = g?.titleGradient ? 'flex' : 'none';
-  initGradEditor('ge', g);
   if (g?.titleGradient) renderGameGradientPresets();
+  document.getElementById('ge-grad-from').value = g?.titleGradientFrom || '#ff5f6d';
+  document.getElementById('ge-grad-to').value = g?.titleGradientTo || '#ffc371';
+  document.getElementById('ge-grad-angle').value = g?.titleGradientAngle || 90;
   document.getElementById('ge-use-hero-style-toggle').classList.toggle('on', !!g?.useHeroTitleStyle);
   refreshGameHeroLinkRow();
   refreshGameOwnStyleInputsState();
@@ -5025,7 +4701,7 @@ function gameTitleStyleCSS(g) {
   const scale = (parseInt(g.titleSize) || 100) / 100;
   const font = `font-family:${g.titleFont ? escapeCSSValue(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeCSSValue(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
   if (g.titleGradient) {
-    return `${font}background:${gradientCSSFromData(g)};-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
+    return `${font}background:linear-gradient(${escapeCSSValue(String(g.titleGradientAngle || 90))}deg, ${escapeCSSValue(g.titleGradientFrom || '#ff5f6d')}, ${escapeCSSValue(g.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
   return `${font}color:${escapeCSSValue(g.titleColor || 'var(--white)')};`;
 }
