@@ -814,7 +814,7 @@ footer {
 .toggle-row:last-child { border-bottom: none; }
 .toggle-label { font-size: 13px; color: var(--white); }
 .hero-font-dropdown {
-  display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200;
+  display: none; position: fixed; z-index: 99999;
   max-height: 320px; overflow-y: auto; background: #15151a; border: 1px solid rgba(255,255,255,0.12);
   border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,0.55);
   scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent;
@@ -1791,17 +1791,14 @@ window.fbSignOut      = async () => await signOut(auth);
             <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne" oninput="updateHeroPreview()"></textarea>
           </div>
           <div class="form-row">
-            <div class="form-group">
+            <div class="form-group hero-font-picker" style="position:relative">
               <label class="form-label">Police du titre</label>
-              <div class="form-group hero-font-picker" style="position:relative">
-                <label class="form-label">Police du titre</label>
-                <button type="button" class="form-select" id="he-font-btn" onclick="toggleFontDropdown(event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
-                  <span id="he-font-btn-label">Barlow Condensed (défaut)</span>
-                  <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
-                </button>
-                <input type="hidden" id="he-font" value="'Barlow Condensed', sans-serif">
-                <div class="hero-font-dropdown" id="he-font-dropdown"></div>
-              </div>
+              <button type="button" class="form-select" id="he-font-btn" onclick="toggleFontDropdown(event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="he-font-btn-label">Barlow Condensed (défaut)</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="he-font" value="'Barlow Condensed', sans-serif">
+              <div class="hero-font-dropdown" id="he-font-dropdown"></div>
             </div>
             <div class="form-group">
               <label class="form-label">Graisse du titre</label>
@@ -3736,8 +3733,38 @@ function toggleFontDropdown(ev) {
   const dd = document.getElementById('he-font-dropdown');
   const willOpen = !dd.classList.contains('open');
   document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
-  if (willOpen) dd.classList.add('open');
+  if (willOpen) {
+    positionFontDropdown();
+    dd.classList.add('open');
+  }
 }
+function positionFontDropdown() {
+  const btn = document.getElementById('he-font-btn');
+  const dd = document.getElementById('he-font-dropdown');
+  if (!btn || !dd) return;
+  const rect = btn.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const maxH = 320;
+  dd.style.left = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  if (spaceBelow < maxH && rect.top > spaceBelow) {
+    dd.style.top = 'auto';
+    dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, rect.top - 12) + 'px';
+  } else {
+    dd.style.bottom = 'auto';
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, spaceBelow - 12) + 'px';
+  }
+}
+window.addEventListener('scroll', () => {
+  const dd = document.getElementById('he-font-dropdown');
+  if (dd && dd.classList.contains('open')) positionFontDropdown();
+}, true);
+window.addEventListener('resize', () => {
+  const dd = document.getElementById('he-font-dropdown');
+  if (dd && dd.classList.contains('open')) positionFontDropdown();
+});
 document.addEventListener('click', (e) => {
   const picker = document.querySelector('.hero-font-picker');
   if (picker && !picker.contains(e.target)) document.getElementById('he-font-dropdown')?.classList.remove('open');
