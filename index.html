@@ -720,7 +720,7 @@ footer {
   width: 60px; height: 50px; display: flex; align-items: center; justify-content: center;
   flex-shrink: 0; overflow: hidden; border-radius: 8px;
 }
-.game-list-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.game-list-thumb img, .game-list-thumb video { width: 100%; height: 100%; object-fit: cover; }
 .game-list-info { flex: 1; }
 .game-list-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
 .game-list-meta { font-size: 12px; color: var(--gray); }
@@ -1027,6 +1027,27 @@ window.fbUploadImage = async function(file, path) {
   const storageRef = ref(storage, path + '/' + Date.now() + '_' + file.name.replace(/\s+/g,'_'));
   const snap = await uploadBytes(storageRef, file);
   return await getDownloadURL(snap.ref);
+};
+
+// ===== MIGRATION : convertit les vieilles images base64 (stockées directement dans Firestore) en URLs Storage =====
+// Corrige automatiquement les données existantes qui font dépasser la limite de 1 Mo par document Firestore.
+window.fbMigrateBase64Fields = async function(arr, fields, folder) {
+  for (const item of arr) {
+    for (const f of fields) {
+      if (item && typeof item[f] === 'string' && item[f].startsWith('data:')) {
+        try {
+          const res = await fetch(item[f]);
+          const blob = await res.blob();
+          const ext = (blob.type.split('/')[1] || 'png').split('+')[0];
+          const storageRef = ref(storage, folder + '/' + Date.now() + '_' + Math.random().toString(36).slice(2) + '.' + ext);
+          const snap = await uploadBytes(storageRef, blob);
+          item[f] = await getDownloadURL(snap.ref);
+        } catch (e) {
+          console.error('Migration image → Storage échouée pour', f, e);
+        }
+      }
+    }
+  }
 };
 
 // ===== INIT DATA =====
@@ -2201,6 +2222,16 @@ async function saveData() {
   try {
     if (!window.fbSaveData) throw new Error('fbSaveData non disponible');
 
+    // Migration automatique : convertit toute image encore stockée en base64 (ancien système)
+    // en URL Firebase Storage, pour éviter de dépasser la limite de 1 Mo par document Firestore.
+    if (window.fbMigrateBase64Fields) {
+      try {
+        await window.fbMigrateBase64Fields(games, ['img'], 'game');
+        await window.fbMigrateBase64Fields(topGamers, ['img', 'banner'], 'gamer');
+        await window.fbMigrateBase64Fields(products, ['img'], 'product');
+      } catch (e) { console.error('Migration base64 échouée:', e); }
+    }
+
     // Sécurité : si tous les tableaux sont vides et qu'on avait des données avant,
     // c'est anormal — on refuse d'écraser Firebase avec des données vides
     const totalItems = products.length + games.length + topGamers.length;
@@ -3284,7 +3315,7 @@ async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
   // Upload hero-bg / hero-banner / staff (gamer, gamer-banner) vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
-  if (key === 'hero-bg' || key === 'hero-banner' || key === 'gamer' || key === 'gamer-banner') {
+  if (key === 'hero-bg' || key === 'hero-banner' || key === 'gamer' || key === 'gamer-banner' || key === 'game') {
     showToast('Upload en cours...');
     const isVideo = file.type.startsWith('video/');
     try {
@@ -3511,12 +3542,21 @@ function fillHeroGameSelect(selected) {
 function renderHeroList() {
   const list = document.getElementById('hero-list');
   if (!list) return;
-  list.innerHTML = heroSlides.map((h, i) => `
+  list.innerHTML = heroSlides.map((h, i) => {
+    const thumbMarkup = h.bg && !h.bgIsVideo
+      ? `<img src="${h.bg}" alt="">`
+      : h.bannerImg
+        ? `<img src="${h.bannerImg}" alt="">`
+        : h.bg && h.bgIsVideo
+          ? `<video src="${h.bg}" muted playsinline preload="metadata"></video>`
+          : ctrlIconHero;
+    return `
     <div class="game-list-item">
-      <div class="game-list-thumb" style="background:linear-gradient(135deg,#1a2a10,#0a1a20)">${h.bg && !h.bgIsVideo ? `<img src="${h.bg}" alt="">` : ctrlIconHero}</div>
+      <div class="game-list-thumb" style="background:linear-gradient(135deg,#1a2a10,#0a1a20)">${thumbMarkup}</div>
       <div class="game-list-info"><div class="game-list-name">${escapeHTML((h.title || 'Sans titre').split('\n')[0])}</div><div class="game-list-meta">Bannière #${i + 1}${h.gameName ? ' · ' + escapeHTML(h.gameName) : ''}</div></div>
       <div class="game-list-actions"><button class="btn-edit" onclick="editHeroSlide(${i})">Éditer</button><button class="btn-delete" onclick="deleteHeroSlide(${i})">Suppr</button></div>
-    </div>`).join('') || emptyStateHTML('Aucune bannière hero. Ajoute-en une !');
+    </div>`;
+  }).join('') || emptyStateHTML('Aucune bannière hero. Ajoute-en une !');
   const title = document.getElementById('hero-card-title');
   if (title) title.textContent = `Bannières (${heroSlides.length})`;
 }
