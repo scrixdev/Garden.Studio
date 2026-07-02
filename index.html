@@ -813,6 +813,25 @@ footer {
 .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .toggle-row:last-child { border-bottom: none; }
 .toggle-label { font-size: 13px; color: var(--white); }
+.hero-font-dropdown {
+  display: none; position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200;
+  max-height: 320px; overflow-y: auto; background: #15151a; border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px; box-shadow: 0 16px 40px rgba(0,0,0,0.55);
+  scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) transparent;
+}
+.hero-font-dropdown.open { display: block; }
+.hero-font-dropdown::-webkit-scrollbar { width: 7px; }
+.hero-font-dropdown::-webkit-scrollbar-track { background: transparent; }
+.hero-font-dropdown::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 8px; }
+.hero-font-dropdown::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+.hero-font-group-label {
+  position: sticky; top: 0; padding: 8px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; color: var(--gray); background: #1c1c22; border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.hero-font-option { padding: 11px 14px; font-size: 17px; color: var(--white); cursor: pointer; transition: background 0.15s; }
+.hero-font-option:hover { background: rgba(var(--lime-rgb),0.1); }
+.hero-font-option.active { background: rgba(var(--lime-rgb),0.16); color: var(--lime); }
+
 .toggle { width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; position: relative; transition: background 0.2s; border: none; }
 .toggle.on { background: var(--lime); }
 .toggle::after { content: ''; position: absolute; width: 18px; height: 18px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: left 0.2s; }
@@ -1769,89 +1788,24 @@ window.fbSignOut      = async () => await signOut(auth);
           </div>
           <div class="form-group">
             <label class="form-label">Titre principal</label>
-            <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne"></textarea>
+            <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne" oninput="updateHeroPreview()"></textarea>
           </div>
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Police du titre</label>
-              <select class="form-select" id="he-font">
-                <option value="'Barlow Condensed', sans-serif">Barlow Condensed (défaut)</option>
-                <optgroup label="Impact / Bold">
-                  <option value="'Anton', sans-serif">Anton</option>
-                  <option value="'Bebas Neue', sans-serif">Bebas Neue</option>
-                  <option value="'Oswald', sans-serif">Oswald</option>
-                  <option value="'Montserrat', sans-serif">Montserrat</option>
-                  <option value="'Poppins', sans-serif">Poppins</option>
-                  <option value="'Kanit', sans-serif">Kanit</option>
-                  <option value="'Archivo Black', sans-serif">Archivo Black</option>
-                  <option value="'Alfa Slab One', sans-serif">Alfa Slab One</option>
-                  <option value="'Titan One', sans-serif">Titan One</option>
-                  <option value="'Big Shoulders Display', sans-serif">Big Shoulders Display</option>
-                  <option value="'Fjalla One', sans-serif">Fjalla One</option>
-                  <option value="'Staatliches', sans-serif">Staatliches</option>
-                  <option value="'Squada One', sans-serif">Squada One</option>
-                  <option value="'Passion One', sans-serif">Passion One</option>
-                </optgroup>
-                <optgroup label="Gaming / Futuriste">
-                  <option value="'Russo One', sans-serif">Russo One (gaming)</option>
-                  <option value="'Orbitron', sans-serif">Orbitron (futuriste)</option>
-                  <option value="'Audiowide', sans-serif">Audiowide</option>
-                  <option value="'Chakra Petch', sans-serif">Chakra Petch</option>
-                  <option value="'Rajdhani', sans-serif">Rajdhani</option>
-                  <option value="'Exo 2', sans-serif">Exo 2</option>
-                  <option value="'Bungee', sans-serif">Bungee</option>
-                  <option value="'Bungee Inline', sans-serif">Bungee Inline</option>
-                  <option value="'Bungee Shade', sans-serif">Bungee Shade</option>
-                  <option value="'Bungee Outline', sans-serif">Bungee Outline</option>
-                  <option value="'Faster One', sans-serif">Faster One</option>
-                  <option value="'Wallpoet', sans-serif">Wallpoet</option>
-                  <option value="'Saira Condensed', sans-serif">Saira Condensed</option>
-                  <option value="'Khand', sans-serif">Khand</option>
-                  <option value="'Teko', sans-serif">Teko</option>
-                  <option value="'Michroma', sans-serif">Michroma</option>
-                  <option value="'Electrolize', sans-serif">Electrolize</option>
-                  <option value="'Aldrich', sans-serif">Aldrich</option>
-                  <option value="'Zen Dots', sans-serif">Zen Dots</option>
-                  <option value="'Iceland', sans-serif">Iceland</option>
-                  <option value="'Turret Road', sans-serif">Turret Road</option>
-                  <option value="'Space Grotesk', sans-serif">Space Grotesk</option>
-                </optgroup>
-                <optgroup label="Rétro / Arcade">
-                  <option value="'Press Start 2P', monospace">Press Start 2P (pixel)</option>
-                  <option value="'Bangers', sans-serif">Bangers (comic)</option>
-                  <option value="'Righteous', sans-serif">Righteous</option>
-                  <option value="'Monoton', sans-serif">Monoton (néon)</option>
-                </optgroup>
-                <optgroup label="Horreur / Sombre">
-                  <option value="'Creepster', sans-serif">Creepster</option>
-                  <option value="'Metal Mania', sans-serif">Metal Mania</option>
-                  <option value="'Black Ops One', sans-serif">Black Ops One (militaire)</option>
-                  <option value="'Nosifer', sans-serif">Nosifer</option>
-                  <option value="'Butcherman', sans-serif">Butcherman</option>
-                  <option value="'Eater', sans-serif">Eater</option>
-                  <option value="'Fascinate', sans-serif">Fascinate</option>
-                  <option value="'UnifrakturMaguntia', serif">UnifrakturMaguntia (gothique)</option>
-                </optgroup>
-                <optgroup label="Fantasy / Épique">
-                  <option value="'Cinzel', serif">Cinzel</option>
-                  <option value="'Cinzel Decorative', serif">Cinzel Decorative</option>
-                  <option value="'Pirata One', serif">Pirata One (médiéval)</option>
-                  <option value="'Playfair Display', serif">Playfair Display</option>
-                  <option value="'Abril Fatface', serif">Abril Fatface</option>
-                  <option value="'Vast Shadow', serif">Vast Shadow</option>
-                  <option value="'Rye', serif">Rye (western)</option>
-                </optgroup>
-                <optgroup label="Manuscrite / Casual">
-                  <option value="'Permanent Marker', sans-serif">Permanent Marker</option>
-                  <option value="'Caveat', cursive">Caveat</option>
-                  <option value="'Shadows Into Light', cursive">Shadows Into Light</option>
-                  <option value="'Special Elite', monospace">Special Elite (machine à écrire)</option>
-                </optgroup>
-              </select>
+              <div class="form-group hero-font-picker" style="position:relative">
+                <label class="form-label">Police du titre</label>
+                <button type="button" class="form-select" id="he-font-btn" onclick="toggleFontDropdown(event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                  <span id="he-font-btn-label">Barlow Condensed (défaut)</span>
+                  <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+                </button>
+                <input type="hidden" id="he-font" value="'Barlow Condensed', sans-serif">
+                <div class="hero-font-dropdown" id="he-font-dropdown"></div>
+              </div>
             </div>
             <div class="form-group">
               <label class="form-label">Graisse du titre</label>
-              <select class="form-select" id="he-weight">
+              <select class="form-select" id="he-weight" onchange="updateHeroPreview()">
                 <option value="300">Light</option>
                 <option value="400">Regular</option>
                 <option value="500">Medium</option>
@@ -1875,6 +1829,10 @@ window.fbSignOut      = async () => await signOut(auth);
                 <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetHeroColor()">Réinitialiser</button>
               </div>
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aperçu en direct</label>
+            <div id="he-live-preview" style="background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:24px 20px;text-align:center;overflow:hidden;word-break:break-word;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:normal;color:#ffffff;font-size:clamp(22px,4vw,38px);text-transform:uppercase;line-height:1.05">Nom du jeu</div>
           </div>
           <div class="form-row">
             <div class="form-group">
@@ -3685,19 +3643,142 @@ function renderHeroList() {
   const title = document.getElementById('hero-card-title');
   if (title) title.textContent = `Bannières (${heroSlides.length})`;
 }
+const HERO_FONTS = [
+  { group: null, options: [ { value: "'Barlow Condensed', sans-serif", label: "Barlow Condensed (défaut)" } ] },
+  { group: "Impact / Bold", options: [
+    { value: "'Anton', sans-serif", label: "Anton" },
+    { value: "'Bebas Neue', sans-serif", label: "Bebas Neue" },
+    { value: "'Oswald', sans-serif", label: "Oswald" },
+    { value: "'Montserrat', sans-serif", label: "Montserrat" },
+    { value: "'Poppins', sans-serif", label: "Poppins" },
+    { value: "'Kanit', sans-serif", label: "Kanit" },
+    { value: "'Archivo Black', sans-serif", label: "Archivo Black" },
+    { value: "'Alfa Slab One', sans-serif", label: "Alfa Slab One" },
+    { value: "'Titan One', sans-serif", label: "Titan One" },
+    { value: "'Big Shoulders Display', sans-serif", label: "Big Shoulders Display" },
+    { value: "'Fjalla One', sans-serif", label: "Fjalla One" },
+    { value: "'Staatliches', sans-serif", label: "Staatliches" },
+    { value: "'Squada One', sans-serif", label: "Squada One" },
+    { value: "'Passion One', sans-serif", label: "Passion One" }
+  ]},
+  { group: "Gaming / Futuriste", options: [
+    { value: "'Russo One', sans-serif", label: "Russo One (gaming)" },
+    { value: "'Orbitron', sans-serif", label: "Orbitron (futuriste)" },
+    { value: "'Audiowide', sans-serif", label: "Audiowide" },
+    { value: "'Chakra Petch', sans-serif", label: "Chakra Petch" },
+    { value: "'Rajdhani', sans-serif", label: "Rajdhani" },
+    { value: "'Exo 2', sans-serif", label: "Exo 2" },
+    { value: "'Bungee', sans-serif", label: "Bungee" },
+    { value: "'Bungee Inline', sans-serif", label: "Bungee Inline" },
+    { value: "'Bungee Shade', sans-serif", label: "Bungee Shade" },
+    { value: "'Bungee Outline', sans-serif", label: "Bungee Outline" },
+    { value: "'Faster One', sans-serif", label: "Faster One" },
+    { value: "'Wallpoet', sans-serif", label: "Wallpoet" },
+    { value: "'Saira Condensed', sans-serif", label: "Saira Condensed" },
+    { value: "'Khand', sans-serif", label: "Khand" },
+    { value: "'Teko', sans-serif", label: "Teko" },
+    { value: "'Michroma', sans-serif", label: "Michroma" },
+    { value: "'Electrolize', sans-serif", label: "Electrolize" },
+    { value: "'Aldrich', sans-serif", label: "Aldrich" },
+    { value: "'Zen Dots', sans-serif", label: "Zen Dots" },
+    { value: "'Iceland', sans-serif", label: "Iceland" },
+    { value: "'Turret Road', sans-serif", label: "Turret Road" },
+    { value: "'Space Grotesk', sans-serif", label: "Space Grotesk" }
+  ]},
+  { group: "Rétro / Arcade", options: [
+    { value: "'Press Start 2P', monospace", label: "Press Start 2P (pixel)" },
+    { value: "'Bangers', sans-serif", label: "Bangers (comic)" },
+    { value: "'Righteous', sans-serif", label: "Righteous" },
+    { value: "'Monoton', sans-serif", label: "Monoton (néon)" }
+  ]},
+  { group: "Horreur / Sombre", options: [
+    { value: "'Creepster', sans-serif", label: "Creepster" },
+    { value: "'Metal Mania', sans-serif", label: "Metal Mania" },
+    { value: "'Black Ops One', sans-serif", label: "Black Ops One (militaire)" },
+    { value: "'Nosifer', sans-serif", label: "Nosifer" },
+    { value: "'Butcherman', sans-serif", label: "Butcherman" },
+    { value: "'Eater', sans-serif", label: "Eater" },
+    { value: "'Fascinate', sans-serif", label: "Fascinate" },
+    { value: "'UnifrakturMaguntia', serif", label: "UnifrakturMaguntia (gothique)" }
+  ]},
+  { group: "Fantasy / Épique", options: [
+    { value: "'Cinzel', serif", label: "Cinzel" },
+    { value: "'Cinzel Decorative', serif", label: "Cinzel Decorative" },
+    { value: "'Pirata One', serif", label: "Pirata One (médiéval)" },
+    { value: "'Playfair Display', serif", label: "Playfair Display" },
+    { value: "'Abril Fatface', serif", label: "Abril Fatface" },
+    { value: "'Vast Shadow', serif", label: "Vast Shadow" },
+    { value: "'Rye', serif", label: "Rye (western)" }
+  ]},
+  { group: "Manuscrite / Casual", options: [
+    { value: "'Permanent Marker', sans-serif", label: "Permanent Marker" },
+    { value: "'Caveat', cursive", label: "Caveat" },
+    { value: "'Shadows Into Light', cursive", label: "Shadows Into Light" },
+    { value: "'Special Elite', monospace", label: "Special Elite (machine à écrire)" }
+  ]}
+];
+function findHeroFontLabel(value) {
+  for (const g of HERO_FONTS) { const f = g.options.find(o => o.value === value); if (f) return f.label; }
+  return value;
+}
+function renderHeroFontDropdown() {
+  const el = document.getElementById('he-font-dropdown');
+  if (!el) return;
+  el.innerHTML = HERO_FONTS.map(g => (g.group ? `<div class="hero-font-group-label">${escapeHTML(g.group)}</div>` : '') +
+    g.options.map(o => `<div class="hero-font-option" data-value="${escapeHTML(o.value)}" style="font-family:${escapeHTML(o.value)}">${escapeHTML(o.label)}</div>`).join('')
+  ).join('');
+  el.querySelectorAll('.hero-font-option').forEach(opt => {
+    opt.addEventListener('click', () => selectHeroFont(opt.getAttribute('data-value')));
+  });
+}
+function toggleFontDropdown(ev) {
+  if (ev) ev.stopPropagation();
+  const dd = document.getElementById('he-font-dropdown');
+  const willOpen = !dd.classList.contains('open');
+  document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (willOpen) dd.classList.add('open');
+}
+document.addEventListener('click', (e) => {
+  const picker = document.querySelector('.hero-font-picker');
+  if (picker && !picker.contains(e.target)) document.getElementById('he-font-dropdown')?.classList.remove('open');
+});
+function selectHeroFont(value) {
+  setHeroFontValue(value);
+  document.getElementById('he-font-dropdown').classList.remove('open');
+}
+function setHeroFontValue(value) {
+  document.getElementById('he-font').value = value;
+  document.getElementById('he-font-btn-label').textContent = findHeroFontLabel(value);
+  document.getElementById('he-font-btn-label').style.fontFamily = value;
+  document.querySelectorAll('.hero-font-option').forEach(opt => opt.classList.toggle('active', opt.getAttribute('data-value') === value));
+  updateHeroPreview();
+}
+function updateHeroPreview() {
+  const box = document.getElementById('he-live-preview');
+  if (!box) return;
+  const titleVal = (document.getElementById('he-title')?.value || 'Nom du jeu').split('\n')[0] || 'Nom du jeu';
+  box.textContent = titleVal;
+  box.style.fontFamily = document.getElementById('he-font')?.value || "'Barlow Condensed', sans-serif";
+  box.style.fontWeight = document.getElementById('he-weight')?.value || '900';
+  box.style.fontStyle = document.getElementById('he-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
+  box.style.color = document.getElementById('he-color')?.value || '#ffffff';
+}
 function toggleHeroItalic() {
   const btn = document.getElementById('he-italic-toggle');
   btn.classList.toggle('on');
+  updateHeroPreview();
 }
 function syncHeroColorFromHex(val) {
-  if (/^#[0-9a-fA-F]{6}$/.test(val)) document.getElementById('he-color').value = val;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) { document.getElementById('he-color').value = val; updateHeroPreview(); }
 }
 function syncHeroHexFromColor(val) {
   document.getElementById('he-color-hex').value = val;
+  updateHeroPreview();
 }
 function resetHeroColor() {
   document.getElementById('he-color').value = '#ffffff';
   document.getElementById('he-color-hex').value = '#ffffff';
+  updateHeroPreview();
 }
 function addHeroSlide() {
   fillHeroGameSelect(games[0]?.name || '');
@@ -3708,11 +3789,12 @@ function addHeroSlide() {
   document.getElementById('he-btn1page').value = 'games';
   document.getElementById('he-btn2').value = 'Studio';
   document.getElementById('he-btn2page').value = 'about';
-  document.getElementById('he-font').value = "'Barlow Condensed', sans-serif";
+  setHeroFontValue("'Barlow Condensed', sans-serif");
   document.getElementById('he-weight').value = '900';
   document.getElementById('he-italic-toggle').classList.remove('on');
   document.getElementById('he-color').value = '#ffffff';
   document.getElementById('he-color-hex').value = '#ffffff';
+  updateHeroPreview();
   document.getElementById('he-age').value = '';
   document.getElementById('he-genres').value = '';
   document.getElementById('he-index').value = -1;
@@ -3735,11 +3817,12 @@ function editHeroSlide(i) {
   document.getElementById('he-btn1page').value = h.btn1Page || 'games';
   document.getElementById('he-btn2').value = h.btn2 || '';
   document.getElementById('he-btn2page').value = h.btn2Page || 'about';
-  document.getElementById('he-font').value = h.titleFont || "'Barlow Condensed', sans-serif";
+  setHeroFontValue(h.titleFont || "'Barlow Condensed', sans-serif");
   document.getElementById('he-weight').value = h.titleWeight || '900';
   document.getElementById('he-italic-toggle').classList.toggle('on', !!h.titleItalic);
   document.getElementById('he-color').value = h.titleColor || '#ffffff';
   document.getElementById('he-color-hex').value = h.titleColor || '#ffffff';
+  updateHeroPreview();
   document.getElementById('he-age').value = h.ageLimit || '';
   document.getElementById('he-genres').value = h.genres || '';
   document.getElementById('he-index').value = i;
@@ -4653,6 +4736,7 @@ renderHeroSlides();
 renderNotifications();
 renderMyListPage();
 fillHeroGameSelect();
+renderHeroFontDropdown();
 (function initHeroHoverPause() {
   const heroEl = document.getElementById('home-hero');
   if (!heroEl) return;
