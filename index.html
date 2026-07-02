@@ -460,6 +460,11 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .stream-row.wide .game-card-thumb { aspect-ratio: 16 / 10; }
 .game-card-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .stream-card:hover .game-card-thumb { transform: scale(1.02); }
+
+/* ===== SKELETON SHIMMER (pendant le chargement des images) ===== */
+@keyframes gsShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
+.gs-skeleton { background-image: linear-gradient(100deg, #17171f 20%, #26262f 40%, #17171f 60%); background-size: 400px 100%; animation: gsShimmer 1.3s ease-in-out infinite; }
+.gs-skeleton img { opacity: 0 !important; }
 .game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; }
 .stream-card:hover .game-card-actions { opacity: 1; }
 .game-card-info { padding: 10px 2px 0; }
@@ -1175,6 +1180,8 @@ window.fbMigrateBase64Fields = async function(arr, fields, folder) {
 
 // ===== INIT DATA =====
 window._gsFirebaseReady = false;
+const _siteLoaderStart = Date.now();
+const SITE_LOADER_MIN_MS = 1200; // durée minimale d'affichage du loader, même si Firebase répond instantanément
 (async () => {
   try {
     // Nettoyage localStorage
@@ -1205,12 +1212,25 @@ window._gsFirebaseReady = false;
     // Marquer Firebase prêt APRÈS que tout est chargé
     window._gsFirebaseReady = true;
     console.log('✅ Firebase prêt — products:', window._products_count, 'games:', window._games_count, 'gamers:', window._gamers_count);
+    hideSiteLoader();
   } catch(e) {
     console.warn('❌ Firebase init erreur:', e);
     // Même en cas d'erreur partielle, marquer prêt pour ne pas bloquer l'UI
     window._gsFirebaseReady = true;
+    hideSiteLoader();
   }
 })();
+
+function hideSiteLoader() {
+  const elapsed = Date.now() - _siteLoaderStart;
+  const wait = Math.max(0, SITE_LOADER_MIN_MS - elapsed);
+  setTimeout(() => {
+    const el = document.getElementById('site-loader');
+    if (el) el.classList.add('hidden');
+  }, wait);
+}
+// Sécurité : si jamais Firebase ne répond pas et bloque, on masque quand même après 10s
+setTimeout(hideSiteLoader, 10000);
 
 // ===== SAVE =====
 window.fbSaveData = async (products, games, gamers) => {
@@ -1308,9 +1328,230 @@ window.fbSignOut      = async () => await signOut(auth);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
+
+/* ===== SITE LOADER ===== */
+#site-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: #0a0a0a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.5s ease, visibility 0.5s ease;
+}
+#site-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.loader {
+  --main-size: 4em;
+  --text-color: #ffffff;
+  --shine-color: #ffffff40;
+  --shadow-color: #aaaaaa;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  user-select: none;
+  position: relative;
+  font-size: var(--main-size);
+  font-weight: 900;
+  text-transform: uppercase;
+  color: var(--text-color);
+  width: 7.3em;
+  height: 1em;
+  filter: drop-shadow(0 0 0.05em var(--shine-color));
+}
+.loader .text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  position: absolute;
+}
+.loader .text:nth-child(1) {
+  clip-path: polygon(0% 0%, 11.11% 0%, 11.11% 100%, 0% 100%);
+  font-size: calc(var(--main-size) / 20);
+  margin-left: -2.1em;
+  opacity: 0.6;
+}
+.loader .text:nth-child(2) {
+  clip-path: polygon(11.11% 0%, 22.22% 0%, 22.22% 100%, 11.11% 100%);
+  font-size: calc(var(--main-size) / 16);
+  margin-left: -0.98em;
+  opacity: 0.7;
+}
+.loader .text:nth-child(3) {
+  clip-path: polygon(22.22% 0%, 33.33% 0%, 33.33% 100%, 22.22% 100%);
+  font-size: calc(var(--main-size) / 13);
+  margin-left: -0.33em;
+  opacity: 0.8;
+}
+.loader .text:nth-child(4) {
+  clip-path: polygon(33.33% 0%, 44.44% 0%, 44.44% 100%, 33.33% 100%);
+  font-size: calc(var(--main-size) / 11);
+  margin-left: -0.05em;
+  opacity: 0.9;
+}
+.loader .text:nth-child(5) {
+  clip-path: polygon(44.44% 0%, 55.55% 0%, 55.55% 100%, 44.44% 100%);
+  font-size: calc(var(--main-size) / 10);
+  margin-left: 0em;
+  opacity: 1;
+}
+.loader .text:nth-child(6) {
+  clip-path: polygon(55.55% 0%, 66.66% 0%, 66.66% 100%, 55.55% 100%);
+  font-size: calc(var(--main-size) / 11);
+  margin-left: 0.05em;
+  opacity: 0.9;
+}
+.loader .text:nth-child(7) {
+  clip-path: polygon(66.66% 0%, 77.77% 0%, 77.77% 100%, 66.66% 100%);
+  font-size: calc(var(--main-size) / 13);
+  margin-left: 0.33em;
+  opacity: 0.8;
+}
+.loader .text:nth-child(8) {
+  clip-path: polygon(77.77% 0%, 88.88% 0%, 88.88% 100%, 77.77% 100%);
+  font-size: calc(var(--main-size) / 16);
+  margin-left: 0.98em;
+  opacity: 0.7;
+}
+.loader .text:nth-child(9) {
+  clip-path: polygon(88.88% 0%, 100% 0%, 100% 100%, 88.88% 100%);
+  font-size: calc(var(--main-size) / 20);
+  margin-left: 2.1em;
+  opacity: 0.6;
+}
+.loader .text span {
+  animation:
+    gsLoaderScrolling 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite,
+    gsLoaderShadow 2s cubic-bezier(0.1, 0.6, 0.9, 0.4) infinite;
+}
+.loader .text:nth-child(1) span {
+  background: linear-gradient(to right, var(--text-color) 4%, var(--shadow-color) 7%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(2) span {
+  background: linear-gradient(to right, var(--text-color) 9%, var(--shadow-color) 13%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(3) span {
+  background: linear-gradient(to right, var(--text-color) 15%, var(--shadow-color) 18%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(4) span {
+  background: linear-gradient(to right, var(--text-color) 20%, var(--shadow-color) 23%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(6) span {
+  background: linear-gradient(to right, var(--shadow-color) 29%, var(--text-color) 32%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(7) span {
+  background: linear-gradient(to right, var(--shadow-color) 34%, var(--text-color) 37%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(8) span {
+  background: linear-gradient(to right, var(--shadow-color) 39%, var(--text-color) 42%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .text:nth-child(9) span {
+  background: linear-gradient(to right, var(--shadow-color) 45%, var(--text-color) 48%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
+.loader .line {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  height: 0.05em;
+  width: calc(var(--main-size) / 2);
+  margin-top: 0.9em;
+  border-radius: 0.05em;
+}
+.loader .line::before {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-color: var(--text-color);
+  opacity: 0.3;
+}
+.loader .line::after {
+  content: "";
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-color: var(--text-color);
+  border-radius: 0.05em;
+  transform: translateX(-90%);
+  animation: gsLoaderWobble 2s cubic-bezier(0.5, 0.8, 0.5, 0.2) infinite;
+}
+@keyframes gsLoaderWobble {
+  0% { transform: translateX(-90%); }
+  50% { transform: translateX(90%); }
+  100% { transform: translateX(-90%); }
+}
+@keyframes gsLoaderScrolling {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes gsLoaderShadow {
+  0% { background-position: -98% 0; }
+  100% { background-position: 102% 0; }
+}
+@media (max-width: 600px) {
+  .loader { --main-size: 2.4em; }
+}
 </style>
 </head>
 <body>
+
+<!-- ===== SITE LOADER ===== -->
+<div id="site-loader">
+  <div class="loader">
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="text"><span>Loading</span></div>
+    <div class="line"></div>
+  </div>
+</div>
 
 <!-- ===== CURTAIN TRANSITION PANELS ===== -->
 <div class="curtain-panel curtain-left" id="curtain-left"></div>
@@ -1909,7 +2150,7 @@ window.fbSignOut      = async () => await signOut(auth);
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('hero',null)">Éditer Hero</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('games',null)">Gérer Jeux</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('top-gamers-admin',null)">Gérer Gamers</button>
-            <button class="btn-primary" style="font-size:12px;padding:10px 18px;background:#c0392b" onclick="confirmResetAllPlays()">Réinitialiser compteurs joueurs</button>
+            <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllPlays()"><i data-lucide="trash-2"></i> Réinitialiser compteurs joueurs</button>
           </div>
         </div>
       </div>
@@ -3694,7 +3935,7 @@ function renderProductsOnSite() {
   if (!products.length) { grid.innerHTML = emptyStateHTML('Aucun produit disponible pour l\'instant.'); return; }
   grid.innerHTML = products.map((p, i) => `
     <div class="product-card" onclick="openProductModal(${i})" style="cursor:pointer">
-      <div class="product-thumb">${p.img ? `<img src="${p.img}" alt="${escapeHTML(p.title)}" loading="lazy">` : gameIcon}</div>
+      <div class="product-thumb${p.img ? ' gs-skeleton' : ''}">${p.img ? `<img src="${p.img}" alt="${escapeHTML(p.title)}" loading="lazy" style="opacity:0;transition:opacity .35s ease" onload="this.style.opacity=1;this.closest('.product-thumb').classList.remove('gs-skeleton')" onerror="this.closest('.product-thumb').classList.remove('gs-skeleton')">` : gameIcon}</div>
       <div class="product-info"><h3>${escapeHTML(p.title)}</h3><p>${escapeHTML(p.desc)}</p></div>
     </div>`).join('');
 }
@@ -3704,7 +3945,7 @@ function renderStreamCard(g, i, wide, extraActionHTML) {
   const vote = userVoteOn(g);
   const hasFav = isFavorited(i);
   const art = g.img
-    ? `<img src="${g.img}" alt="${escapeHTML(g.name)}" loading="lazy">`
+    ? `<img src="${g.img}" alt="${escapeHTML(g.name)}" loading="lazy" style="opacity:0;transition:opacity .35s ease" onload="this.style.opacity=1;this.closest('.game-card-thumb').classList.remove('gs-skeleton')" onerror="this.closest('.game-card-thumb').classList.remove('gs-skeleton')">`
     : `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:${g.color}"><div class="gs-circle b"></div><div class="gs-circle c"></div></div>`;
   const status = gameStatusLabel(g.status);
   const actions = `
@@ -3712,7 +3953,7 @@ function renderStreamCard(g, i, wide, extraActionHTML) {
         <button class="card-icon-btn ${(hasList || hasFav) ? 'active' : ''}" onclick="event.stopPropagation();openLibraryPicker(${i},event)" title="Ajouter"><i data-lucide="plus"></i></button>
         <button class="card-icon-btn ${vote === 'like' ? 'like-active' : ''}" onclick="event.stopPropagation();toggleVote(${i},'like',event)" title="Like"><i data-lucide="thumbs-up"></i></button>`;
   return `<div class="stream-card" onclick="openGameModal(${i})">
-    <div class="game-card-thumb">
+    <div class="game-card-thumb${g.img ? ' gs-skeleton' : ''}">
       ${art}
       <span class="card-badge">${escapeHTML(status)}</span>
       <div class="game-card-actions" onclick="event.stopPropagation()">${actions}</div>
