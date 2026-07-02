@@ -2598,6 +2598,7 @@ let currentHeroSlide = 0;
 let currentLibraryTab = 'list';
 let userLibrary = createEmptyLibrary();
 let _heroAutoplayTimer = null;
+let _heroPaused = false;
 
 // ===== CALLBACKS POUR FIREBASE (évite window.arr = arr qui casse les refs) =====
 window._gsSetProducts = (data) => {
@@ -3554,7 +3555,15 @@ function renderHeroSlides() {
 function goToHeroSlide(i) { currentHeroSlide = i; renderHeroSlides(); }
 function nextHeroSlide() { currentHeroSlide = (currentHeroSlide + 1) % heroSlides.length; renderHeroSlides(); }
 function prevHeroSlide() { currentHeroSlide = (currentHeroSlide - 1 + heroSlides.length) % heroSlides.length; renderHeroSlides(); }
-function resetHeroAutoplay() { if (_heroAutoplayTimer) clearInterval(_heroAutoplayTimer); if (heroSlides.length > 1) _heroAutoplayTimer = setInterval(nextHeroSlide, 7000); }
+function resetHeroAutoplay() {
+  if (_heroAutoplayTimer) { clearTimeout(_heroAutoplayTimer); clearInterval(_heroAutoplayTimer); _heroAutoplayTimer = null; }
+  if (heroSlides.length <= 1 || _heroPaused) return;
+  const IMAGE_DURATION = 7000;
+  const MAX_VIDEO_DURATION = 20000; // la vidéo boucle tant que ce délai n'est pas atteint
+  const activeVideo = document.querySelector('#hero-slides-container .hero-slide.active .hero-bg-media video');
+  const advance = () => { if (!_heroPaused) nextHeroSlide(); };
+  _heroAutoplayTimer = setTimeout(advance, activeVideo ? MAX_VIDEO_DURATION : IMAGE_DURATION);
+}
 async function saveHeroSlides() { if (!window.fbSaveHeroes) return; await window.fbSaveHeroes(heroSlides); }
 function fillHeroGameSelect(selected) {
   const select = document.getElementById('he-game');
@@ -4527,6 +4536,12 @@ renderHeroSlides();
 renderNotifications();
 renderMyListPage();
 fillHeroGameSelect();
+(function initHeroHoverPause() {
+  const heroEl = document.getElementById('home-hero');
+  if (!heroEl) return;
+  heroEl.addEventListener('mouseenter', () => { _heroPaused = true; if (_heroAutoplayTimer) { clearTimeout(_heroAutoplayTimer); clearInterval(_heroAutoplayTimer); _heroAutoplayTimer = null; } });
+  heroEl.addEventListener('mouseleave', () => { _heroPaused = false; resetHeroAutoplay(); });
+})();
 document.addEventListener('DOMContentLoaded', () => { if (window.lucide) lucide.createIcons(); });
 setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
 </script>
