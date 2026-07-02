@@ -304,7 +304,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .hero-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 16px; }
 .hero-genre-tag { padding: 5px 12px; border-radius: 999px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); font-size: 12px; font-weight: 700; letter-spacing: 0.3px; color: rgba(255,255,255,0.85); }
 .hero-age-tag { padding: 5px 10px; border-radius: 5px; background: rgba(var(--lime-rgb),0.16); border: 1px solid rgba(var(--lime-rgb),0.5); color: var(--lime); font-size: 12px; font-weight: 800; }
-.hero-title { font-size: clamp(46px, 6.2vw, 76px); letter-spacing: 0; margin-bottom: 18px; }
+.hero-title { font-size: calc(clamp(46px, 6.2vw, 76px) * var(--title-scale, 1)); letter-spacing: 0; margin-bottom: 18px; }
 .hero-desc { font-size: 16px; max-width: 520px; margin-bottom: 24px; color: rgba(255,255,255,0.78); }
 .hero-btns { flex-wrap: wrap; align-items: center; }
 .hero-overlay { background: linear-gradient(to right, rgba(5,6,8,0.62) 0%, rgba(5,6,8,0.32) 42%, rgba(5,6,8,0.05) 100%); }
@@ -566,7 +566,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .modal-kicker { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; letter-spacing: 2px; font-size: 13px; text-transform: uppercase; color: rgba(255,255,255,0.7); margin-bottom: 6px; }
 .modal-byline { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 14px; }
 .modal-title {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: 46px;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 900; font-size: calc(46px * var(--title-scale, 1));
   text-transform: uppercase; line-height: 1; margin-bottom: 14px;
 }
 .modal-badges { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
@@ -828,9 +828,15 @@ footer {
   position: sticky; top: 0; padding: 8px 14px; font-size: 11px; font-weight: 800; letter-spacing: 1px;
   text-transform: uppercase; color: var(--gray); background: #1c1c22; border-bottom: 1px solid rgba(255,255,255,0.06);
 }
-.hero-font-option { padding: 11px 14px; font-size: 17px; color: var(--white); cursor: pointer; transition: background 0.15s; }
+.hero-font-option { padding: 11px 14px 11px 34px; position: relative; font-size: 17px; color: var(--white); cursor: pointer; transition: background 0.15s; }
 .hero-font-option:hover { background: rgba(var(--lime-rgb),0.1); }
 .hero-font-option.active { background: rgba(var(--lime-rgb),0.16); color: var(--lime); }
+.hero-font-option.active::before { content: "✓"; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-weight: 800; color: var(--lime); font-size: 14px; }
+.hero-font-italic-row {
+  display: flex; align-items: center; justify-content: space-between; padding: 12px 14px;
+  border-top: 1px solid rgba(255,255,255,0.08); background: #1c1c22; position: sticky; bottom: 0;
+  font-size: 13px; font-weight: 600; color: var(--white);
+}
 
 .toggle { width: 44px; height: 24px; background: rgba(255,255,255,0.1); border-radius: 12px; cursor: pointer; position: relative; transition: background 0.2s; border: none; }
 .toggle.on { background: var(--lime); }
@@ -1801,23 +1807,25 @@ window.fbSignOut      = async () => await signOut(auth);
               <input type="hidden" id="he-font" value="'Barlow Condensed', sans-serif">
               <div class="hero-font-dropdown" id="he-font-dropdown"></div>
             </div>
-            <div class="form-group">
+            <div class="form-group weight-picker" style="position:relative">
               <label class="form-label">Graisse du titre</label>
-              <select class="form-select" id="he-weight" onchange="updateHeroPreview()">
-                <option value="300">Light</option>
-                <option value="400">Regular</option>
-                <option value="500">Medium</option>
-                <option value="600">SemiBold</option>
-                <option value="700">Bold</option>
-                <option value="800">ExtraBold</option>
-                <option value="900" selected>Black</option>
-              </select>
+              <button type="button" class="form-select" id="he-weight-btn" onclick="toggleWeightDropdown('he',event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="he-weight-btn-label">Black</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="he-weight" value="900">
+              <div class="hero-font-dropdown" id="he-weight-dropdown"></div>
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="display:flex;align-items:center;gap:10px">
-              <label class="form-label" style="margin:0">Italique</label>
-              <button type="button" class="toggle" id="he-italic-toggle" onclick="toggleHeroItalic()"></button>
+            <div class="form-group size-picker" style="position:relative">
+              <label class="form-label">Taille du titre</label>
+              <button type="button" class="form-select" id="he-size-btn" onclick="toggleSizeDropdown('he',event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="he-size-btn-label">100% (Taille de base)</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="he-size" value="100">
+              <div class="hero-font-dropdown" id="he-size-dropdown"></div>
             </div>
             <div class="form-group">
               <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -1906,10 +1914,6 @@ window.fbSignOut      = async () => await signOut(auth);
             <label class="form-label">Jeu lie au hero</label>
             <select class="form-select" id="he-game" onchange="onHeroGameSelectChange()"></select>
           </div>
-          <div class="form-group" id="he-use-game-style-row" style="display:none;flex-direction:row;align-items:center;gap:10px">
-            <button type="button" class="toggle" id="he-use-game-style-toggle" onclick="toggleUseGameStyle()"></button>
-            <label class="form-label" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--white)">Utiliser le style (police/couleur) du jeu lié</label>
-          </div>
 <div class="form-group">
             <label class="form-label">Bande-annonce (vidéo ou image de fond)</label>
             <div class="img-upload-zone">
@@ -1959,7 +1963,7 @@ window.fbSignOut      = async () => await signOut(auth);
             <button class="btn-delete" onclick="cancelGameEdit()"><i data-lucide="x"></i> Annuler</button>
           </div>
           <div class="form-row">
-            <div class="form-group"><label class="form-label">Nom du jeu</label><input type="text" class="form-input" id="ge-name"></div>
+            <div class="form-group"><label class="form-label">Nom du jeu</label><input type="text" class="form-input" id="ge-name" oninput="refreshGameHeroLinkRow(); updateGameTitlePreview();"></div>
             <div class="form-group">
               <label class="form-label">Statut</label>
               <select class="form-select" id="ge-status">
@@ -1981,6 +1985,14 @@ window.fbSignOut      = async () => await signOut(auth);
             <label class="form-label"><i data-lucide="link"></i> Lien du jeu (URL)</label>
             <input type="url" class="form-input" id="ge-link" placeholder="https://store.steampowered.com/...">
           </div>
+          <div class="form-group" id="ge-use-hero-style-row" style="display:none;flex-direction:column;gap:6px">
+            <div style="display:flex;align-items:center;gap:10px">
+              <button type="button" class="toggle" id="ge-use-hero-style-toggle" onclick="toggleUseHeroStyle()"></button>
+              <label class="form-label" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--white)">Utiliser le style (police/couleur) du hero lié</label>
+            </div>
+            <div id="ge-hero-style-info" style="font-size:11px;color:var(--gray)"></div>
+          </div>
+          <div id="ge-own-style-zone" style="transition:opacity 0.2s">
           <div class="form-row">
             <div class="form-group hero-font-picker" style="position:relative">
               <label class="form-label">Police du titre</label>
@@ -1991,23 +2003,25 @@ window.fbSignOut      = async () => await signOut(auth);
               <input type="hidden" id="ge-font" value="'Barlow Condensed', sans-serif">
               <div class="hero-font-dropdown" id="ge-font-dropdown"></div>
             </div>
-            <div class="form-group">
+            <div class="form-group weight-picker" style="position:relative">
               <label class="form-label">Graisse du titre</label>
-              <select class="form-select" id="ge-weight" onchange="updateGameTitlePreview()">
-                <option value="300">Light</option>
-                <option value="400">Regular</option>
-                <option value="500">Medium</option>
-                <option value="600">SemiBold</option>
-                <option value="700">Bold</option>
-                <option value="800">ExtraBold</option>
-                <option value="900" selected>Black</option>
-              </select>
+              <button type="button" class="form-select" id="ge-weight-btn" onclick="toggleWeightDropdown('ge',event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="ge-weight-btn-label">Black</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="ge-weight" value="900">
+              <div class="hero-font-dropdown" id="ge-weight-dropdown"></div>
             </div>
           </div>
           <div class="form-row">
-            <div class="form-group" style="display:flex;align-items:center;gap:10px">
-              <label class="form-label" style="margin:0">Italique</label>
-              <button type="button" class="toggle" id="ge-italic-toggle" onclick="toggleGameItalic()"></button>
+            <div class="form-group size-picker" style="position:relative">
+              <label class="form-label">Taille du titre</label>
+              <button type="button" class="form-select" id="ge-size-btn" onclick="toggleSizeDropdown('ge',event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="ge-size-btn-label">100% (Taille de base)</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="ge-size" value="100">
+              <div class="hero-font-dropdown" id="ge-size-dropdown"></div>
             </div>
             <div class="form-group">
               <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
@@ -2035,6 +2049,7 @@ window.fbSignOut      = async () => await signOut(auth);
                 <div id="ge-grad-presets" style="display:flex;gap:8px;flex-wrap:wrap"></div>
               </div>
             </div>
+          </div>
           </div>
           <div class="form-group">
             <label class="form-label">Aperçu en direct</label>
@@ -3665,7 +3680,7 @@ function renderHeroSlides() {
       <div class="hero-overlay"></div><div class="hero-overlay-bottom"></div>
       <div class="hero-content">
         <div class="hero-kicker"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)"></span>${escapeHTML(badge)}</div>
-        <h1 class="hero-title" style="${(h.useGameTitleStyle && g) ? gameTitleStyleCSS(g) : `font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${h.titleWeight ? escapeHTML(String(h.titleWeight)) : '900'};font-style:${h.titleItalic ? 'italic' : 'normal'};${h.titleGradient ? `background:linear-gradient(${escapeHTML(String(h.titleGradientAngle || 90))}deg, ${escapeHTML(h.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;` : `color:${h.titleColor ? escapeHTML(h.titleColor) : 'var(--white)'};`}`}">${escapeHTML(title).replace(/\n/g, '<br>')}</h1>
+        <h1 class="hero-title" style="${heroTitleStyleCSS(h)}">${escapeHTML(title).replace(/\n/g, '<br>')}</h1>
         ${(h.genres || h.ageLimit || g) ? `<div class="hero-tags">${(h.genres || '').split(',').map(x => x.trim()).filter(Boolean).map(genre => `<span class="hero-genre-tag">${escapeHTML(genre)}</span>`).join('')}${h.ageLimit ? `<span class="hero-age-tag">${escapeHTML(h.ageLimit)}</span>` : ''}${g ? `<span class="hero-rating">${starCompactHTML(getGameRating(g), 15)}</span>` : ''}</div>` : ''}
         <p class="hero-desc">${escapeHTML(desc)}</p>
         <div class="hero-btns">
@@ -3991,58 +4006,143 @@ function resetHeroGradient() {
 function findGameByName(name) {
   return games.find(g => g.name === name);
 }
-function onHeroGameSelectChange() {
-  const gameName = document.getElementById('he-game')?.value || '';
-  const row = document.getElementById('he-use-game-style-row');
-  const toggle = document.getElementById('he-use-game-style-toggle');
-  if (gameName) {
-    row.style.display = 'flex';
-  } else {
-    row.style.display = 'none';
-    toggle.classList.remove('on');
+function findHeroForGame(name) {
+  if (!name) return null;
+  return heroSlides.find(h => (h.gameName || h.linkedGame) === name) || null;
+}
+function heroTitleStyleCSS(h) {
+  if (!h) return `font-family:'Barlow Condensed', sans-serif;font-weight:900;font-style:normal;color:var(--white);--title-scale:1;`;
+  const scale = (parseInt(h.titleSize) || 100) / 100;
+  const font = `font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(h.titleWeight || '900'))};font-style:${h.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
+  if (h.titleGradient) {
+    return `${font}background:linear-gradient(${escapeHTML(String(h.titleGradientAngle || 90))}deg, ${escapeHTML(h.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
-  refreshHeroOwnStyleInputsState();
-  updateHeroPreview();
+  return `${font}color:${escapeHTML(h.titleColor || 'var(--white)')};`;
 }
-function toggleUseGameStyle() {
-  document.getElementById('he-use-game-style-toggle').classList.toggle('on');
-  refreshHeroOwnStyleInputsState();
-  updateHeroPreview();
+// ===== GRAISSE / ITALIQUE / TAILLE — dropdowns génériques (hero "he" + jeu "ge") =====
+const WEIGHT_OPTIONS = [
+  { value: '100', label: 'Thin' },
+  { value: '200', label: 'Extra Light' },
+  { value: '300', label: 'Light' },
+  { value: '400', label: 'Regular' },
+  { value: '500', label: 'Medium' },
+  { value: '600', label: 'Semi Bold' },
+  { value: '700', label: 'Bold' },
+  { value: '800', label: 'Extra Bold' },
+  { value: '900', label: 'Black' }
+];
+const TITLE_SIZE_OPTIONS = [
+  { value: '50', label: '50%' },
+  { value: '65', label: '65%' },
+  { value: '75', label: '75%' },
+  { value: '90', label: '90%' },
+  { value: '100', label: '100% (Taille de base)' },
+  { value: '110', label: '110%' },
+  { value: '125', label: '125%' },
+  { value: '150', label: '150%' },
+  { value: '175', label: '175%' },
+  { value: '200', label: '200%' }
+];
+function positionStyleDropdown(btnId, dd) {
+  const btn = document.getElementById(btnId);
+  if (!btn || !dd) return;
+  const rect = btn.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const maxH = 320;
+  dd.style.left = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  if (spaceBelow < maxH && rect.top > spaceBelow) {
+    dd.style.top = 'auto';
+    dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, rect.top - 12) + 'px';
+  } else {
+    dd.style.bottom = 'auto';
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, spaceBelow - 12) + 'px';
+  }
 }
-function refreshHeroOwnStyleInputsState() {
-  const useGameStyle = document.getElementById('he-use-game-style-toggle')?.classList.contains('on');
-  const zone = document.getElementById('he-own-style-zone');
-  if (zone) zone.style.opacity = useGameStyle ? '0.4' : '1';
-  ['he-font-btn', 'he-weight', 'he-italic-toggle', 'he-color', 'he-color-hex', 'he-gradient-toggle', 'he-grad-from', 'he-grad-to', 'he-grad-angle'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.disabled = !!useGameStyle;
-    if (el && el.tagName === 'BUTTON') el.style.pointerEvents = useGameStyle ? 'none' : '';
+function refreshPreviewFor(prefix) { if (prefix === 'he') updateHeroPreview(); else updateGameTitlePreview(); }
+function renderWeightDropdown(prefix) {
+  const el = document.getElementById(prefix + '-weight-dropdown');
+  if (!el) return;
+  el.innerHTML = WEIGHT_OPTIONS.map(o => `<div class="hero-font-option" data-value="${o.value}" style="font-weight:${o.value}">${escapeHTML(o.label)}</div>`).join('') +
+    `<div class="hero-font-italic-row"><span>Italique</span><button type="button" class="toggle" id="${prefix}-italic-toggle" onclick="${prefix === 'he' ? 'toggleHeroItalic()' : 'toggleGameItalic()'}"></button></div>`;
+  el.querySelectorAll('.hero-font-option').forEach(opt => {
+    opt.addEventListener('click', () => setWeightValue(prefix, opt.getAttribute('data-value')));
   });
+}
+function toggleWeightDropdown(prefix, ev) {
+  if (ev) ev.stopPropagation();
+  const dd = document.getElementById(prefix + '-weight-dropdown');
+  if (dd.parentElement !== document.body) document.body.appendChild(dd);
+  const willOpen = !dd.classList.contains('open');
+  document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (willOpen) { positionStyleDropdown(prefix + '-weight-btn', dd); dd.classList.add('open'); }
+}
+function setWeightValue(prefix, value) {
+  document.getElementById(prefix + '-weight').value = value;
+  const opt = WEIGHT_OPTIONS.find(o => o.value === value);
+  const label = document.getElementById(prefix + '-weight-btn-label');
+  if (label) label.textContent = opt ? opt.label : value;
+  document.querySelectorAll('#' + prefix + '-weight-dropdown .hero-font-option').forEach(el => el.classList.toggle('active', el.getAttribute('data-value') === value));
+  refreshPreviewFor(prefix);
+}
+function renderSizeDropdown(prefix) {
+  const el = document.getElementById(prefix + '-size-dropdown');
+  if (!el) return;
+  el.innerHTML = TITLE_SIZE_OPTIONS.map(o => `<div class="hero-font-option" data-value="${o.value}">${escapeHTML(o.label)}</div>`).join('');
+  el.querySelectorAll('.hero-font-option').forEach(opt => {
+    opt.addEventListener('click', () => setSizeValue(prefix, opt.getAttribute('data-value')));
+  });
+}
+function toggleSizeDropdown(prefix, ev) {
+  if (ev) ev.stopPropagation();
+  const dd = document.getElementById(prefix + '-size-dropdown');
+  if (dd.parentElement !== document.body) document.body.appendChild(dd);
+  const willOpen = !dd.classList.contains('open');
+  document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (willOpen) { positionStyleDropdown(prefix + '-size-btn', dd); dd.classList.add('open'); }
+}
+function setSizeValue(prefix, value) {
+  document.getElementById(prefix + '-size').value = value;
+  const opt = TITLE_SIZE_OPTIONS.find(o => o.value === value);
+  const label = document.getElementById(prefix + '-size-btn-label');
+  if (label) label.textContent = opt ? opt.label : (value + '%');
+  document.querySelectorAll('#' + prefix + '-size-dropdown .hero-font-option').forEach(el => el.classList.toggle('active', el.getAttribute('data-value') === value));
+  document.getElementById(prefix + '-size-dropdown')?.classList.remove('open');
+  refreshPreviewFor(prefix);
+}
+function repositionOpenStyleDropdowns() {
+  ['he', 'ge'].forEach(prefix => {
+    ['weight', 'size'].forEach(field => {
+      const dd = document.getElementById(prefix + '-' + field + '-dropdown');
+      if (dd && dd.classList.contains('open')) positionStyleDropdown(prefix + '-' + field + '-btn', dd);
+    });
+  });
+}
+window.addEventListener('scroll', repositionOpenStyleDropdowns, true);
+window.addEventListener('resize', repositionOpenStyleDropdowns);
+document.addEventListener('click', (e) => {
+  ['he', 'ge'].forEach(prefix => {
+    ['weight', 'size'].forEach(field => {
+      const picker = document.getElementById(prefix + '-' + field + '-btn')?.closest('.' + field + '-picker');
+      const dd = document.getElementById(prefix + '-' + field + '-dropdown');
+      const insidePicker = picker && picker.contains(e.target);
+      const insideDropdown = dd && dd.contains(e.target);
+      if (!insidePicker && !insideDropdown) dd?.classList.remove('open');
+    });
+  });
+});
+function onHeroGameSelectChange() {
+  updateHeroPreview();
 }
 function updateHeroPreview() {
   const box = document.getElementById('he-live-preview');
   if (!box) return;
   const titleVal = (document.getElementById('he-title')?.value || 'Nom du jeu').split('\n')[0] || 'Nom du jeu';
   box.textContent = titleVal;
-  const useGameStyle = document.getElementById('he-use-game-style-toggle')?.classList.contains('on');
-  const linkedGame = useGameStyle ? findGameByName(document.getElementById('he-game')?.value || '') : null;
-  if (linkedGame) {
-    box.style.fontFamily = linkedGame.titleFont || "'Barlow Condensed', sans-serif";
-    box.style.fontWeight = linkedGame.titleWeight || '900';
-    box.style.fontStyle = linkedGame.titleItalic ? 'italic' : 'normal';
-    if (linkedGame.titleGradient) {
-      box.style.background = `linear-gradient(${linkedGame.titleGradientAngle || 90}deg, ${linkedGame.titleGradientFrom || '#ff5f6d'}, ${linkedGame.titleGradientTo || '#ffc371'})`;
-      box.style.webkitBackgroundClip = 'text';
-      box.style.backgroundClip = 'text';
-      box.style.color = 'transparent';
-      box.style.webkitTextFillColor = 'transparent';
-    } else {
-      box.style.background = 'none';
-      box.style.webkitTextFillColor = '';
-      box.style.color = linkedGame.titleColor || '#ffffff';
-    }
-    return;
-  }
+  const scale = (parseInt(document.getElementById('he-size')?.value) || 100) / 100;
+  box.style.fontSize = `calc(clamp(22px,4vw,38px) * ${scale})`;
   box.style.fontFamily = document.getElementById('he-font')?.value || "'Barlow Condensed', sans-serif";
   box.style.fontWeight = document.getElementById('he-weight')?.value || '900';
   box.style.fontStyle = document.getElementById('he-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
@@ -4089,8 +4189,9 @@ function addHeroSlide() {
   document.getElementById('he-btn2').value = 'Studio';
   document.getElementById('he-btn2page').value = 'about';
   setHeroFontValue("'Barlow Condensed', sans-serif");
-  document.getElementById('he-weight').value = '900';
+  setWeightValue('he', '900');
   document.getElementById('he-italic-toggle').classList.remove('on');
+  setSizeValue('he', '100');
   document.getElementById('he-color').value = '#ffffff';
   document.getElementById('he-color-hex').value = '#ffffff';
   document.getElementById('he-gradient-toggle').classList.remove('on');
@@ -4099,7 +4200,6 @@ function addHeroSlide() {
   document.getElementById('he-grad-from').value = '#ff5f6d';
   document.getElementById('he-grad-to').value = '#ffc371';
   document.getElementById('he-grad-angle').value = 90;
-  document.getElementById('he-use-game-style-toggle').classList.toggle('on', !!(games[0]?.name));
   onHeroGameSelectChange();
   updateHeroPreview();
   document.getElementById('he-age').value = '';
@@ -4125,8 +4225,9 @@ function editHeroSlide(i) {
   document.getElementById('he-btn2').value = h.btn2 || '';
   document.getElementById('he-btn2page').value = h.btn2Page || 'about';
   setHeroFontValue(h.titleFont || "'Barlow Condensed', sans-serif");
-  document.getElementById('he-weight').value = h.titleWeight || '900';
+  setWeightValue('he', h.titleWeight || '900');
   document.getElementById('he-italic-toggle').classList.toggle('on', !!h.titleItalic);
+  setSizeValue('he', String(h.titleSize || 100));
   document.getElementById('he-color').value = h.titleColor || '#ffffff';
   document.getElementById('he-color-hex').value = h.titleColor || '#ffffff';
   document.getElementById('he-gradient-toggle').classList.toggle('on', !!h.titleGradient);
@@ -4136,8 +4237,6 @@ function editHeroSlide(i) {
   document.getElementById('he-grad-from').value = h.titleGradientFrom || '#ff5f6d';
   document.getElementById('he-grad-to').value = h.titleGradientTo || '#ffc371';
   document.getElementById('he-grad-angle').value = h.titleGradientAngle || 90;
-  const linkedName = h.gameName || h.linkedGame || '';
-  document.getElementById('he-use-game-style-toggle').classList.toggle('on', linkedName ? (h.useGameTitleStyle !== false) : false);
   onHeroGameSelectChange();
   updateHeroPreview();
   document.getElementById('he-age').value = h.ageLimit || '';
@@ -4189,7 +4288,7 @@ async function saveHeroEdit() {
     titleGradientFrom: document.getElementById('he-grad-from')?.value || '#ff5f6d',
     titleGradientTo: document.getElementById('he-grad-to')?.value || '#ffc371',
     titleGradientAngle: parseInt(document.getElementById('he-grad-angle')?.value) || 90,
-    useGameTitleStyle: document.getElementById('he-use-game-style-toggle')?.classList.contains('on') || false,
+    titleSize: parseInt(document.getElementById('he-size')?.value) || 100,
     ageLimit: document.getElementById('he-age')?.value || '',
     genres: document.getElementById('he-genres')?.value || '',
     bg: ('hero-bg' in tempImgs) ? tempImgs['hero-bg'] : (existing ? existing.bg || '' : ''),
@@ -4477,11 +4576,64 @@ function resetGameGradient() {
   document.getElementById('ge-grad-angle').value = 90;
   updateGameTitlePreview();
 }
+function refreshGameHeroLinkRow() {
+  const name = document.getElementById('ge-name')?.value || '';
+  const row = document.getElementById('ge-use-hero-style-row');
+  const info = document.getElementById('ge-hero-style-info');
+  const toggle = document.getElementById('ge-use-hero-style-toggle');
+  if (!row) return;
+  const hero = findHeroForGame(name);
+  if (hero) {
+    row.style.display = 'flex';
+    if (info) info.textContent = 'Lié depuis la bannière hero : "' + (hero.title ? hero.title.split('\n')[0] : name) + '"';
+  } else {
+    row.style.display = 'none';
+    if (toggle) toggle.classList.remove('on');
+  }
+}
+function toggleUseHeroStyle() {
+  document.getElementById('ge-use-hero-style-toggle').classList.toggle('on');
+  refreshGameOwnStyleInputsState();
+  updateGameTitlePreview();
+}
+function refreshGameOwnStyleInputsState() {
+  const useHeroStyle = document.getElementById('ge-use-hero-style-toggle')?.classList.contains('on');
+  const zone = document.getElementById('ge-own-style-zone');
+  if (zone) zone.style.opacity = useHeroStyle ? '0.4' : '1';
+  ['ge-font-btn', 'ge-weight-btn', 'ge-size-btn', 'ge-title-color', 'ge-title-color-hex', 'ge-gradient-toggle', 'ge-grad-from', 'ge-grad-to', 'ge-grad-angle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !!useHeroStyle;
+    if (el && el.tagName === 'BUTTON') el.style.pointerEvents = useHeroStyle ? 'none' : '';
+  });
+}
 function updateGameTitlePreview() {
   const box = document.getElementById('ge-live-preview');
   if (!box) return;
   const nameVal = document.getElementById('ge-name')?.value || 'Nom du jeu';
   box.textContent = nameVal;
+  const useHeroStyle = document.getElementById('ge-use-hero-style-toggle')?.classList.contains('on');
+  const linkedHero = useHeroStyle ? findHeroForGame(nameVal) : null;
+  if (linkedHero) {
+    const scale = (parseInt(linkedHero.titleSize) || 100) / 100;
+    box.style.fontSize = `calc(clamp(22px,4vw,38px) * ${scale})`;
+    box.style.fontFamily = linkedHero.titleFont || "'Barlow Condensed', sans-serif";
+    box.style.fontWeight = linkedHero.titleWeight || '900';
+    box.style.fontStyle = linkedHero.titleItalic ? 'italic' : 'normal';
+    if (linkedHero.titleGradient) {
+      box.style.background = `linear-gradient(${linkedHero.titleGradientAngle || 90}deg, ${linkedHero.titleGradientFrom || '#ff5f6d'}, ${linkedHero.titleGradientTo || '#ffc371'})`;
+      box.style.webkitBackgroundClip = 'text';
+      box.style.backgroundClip = 'text';
+      box.style.color = 'transparent';
+      box.style.webkitTextFillColor = 'transparent';
+    } else {
+      box.style.background = 'none';
+      box.style.webkitTextFillColor = '';
+      box.style.color = linkedHero.titleColor || '#ffffff';
+    }
+    return;
+  }
+  const scale = (parseInt(document.getElementById('ge-size')?.value) || 100) / 100;
+  box.style.fontSize = `calc(clamp(22px,4vw,38px) * ${scale})`;
   box.style.fontFamily = document.getElementById('ge-font')?.value || "'Barlow Condensed', sans-serif";
   box.style.fontWeight = document.getElementById('ge-weight')?.value || '900';
   box.style.fontStyle = document.getElementById('ge-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
@@ -4503,8 +4655,9 @@ function updateGameTitlePreview() {
 }
 function applyGameTitleStyleToForm(g) {
   setGameFontValue(g?.titleFont || "'Barlow Condensed', sans-serif");
-  document.getElementById('ge-weight').value = g?.titleWeight || '900';
+  setWeightValue('ge', g?.titleWeight || '900');
   document.getElementById('ge-italic-toggle').classList.toggle('on', !!g?.titleItalic);
+  setSizeValue('ge', String(g?.titleSize || 100));
   document.getElementById('ge-title-color').value = g?.titleColor || '#ffffff';
   document.getElementById('ge-title-color-hex').value = g?.titleColor || '#ffffff';
   document.getElementById('ge-gradient-toggle').classList.toggle('on', !!g?.titleGradient);
@@ -4514,11 +4667,19 @@ function applyGameTitleStyleToForm(g) {
   document.getElementById('ge-grad-from').value = g?.titleGradientFrom || '#ff5f6d';
   document.getElementById('ge-grad-to').value = g?.titleGradientTo || '#ffc371';
   document.getElementById('ge-grad-angle').value = g?.titleGradientAngle || 90;
+  document.getElementById('ge-use-hero-style-toggle').classList.toggle('on', !!g?.useHeroTitleStyle);
+  refreshGameHeroLinkRow();
+  refreshGameOwnStyleInputsState();
   updateGameTitlePreview();
 }
 function gameTitleStyleCSS(g) {
-  if (!g) return `font-family:'Barlow Condensed', sans-serif;font-weight:900;font-style:normal;color:var(--white);`;
-  const font = `font-family:${g.titleFont ? escapeHTML(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};`;
+  if (!g) return `font-family:'Barlow Condensed', sans-serif;font-weight:900;font-style:normal;color:var(--white);--title-scale:1;`;
+  if (g.useHeroTitleStyle) {
+    const hero = findHeroForGame(g.name);
+    if (hero) return heroTitleStyleCSS(hero);
+  }
+  const scale = (parseInt(g.titleSize) || 100) / 100;
+  const font = `font-family:${g.titleFont ? escapeHTML(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};--title-scale:${scale};`;
   if (g.titleGradient) {
     return `${font}background:linear-gradient(${escapeHTML(String(g.titleGradientAngle || 90))}deg, ${escapeHTML(g.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(g.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
   }
@@ -4547,6 +4708,8 @@ async function saveGameEdit() {
     titleGradientFrom: document.getElementById('ge-grad-from')?.value || '#ff5f6d',
     titleGradientTo: document.getElementById('ge-grad-to')?.value || '#ffc371',
     titleGradientAngle: parseInt(document.getElementById('ge-grad-angle')?.value) || 90,
+    titleSize: parseInt(document.getElementById('ge-size')?.value) || 100,
+    useHeroTitleStyle: document.getElementById('ge-use-hero-style-toggle')?.classList.contains('on') || false,
     img: ('game' in tempImgs) ? tempImgs['game'] : (i >= 0 && i < games.length ? games[i].img || '' : ''),
     publishedAt: wasNew ? new Date().toISOString() : (games[i]?.publishedAt || new Date().toISOString()),
     plays: i >= 0 && games[i]?.plays ? games[i].plays : 0,
@@ -5227,6 +5390,11 @@ renderNotifications();
 renderMyListPage();
 fillHeroGameSelect();
 renderHeroFontDropdown();
+renderGameFontDropdown();
+renderWeightDropdown('he');
+renderWeightDropdown('ge');
+renderSizeDropdown('he');
+renderSizeDropdown('ge');
 (function initHeroHoverPause() {
   const heroEl = document.getElementById('home-hero');
   if (!heroEl) return;
