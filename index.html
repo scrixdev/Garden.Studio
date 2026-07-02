@@ -1790,6 +1790,7 @@ window.fbSignOut      = async () => await signOut(auth);
             <label class="form-label">Titre principal</label>
             <textarea class="form-textarea" id="he-title" style="min-height:80px" placeholder="Une ligne par retour à la ligne" oninput="updateHeroPreview()"></textarea>
           </div>
+          <div id="he-own-style-zone" style="transition:opacity 0.2s">
           <div class="form-row">
             <div class="form-group hero-font-picker" style="position:relative">
               <label class="form-label">Police du titre</label>
@@ -1823,7 +1824,7 @@ window.fbSignOut      = async () => await signOut(auth);
                 <span>Couleur du titre</span>
                 <span style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:11px;color:var(--gray);text-transform:none;letter-spacing:0">
                   Dégradé
-                  <button type="button" class="toggle" id="he-gradient-toggle" onclick="toggleHeroGradient()" style="width:34px;height:19px"></button>
+                  <button type="button" class="toggle" id="he-gradient-toggle" onclick="toggleHeroGradient()"></button>
                 </span>
               </label>
               <div id="he-color-solid-row" style="display:flex;align-items:center;gap:10px">
@@ -1844,6 +1845,7 @@ window.fbSignOut      = async () => await signOut(auth);
                 <div id="he-grad-presets" style="display:flex;gap:8px;flex-wrap:wrap"></div>
               </div>
             </div>
+          </div>
           </div>
           <div class="form-group">
             <label class="form-label">Aperçu en direct</label>
@@ -1902,7 +1904,11 @@ window.fbSignOut      = async () => await signOut(auth);
           </div>
                     <div class="form-group">
             <label class="form-label">Jeu lie au hero</label>
-            <select class="form-select" id="he-game"></select>
+            <select class="form-select" id="he-game" onchange="onHeroGameSelectChange()"></select>
+          </div>
+          <div class="form-group" id="he-use-game-style-row" style="display:none;flex-direction:row;align-items:center;gap:10px">
+            <button type="button" class="toggle" id="he-use-game-style-toggle" onclick="toggleUseGameStyle()"></button>
+            <label class="form-label" style="margin:0;text-transform:none;letter-spacing:0;font-size:13px;color:var(--white)">Utiliser le style (police/couleur) du jeu lié</label>
           </div>
 <div class="form-group">
             <label class="form-label">Bande-annonce (vidéo ou image de fond)</label>
@@ -1975,7 +1981,67 @@ window.fbSignOut      = async () => await signOut(auth);
             <label class="form-label"><i data-lucide="link"></i> Lien du jeu (URL)</label>
             <input type="url" class="form-input" id="ge-link" placeholder="https://store.steampowered.com/...">
           </div>
-          <div class="form-group"><label class="form-label">Couleur de fond (gradient CSS)</label><input type="text" class="form-input" id="ge-color" placeholder="var(--gradient-accent)"></div>
+          <div class="form-row">
+            <div class="form-group hero-font-picker" style="position:relative">
+              <label class="form-label">Police du titre</label>
+              <button type="button" class="form-select" id="ge-font-btn" onclick="toggleGameFontDropdown(event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;text-align:left;width:100%">
+                <span id="ge-font-btn-label">Barlow Condensed (défaut)</span>
+                <i data-lucide="chevron-down" style="width:16px;height:16px;flex-shrink:0"></i>
+              </button>
+              <input type="hidden" id="ge-font" value="'Barlow Condensed', sans-serif">
+              <div class="hero-font-dropdown" id="ge-font-dropdown"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Graisse du titre</label>
+              <select class="form-select" id="ge-weight" onchange="updateGameTitlePreview()">
+                <option value="300">Light</option>
+                <option value="400">Regular</option>
+                <option value="500">Medium</option>
+                <option value="600">SemiBold</option>
+                <option value="700">Bold</option>
+                <option value="800">ExtraBold</option>
+                <option value="900" selected>Black</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group" style="display:flex;align-items:center;gap:10px">
+              <label class="form-label" style="margin:0">Italique</label>
+              <button type="button" class="toggle" id="ge-italic-toggle" onclick="toggleGameItalic()"></button>
+            </div>
+            <div class="form-group">
+              <label class="form-label" style="display:flex;align-items:center;justify-content:space-between">
+                <span>Couleur du titre</span>
+                <span style="display:flex;align-items:center;gap:6px;font-weight:400;font-size:11px;color:var(--gray);text-transform:none;letter-spacing:0">
+                  Dégradé
+                  <button type="button" class="toggle" id="ge-gradient-toggle" onclick="toggleGameGradient()"></button>
+                </span>
+              </label>
+              <div id="ge-color-solid-row" style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="ge-title-color" value="#ffffff" oninput="syncGameHexFromColor(this.value)" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                <input type="text" class="form-input" id="ge-title-color-hex" value="#ffffff" placeholder="#ffffff" style="max-width:110px" oninput="syncGameColorFromHex(this.value)">
+                <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetGameColor()">Réinitialiser</button>
+              </div>
+              <div id="ge-color-gradient-row" style="display:none;flex-direction:column;gap:10px">
+                <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                  <input type="color" id="ge-grad-from" value="#ff5f6d" oninput="updateGameTitlePreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <input type="color" id="ge-grad-to" value="#ffc371" oninput="updateGameTitlePreview()" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <input type="number" class="form-input" id="ge-grad-angle" value="90" min="0" max="360" style="max-width:70px" oninput="updateGameTitlePreview()">
+                    <span style="font-size:12px;color:var(--gray)">°</span>
+                  </div>
+                  <button type="button" class="btn-ghost" style="font-size:11px;padding:6px 10px" onclick="resetGameGradient()">Réinitialiser</button>
+                </div>
+                <div id="ge-grad-presets" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Aperçu en direct</label>
+            <div id="ge-live-preview" style="background:rgba(0,0,0,0.35);border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:24px 20px;text-align:center;overflow:hidden;word-break:break-word;font-family:'Barlow Condensed',sans-serif;font-weight:900;font-style:normal;color:#ffffff;font-size:clamp(22px,4vw,38px);text-transform:uppercase;line-height:1.05">Nom du jeu</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Couleur de fond (gradient CSS)</label><input type="text" class="form-input" id="ge-color" placeholder="var(--gradient-accent)"></div>
           <div class="form-group"><label class="form-label">Description courte</label><textarea class="form-textarea" style="min-height:70px" id="ge-desc" placeholder="Description du jeu visible dans la fiche..."></textarea></div>
           <div class="form-group">
             <label class="form-label">Image du jeu</label>
@@ -3313,6 +3379,7 @@ function openGameModalDirect(i) {
     ? `<img class="modal-cover-bg" src="${g.img}" alt="${escapeHTML(g.name)}"><div class="modal-cover-gradient"></div>`
     : `<div class="modal-cover-placeholder" style="background:${g.color}">${ctrlIcon}</div>`;
   document.getElementById('modal-title').textContent = g.name;
+  document.getElementById('modal-title').setAttribute('style', gameTitleStyleCSS(g));
   document.getElementById('modal-badges').innerHTML = `<span class="badge">${gameStatusLabel(g.status)}</span>`;
   document.getElementById('modal-byline').textContent = `By ${g.dev || 'Garden Studio'}${g.date ? ' · ' + g.date : ''}`;
   const realRating = getGameRating(g);
@@ -3598,7 +3665,7 @@ function renderHeroSlides() {
       <div class="hero-overlay"></div><div class="hero-overlay-bottom"></div>
       <div class="hero-content">
         <div class="hero-kicker"><span style="width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 18px var(--lime)"></span>${escapeHTML(badge)}</div>
-        <h1 class="hero-title" style="font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${h.titleWeight ? escapeHTML(String(h.titleWeight)) : '900'};font-style:${h.titleItalic ? 'italic' : 'normal'};${h.titleGradient ? `background:linear-gradient(${escapeHTML(String(h.titleGradientAngle || 90))}deg, ${escapeHTML(h.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;` : `color:${h.titleColor ? escapeHTML(h.titleColor) : 'var(--white)'};`}">${escapeHTML(title).replace(/\n/g, '<br>')}</h1>
+        <h1 class="hero-title" style="${(h.useGameTitleStyle && g) ? gameTitleStyleCSS(g) : `font-family:${h.titleFont ? escapeHTML(h.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${h.titleWeight ? escapeHTML(String(h.titleWeight)) : '900'};font-style:${h.titleItalic ? 'italic' : 'normal'};${h.titleGradient ? `background:linear-gradient(${escapeHTML(String(h.titleGradientAngle || 90))}deg, ${escapeHTML(h.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(h.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;` : `color:${h.titleColor ? escapeHTML(h.titleColor) : 'var(--white)'};`}`}">${escapeHTML(title).replace(/\n/g, '<br>')}</h1>
         ${(h.genres || h.ageLimit || g) ? `<div class="hero-tags">${(h.genres || '').split(',').map(x => x.trim()).filter(Boolean).map(genre => `<span class="hero-genre-tag">${escapeHTML(genre)}</span>`).join('')}${h.ageLimit ? `<span class="hero-age-tag">${escapeHTML(h.ageLimit)}</span>` : ''}${g ? `<span class="hero-rating">${starCompactHTML(getGameRating(g), 15)}</span>` : ''}</div>` : ''}
         <p class="hero-desc">${escapeHTML(desc)}</p>
         <div class="hero-btns">
@@ -3865,7 +3932,7 @@ window.addEventListener('resize', () => {
   if (dd && dd.classList.contains('open')) positionFontDropdown();
 });
 document.addEventListener('click', (e) => {
-  const picker = document.querySelector('.hero-font-picker');
+  const picker = document.getElementById('he-font-btn')?.closest('.hero-font-picker');
   const dd = document.getElementById('he-font-dropdown');
   const insidePicker = picker && picker.contains(e.target);
   const insideDropdown = dd && dd.contains(e.target);
@@ -3921,11 +3988,61 @@ function resetHeroGradient() {
   document.getElementById('he-grad-angle').value = 90;
   updateHeroPreview();
 }
+function findGameByName(name) {
+  return games.find(g => g.name === name);
+}
+function onHeroGameSelectChange() {
+  const gameName = document.getElementById('he-game')?.value || '';
+  const row = document.getElementById('he-use-game-style-row');
+  const toggle = document.getElementById('he-use-game-style-toggle');
+  if (gameName) {
+    row.style.display = 'flex';
+  } else {
+    row.style.display = 'none';
+    toggle.classList.remove('on');
+  }
+  refreshHeroOwnStyleInputsState();
+  updateHeroPreview();
+}
+function toggleUseGameStyle() {
+  document.getElementById('he-use-game-style-toggle').classList.toggle('on');
+  refreshHeroOwnStyleInputsState();
+  updateHeroPreview();
+}
+function refreshHeroOwnStyleInputsState() {
+  const useGameStyle = document.getElementById('he-use-game-style-toggle')?.classList.contains('on');
+  const zone = document.getElementById('he-own-style-zone');
+  if (zone) zone.style.opacity = useGameStyle ? '0.4' : '1';
+  ['he-font-btn', 'he-weight', 'he-italic-toggle', 'he-color', 'he-color-hex', 'he-gradient-toggle', 'he-grad-from', 'he-grad-to', 'he-grad-angle'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = !!useGameStyle;
+    if (el && el.tagName === 'BUTTON') el.style.pointerEvents = useGameStyle ? 'none' : '';
+  });
+}
 function updateHeroPreview() {
   const box = document.getElementById('he-live-preview');
   if (!box) return;
   const titleVal = (document.getElementById('he-title')?.value || 'Nom du jeu').split('\n')[0] || 'Nom du jeu';
   box.textContent = titleVal;
+  const useGameStyle = document.getElementById('he-use-game-style-toggle')?.classList.contains('on');
+  const linkedGame = useGameStyle ? findGameByName(document.getElementById('he-game')?.value || '') : null;
+  if (linkedGame) {
+    box.style.fontFamily = linkedGame.titleFont || "'Barlow Condensed', sans-serif";
+    box.style.fontWeight = linkedGame.titleWeight || '900';
+    box.style.fontStyle = linkedGame.titleItalic ? 'italic' : 'normal';
+    if (linkedGame.titleGradient) {
+      box.style.background = `linear-gradient(${linkedGame.titleGradientAngle || 90}deg, ${linkedGame.titleGradientFrom || '#ff5f6d'}, ${linkedGame.titleGradientTo || '#ffc371'})`;
+      box.style.webkitBackgroundClip = 'text';
+      box.style.backgroundClip = 'text';
+      box.style.color = 'transparent';
+      box.style.webkitTextFillColor = 'transparent';
+    } else {
+      box.style.background = 'none';
+      box.style.webkitTextFillColor = '';
+      box.style.color = linkedGame.titleColor || '#ffffff';
+    }
+    return;
+  }
   box.style.fontFamily = document.getElementById('he-font')?.value || "'Barlow Condensed', sans-serif";
   box.style.fontWeight = document.getElementById('he-weight')?.value || '900';
   box.style.fontStyle = document.getElementById('he-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
@@ -3982,6 +4099,8 @@ function addHeroSlide() {
   document.getElementById('he-grad-from').value = '#ff5f6d';
   document.getElementById('he-grad-to').value = '#ffc371';
   document.getElementById('he-grad-angle').value = 90;
+  document.getElementById('he-use-game-style-toggle').classList.toggle('on', !!(games[0]?.name));
+  onHeroGameSelectChange();
   updateHeroPreview();
   document.getElementById('he-age').value = '';
   document.getElementById('he-genres').value = '';
@@ -4017,6 +4136,9 @@ function editHeroSlide(i) {
   document.getElementById('he-grad-from').value = h.titleGradientFrom || '#ff5f6d';
   document.getElementById('he-grad-to').value = h.titleGradientTo || '#ffc371';
   document.getElementById('he-grad-angle').value = h.titleGradientAngle || 90;
+  const linkedName = h.gameName || h.linkedGame || '';
+  document.getElementById('he-use-game-style-toggle').classList.toggle('on', linkedName ? (h.useGameTitleStyle !== false) : false);
+  onHeroGameSelectChange();
   updateHeroPreview();
   document.getElementById('he-age').value = h.ageLimit || '';
   document.getElementById('he-genres').value = h.genres || '';
@@ -4067,6 +4189,7 @@ async function saveHeroEdit() {
     titleGradientFrom: document.getElementById('he-grad-from')?.value || '#ff5f6d',
     titleGradientTo: document.getElementById('he-grad-to')?.value || '#ffc371',
     titleGradientAngle: parseInt(document.getElementById('he-grad-angle')?.value) || 90,
+    useGameTitleStyle: document.getElementById('he-use-game-style-toggle')?.classList.contains('on') || false,
     ageLimit: document.getElementById('he-age')?.value || '',
     genres: document.getElementById('he-genres')?.value || '',
     bg: ('hero-bg' in tempImgs) ? tempImgs['hero-bg'] : (existing ? existing.bg || '' : ''),
@@ -4231,6 +4354,7 @@ function editGame(i) {
   document.getElementById('ge-desc').value = games[i].desc || '';
   document.getElementById('ge-status').value = games[i].status || 'available';
   document.getElementById('ge-index').value = i;
+  applyGameTitleStyleToForm(games[i]);
   document.getElementById('ge-delete-btn').style.display = 'inline-flex';
   document.getElementById('game-edit-form-title').textContent = 'Éditer : ' + games[i].name;
   tempImgs['game'] = games[i].img || '';
@@ -4242,6 +4366,164 @@ function editGame(i) {
 }
 
 function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; delete tempImgs['game']; }
+
+// ===== GAME TITLE STYLE (police / couleur / dégradé, miroir du hero) =====
+function renderGameFontDropdown() {
+  const el = document.getElementById('ge-font-dropdown');
+  if (!el) return;
+  el.innerHTML = HERO_FONTS.map(g => (g.group ? `<div class="hero-font-group-label">${escapeHTML(g.group)}</div>` : '') +
+    g.options.map(o => `<div class="hero-font-option" data-value="${escapeHTML(o.value)}" style="font-family:${escapeHTML(o.value)}">${escapeHTML(o.label)}</div>`).join('')
+  ).join('');
+  el.querySelectorAll('.hero-font-option').forEach(opt => {
+    opt.addEventListener('click', () => selectGameFont(opt.getAttribute('data-value')));
+  });
+}
+function toggleGameFontDropdown(ev) {
+  if (ev) ev.stopPropagation();
+  const dd = document.getElementById('ge-font-dropdown');
+  if (dd.parentElement !== document.body) document.body.appendChild(dd);
+  const willOpen = !dd.classList.contains('open');
+  document.querySelectorAll('.hero-font-dropdown.open').forEach(d => d.classList.remove('open'));
+  if (willOpen) {
+    positionGameFontDropdown();
+    dd.classList.add('open');
+  }
+}
+function positionGameFontDropdown() {
+  const btn = document.getElementById('ge-font-btn');
+  const dd = document.getElementById('ge-font-dropdown');
+  if (!btn || !dd) return;
+  const rect = btn.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const maxH = 320;
+  dd.style.left = rect.left + 'px';
+  dd.style.width = rect.width + 'px';
+  if (spaceBelow < maxH && rect.top > spaceBelow) {
+    dd.style.top = 'auto';
+    dd.style.bottom = (window.innerHeight - rect.top + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, rect.top - 12) + 'px';
+  } else {
+    dd.style.bottom = 'auto';
+    dd.style.top = (rect.bottom + 6) + 'px';
+    dd.style.maxHeight = Math.min(maxH, spaceBelow - 12) + 'px';
+  }
+}
+window.addEventListener('scroll', () => {
+  const dd = document.getElementById('ge-font-dropdown');
+  if (dd && dd.classList.contains('open')) positionGameFontDropdown();
+}, true);
+window.addEventListener('resize', () => {
+  const dd = document.getElementById('ge-font-dropdown');
+  if (dd && dd.classList.contains('open')) positionGameFontDropdown();
+});
+document.addEventListener('click', (e) => {
+  const picker = document.querySelector('.game-font-picker') || document.getElementById('ge-font-btn')?.closest('.hero-font-picker');
+  const dd = document.getElementById('ge-font-dropdown');
+  const insidePicker = picker && picker.contains(e.target);
+  const insideDropdown = dd && dd.contains(e.target);
+  if (!insidePicker && !insideDropdown) dd?.classList.remove('open');
+});
+function selectGameFont(value) {
+  setGameFontValue(value);
+  document.getElementById('ge-font-dropdown').classList.remove('open');
+}
+function setGameFontValue(value) {
+  document.getElementById('ge-font').value = value;
+  document.getElementById('ge-font-btn-label').textContent = findHeroFontLabel(value);
+  document.getElementById('ge-font-btn-label').style.fontFamily = value;
+  document.querySelectorAll('#ge-font-dropdown .hero-font-option').forEach(opt => opt.classList.toggle('active', opt.getAttribute('data-value') === value));
+  updateGameTitlePreview();
+}
+function toggleGameItalic() {
+  document.getElementById('ge-italic-toggle').classList.toggle('on');
+  updateGameTitlePreview();
+}
+function syncGameColorFromHex(val) {
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) { document.getElementById('ge-title-color').value = val; updateGameTitlePreview(); }
+}
+function syncGameHexFromColor(val) {
+  document.getElementById('ge-title-color-hex').value = val;
+  updateGameTitlePreview();
+}
+function resetGameColor() {
+  document.getElementById('ge-title-color').value = '#ffffff';
+  document.getElementById('ge-title-color-hex').value = '#ffffff';
+  updateGameTitlePreview();
+}
+function renderGameGradientPresets() {
+  const el = document.getElementById('ge-grad-presets');
+  if (!el || el.childElementCount) return;
+  el.innerHTML = HERO_GRADIENT_PRESETS.map(p =>
+    `<button type="button" title="${escapeHTML(p.label)}" onclick="applyGameGradientPreset('${p.from}','${p.to}',${p.angle})" style="width:30px;height:30px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);cursor:pointer;background:linear-gradient(${p.angle}deg, ${p.from}, ${p.to})"></button>`
+  ).join('');
+}
+function applyGameGradientPreset(from, to, angle) {
+  document.getElementById('ge-grad-from').value = from;
+  document.getElementById('ge-grad-to').value = to;
+  document.getElementById('ge-grad-angle').value = angle;
+  updateGameTitlePreview();
+}
+function toggleGameGradient() {
+  const btn = document.getElementById('ge-gradient-toggle');
+  const isOn = btn.classList.toggle('on');
+  document.getElementById('ge-color-solid-row').style.display = isOn ? 'none' : 'flex';
+  document.getElementById('ge-color-gradient-row').style.display = isOn ? 'flex' : 'none';
+  if (isOn) renderGameGradientPresets();
+  updateGameTitlePreview();
+}
+function resetGameGradient() {
+  document.getElementById('ge-grad-from').value = '#ff5f6d';
+  document.getElementById('ge-grad-to').value = '#ffc371';
+  document.getElementById('ge-grad-angle').value = 90;
+  updateGameTitlePreview();
+}
+function updateGameTitlePreview() {
+  const box = document.getElementById('ge-live-preview');
+  if (!box) return;
+  const nameVal = document.getElementById('ge-name')?.value || 'Nom du jeu';
+  box.textContent = nameVal;
+  box.style.fontFamily = document.getElementById('ge-font')?.value || "'Barlow Condensed', sans-serif";
+  box.style.fontWeight = document.getElementById('ge-weight')?.value || '900';
+  box.style.fontStyle = document.getElementById('ge-italic-toggle')?.classList.contains('on') ? 'italic' : 'normal';
+  const isGradient = document.getElementById('ge-gradient-toggle')?.classList.contains('on');
+  if (isGradient) {
+    const from = document.getElementById('ge-grad-from')?.value || '#ff5f6d';
+    const to = document.getElementById('ge-grad-to')?.value || '#ffc371';
+    const angle = document.getElementById('ge-grad-angle')?.value || 90;
+    box.style.background = `linear-gradient(${angle}deg, ${from}, ${to})`;
+    box.style.webkitBackgroundClip = 'text';
+    box.style.backgroundClip = 'text';
+    box.style.color = 'transparent';
+    box.style.webkitTextFillColor = 'transparent';
+  } else {
+    box.style.background = 'none';
+    box.style.webkitTextFillColor = '';
+    box.style.color = document.getElementById('ge-title-color')?.value || '#ffffff';
+  }
+}
+function applyGameTitleStyleToForm(g) {
+  setGameFontValue(g?.titleFont || "'Barlow Condensed', sans-serif");
+  document.getElementById('ge-weight').value = g?.titleWeight || '900';
+  document.getElementById('ge-italic-toggle').classList.toggle('on', !!g?.titleItalic);
+  document.getElementById('ge-title-color').value = g?.titleColor || '#ffffff';
+  document.getElementById('ge-title-color-hex').value = g?.titleColor || '#ffffff';
+  document.getElementById('ge-gradient-toggle').classList.toggle('on', !!g?.titleGradient);
+  document.getElementById('ge-color-solid-row').style.display = g?.titleGradient ? 'none' : 'flex';
+  document.getElementById('ge-color-gradient-row').style.display = g?.titleGradient ? 'flex' : 'none';
+  if (g?.titleGradient) renderGameGradientPresets();
+  document.getElementById('ge-grad-from').value = g?.titleGradientFrom || '#ff5f6d';
+  document.getElementById('ge-grad-to').value = g?.titleGradientTo || '#ffc371';
+  document.getElementById('ge-grad-angle').value = g?.titleGradientAngle || 90;
+  updateGameTitlePreview();
+}
+function gameTitleStyleCSS(g) {
+  if (!g) return `font-family:'Barlow Condensed', sans-serif;font-weight:900;font-style:normal;color:var(--white);`;
+  const font = `font-family:${g.titleFont ? escapeHTML(g.titleFont) : "'Barlow Condensed', sans-serif"};font-weight:${escapeHTML(String(g.titleWeight || '900'))};font-style:${g.titleItalic ? 'italic' : 'normal'};`;
+  if (g.titleGradient) {
+    return `${font}background:linear-gradient(${escapeHTML(String(g.titleGradientAngle || 90))}deg, ${escapeHTML(g.titleGradientFrom || '#ff5f6d')}, ${escapeHTML(g.titleGradientTo || '#ffc371')});-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;`;
+  }
+  return `${font}color:${escapeHTML(g.titleColor || 'var(--white)')};`;
+}
 
 async function saveGameEdit() {
   if (_saveInProgress) return;
@@ -4257,6 +4539,14 @@ async function saveGameEdit() {
     link: document.getElementById('ge-link').value,
     desc: document.getElementById('ge-desc').value,
     status: document.getElementById('ge-status').value,
+    titleFont: document.getElementById('ge-font')?.value || "'Barlow Condensed', sans-serif",
+    titleWeight: document.getElementById('ge-weight')?.value || '900',
+    titleItalic: document.getElementById('ge-italic-toggle')?.classList.contains('on') || false,
+    titleColor: document.getElementById('ge-title-color')?.value || '#ffffff',
+    titleGradient: document.getElementById('ge-gradient-toggle')?.classList.contains('on') || false,
+    titleGradientFrom: document.getElementById('ge-grad-from')?.value || '#ff5f6d',
+    titleGradientTo: document.getElementById('ge-grad-to')?.value || '#ffc371',
+    titleGradientAngle: parseInt(document.getElementById('ge-grad-angle')?.value) || 90,
     img: ('game' in tempImgs) ? tempImgs['game'] : (i >= 0 && i < games.length ? games[i].img || '' : ''),
     publishedAt: wasNew ? new Date().toISOString() : (games[i]?.publishedAt || new Date().toISOString()),
     plays: i >= 0 && games[i]?.plays ? games[i].plays : 0,
@@ -4322,6 +4612,7 @@ function addGame() {
   document.getElementById('ge-desc').value = '';
   document.getElementById('ge-status').value = 'available';
   document.getElementById('ge-index').value = -1;
+  applyGameTitleStyleToForm(null);
   document.getElementById('game-img-preview').style.display = 'none';
   document.getElementById('ge-delete-btn').style.display = 'none';
   document.getElementById('game-edit-form-title').textContent = 'Nouveau jeu';
