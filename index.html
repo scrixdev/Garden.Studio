@@ -55,13 +55,25 @@ nav {
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px;
   letter-spacing: 1px; color: var(--lime); text-decoration: none; cursor: pointer;
 }
-.nav-links { display: flex; gap: 40px; list-style: none; }
-.nav-links a {
-  color: var(--white); text-decoration: none; font-size: 14px; font-weight: 500;
-  letter-spacing: 0.5px; transition: color 0.2s; cursor: pointer;
+.nav-links {
+  display: flex; gap: 28px; list-style: none; align-items: center;
 }
-.nav-links a:hover, .nav-links a.active { color: var(--lime); }
-.nav-links a.active { border-bottom: 2px solid var(--lime); padding-bottom: 2px; }
+.nav-links a {
+  display: flex; align-items: center; gap: 8px;
+  color: rgba(255,255,255,0.65); text-decoration: none; font-size: 13.5px; font-weight: 600;
+  letter-spacing: 0.2px; transition: color 0.25s; cursor: pointer;
+  padding: 9px 4px; white-space: nowrap; position: relative;
+}
+.nav-links a svg { width: 16px; height: 16px; flex-shrink: 0; }
+.nav-links a span { position: relative; display: inline-block; }
+.nav-links a span::after {
+  content: ''; position: absolute; left: 0; bottom: -6px; height: 2px; width: 0;
+  background: #ffffff; border-radius: 2px;
+  transition: width 0.35s cubic-bezier(.4,0,.2,1);
+}
+.nav-links a:hover { color: var(--white); }
+.nav-links a:hover span::after { width: 100%; }
+.nav-links a.active { color: var(--white); }
 .nav-right { display: flex; gap: 12px; align-items: center; }
 .btn-signin {
   border: 1px solid var(--glass-border); color: var(--white); background: var(--glass-highlight), var(--glass-bg);
@@ -71,6 +83,24 @@ nav {
   font-size: 13px; letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s; border-radius: 999px;
 }
 .btn-signin:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); color: var(--white); }
+.btn-signin.logged-in {
+  display: flex; align-items: center; justify-content: flex-start;
+  height: 42px; width: 42px; padding: 0; overflow: hidden;
+  transition: width 0.4s cubic-bezier(.4,0,.2,1), border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+.btn-signin.logged-in .nav-user-avatar-wrap { width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; flex: none; }
+.btn-signin.logged-in .nav-user-label {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; letter-spacing: 1.2px; text-transform: uppercase;
+  white-space: nowrap; max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width 0.4s cubic-bezier(.4,0,.2,1), opacity 0.3s ease 0.05s, padding 0.4s ease;
+}
+.btn-signin.logged-in:hover, .btn-signin.logged-in:focus-visible {
+  width: 200px; border-color: var(--lime-border);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(var(--lime-rgb),0.25);
+}
+.btn-signin.logged-in:hover .nav-user-label, .btn-signin.logged-in:focus-visible .nav-user-label {
+  max-width: 160px; opacity: 1; padding-right: 16px;
+}
 .btn-admin {
   background: var(--glass-highlight), var(--glass-bg); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 18px;
   backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 999px;
@@ -342,10 +372,7 @@ nav {
 nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: blur(22px) saturate(180%); -webkit-backdrop-filter: blur(22px) saturate(180%); border-bottom: 1px solid rgba(255,255,255,0.22); gap: 24px; }
 .logo { color: var(--lime); white-space: nowrap; }
 .logo::after { display: none; }
-.nav-links { gap: 24px; flex: 1; justify-content: center; }
-.nav-links a { color: rgba(255,255,255,0.85); font-size: 13px; }
-.nav-links a:hover, .nav-links a.active { color: var(--white); }
-.nav-links a.active { border-bottom-color: var(--white); }
+.nav-links { flex: 0; justify-content: center; }
 .nav-right { position: relative; gap: 10px; }
 .nav-icon-btn { width: 38px; height: 38px; position: relative; display: inline-flex; align-items: center; justify-content: center; background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 50%; cursor: pointer; transition-duration: .3s; box-shadow: var(--glass-shadow); border: 1px solid var(--glass-border); color: rgba(255,255,255,0.92); }
 .nav-icon-btn i, .nav-icon-btn svg { width: 17px; height: 17px; }
@@ -510,21 +537,46 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
 .library-picker-row:hover { background: rgba(255,255,255,0.06); }
 .library-picker-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--lime); cursor: pointer; }
-.lib-org-icon-box { width: 44px; height: 44px; border-radius: 12px; background: var(--glass-highlight), rgba(255,59,48,0.14); border: 1px solid rgba(255,59,48,0.3); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); display: flex; align-items: center; justify-content: center; flex: none; color: #ff6259; }
+.lib-org-icon-box { width: 44px; height: 44px; border-radius: 12px; background: var(--glass-highlight), rgba(255,255,255,0.06); border: 1px solid rgba(255,59,48,0.4); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); display: flex; align-items: center; justify-content: center; flex: none; color: #ff6259; }
 .lib-org-icon-box svg { width: 20px; height: 20px; }
 .lib-org-current { font-size: 12.5px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 7px; margin: 16px 0 20px; }
 .lib-org-current .lib-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .lib-org-label { font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 10px; }
 .lib-org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
-.lib-org-btn { position: relative; display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-highlight), rgba(255,255,255,0.06); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.15s; text-align: left; }
-.lib-org-btn:hover { background: var(--glass-highlight), rgba(255,255,255,0.1); transform: translateY(-1px); }
-.lib-org-btn.active { border-color: rgba(255,59,48,0.55); background: var(--glass-highlight), rgba(255,59,48,0.16); }
+.lib-org-btn { position: relative; display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-highlight), rgba(255,255,255,0.06); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; text-align: left; }
+.lib-org-btn:hover { border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
+.lib-org-btn.active { border-color: var(--org-color, var(--lime)); box-shadow: var(--glass-shadow), 0 0 0 1px var(--org-color, var(--lime)) inset, 0 0 14px -4px var(--org-color, var(--lime)); }
 .lib-org-btn .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
-.lib-org-check { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; color: #ff6259; }
-.lib-org-remove-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,59,48,0.4); background: var(--glass-highlight), rgba(255,59,48,0.1); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #ff6259; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background 0.15s, transform 0.15s; }
-.lib-org-remove-btn:hover { background: var(--glass-highlight), rgba(255,59,48,0.18); transform: translateY(-1px); }
+.lib-org-check { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; color: var(--org-color, var(--lime)); }
+.lib-org-remove-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,59,48,0.45); background: var(--glass-highlight), rgba(255,255,255,0.06); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #ff6259; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+.lib-org-remove-btn:hover { border-color: rgba(255,59,48,0.8); box-shadow: var(--glass-shadow), 0 0 14px -4px rgba(255,59,48,0.7); transform: translateY(-1px); }
 .lib-org-remove-btn svg { width: 15px; height: 15px; }
 .lib-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.pin-home-btn {
+  display: inline-flex; align-items: center; justify-content: flex-start;
+  height: 42px; width: 42px; padding: 0; overflow: hidden;
+  border-radius: 999px; cursor: pointer; border: 1px solid var(--glass-border);
+  background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(8px) saturate(150%); -webkit-backdrop-filter: blur(8px) saturate(150%);
+  box-shadow: var(--glass-shadow); color: var(--white);
+  transition: width 0.4s cubic-bezier(.4,0,.2,1), border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+.pin-home-icon { display: flex; align-items: center; justify-content: center; width: 42px; height: 42px; flex-shrink: 0; }
+.pin-home-icon i { width: 17px; height: 17px; transition: transform 0.35s ease; }
+.pin-home-label {
+  font-weight: 700; font-size: 13px; white-space: nowrap;
+  max-width: 0; opacity: 0; overflow: hidden;
+  transition: max-width 0.4s cubic-bezier(.4,0,.2,1), opacity 0.3s ease 0.05s, padding 0.4s ease;
+}
+.pin-home-btn:hover, .pin-home-btn:focus-visible {
+  width: 210px; border-color: var(--lime-border);
+  box-shadow: var(--glass-shadow), 0 0 0 1px rgba(var(--lime-rgb),0.25);
+}
+.pin-home-btn:hover .pin-home-label, .pin-home-btn:focus-visible .pin-home-label {
+  max-width: 170px; opacity: 1; padding-right: 4px;
+}
+.pin-home-btn.active { border-color: var(--lime); color: var(--lime); }
+.pin-home-btn.active .pin-home-icon i { fill: var(--lime); transform: rotate(-35deg); }
+.pin-home-btn.active:hover { width: 210px; }
 .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .lib-select-wrap { position: relative; }
 .lib-select-btn { display: flex; align-items: center; gap: 10px; border: 1px solid var(--glass-border); background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 700; font-size: 13.5px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
@@ -1661,11 +1713,11 @@ window.fbSignOut      = async () => await signOut(auth);
     GARDEN STUDIO
   </span>
     <ul class="nav-links" id="nav-links">
-    <li><a onclick="goHome()" id="nav-home" class="active">Accueil</a></li>
-    <li><a onclick="showPage('about')" id="nav-about">Studio</a></li>
-    <li><a onclick="showPage('top-gamers')" id="nav-top-gamers">Equipe</a></li>
-    <li><a onclick="showPage('recruit')" id="nav-recruit">On recrute</a></li>
-    <li><a onclick="showPage('my-list')" id="nav-my-list">My List</a></li>
+    <li><a onclick="goHome()" id="nav-home" class="active"><i data-lucide="home"></i><span>Accueil</span></a></li>
+    <li><a onclick="showPage('about')" id="nav-about"><i data-lucide="landmark"></i><span>Studio</span></a></li>
+    <li><a onclick="showPage('top-gamers')" id="nav-top-gamers"><i data-lucide="users"></i><span>Equipe</span></a></li>
+    <li><a onclick="showPage('recruit')" id="nav-recruit"><i data-lucide="briefcase"></i><span>On recrute</span></a></li>
+    <li><a onclick="showPage('my-list')" id="nav-my-list"><i data-lucide="bookmark"></i><span>My List</span></a></li>
   </ul>
     <div class="nav-right">
     <div class="nav-search" onclick="toggleMobileSearch(event)">
@@ -1744,6 +1796,13 @@ window.fbSignOut      = async () => await signOut(auth);
   </section>
 
     <!-- STREAMING ROWS -->
+  <section class="stream-section" id="home-my-list-games" style="display:none">
+    <div class="stream-section-header">
+      <div><h2 class="stream-section-title">Ma liste</h2></div>
+    </div>
+    <div class="stream-row wide" id="my-list-games-row"></div>
+  </section>
+
   <section class="stream-section" id="home-recent-games">
     <div class="stream-section-header">
       <div><h2 class="stream-section-title">Jeux recents</h2></div>
@@ -1777,6 +1836,10 @@ window.fbSignOut      = async () => await signOut(auth);
         <p style="color:rgba(255,255,255,0.58);max-width:560px;line-height:1.7;margin-top:12px">Retrouve tes jeux ajoutes, tes jeux likes et tes categories de favoris personnalisees.</p>
       </div>
       <div class="lib-controls">
+        <button class="pin-home-btn" id="pin-home-btn" onclick="toggleMyListPinned()" aria-label="Épingler sur l'accueil">
+          <span class="pin-home-icon"><i data-lucide="pin"></i></span>
+          <span class="pin-home-label">Épingler sur l'accueil</span>
+        </button>
         <div class="lib-select-wrap">
           <button class="lib-select-btn" id="lib-select-btn" onclick="toggleLibraryDropdown(event)">
             <span class="lib-dot" id="lib-select-dot"></span>
@@ -3306,7 +3369,7 @@ window._gsSetNotifications = (data) => {
   (data || []).forEach(x => notifications.push(x));
   console.log('📥 notifications chargées:', notifications.length);
 };
-window._gsSetUser         = (user) => { currentUser = user; loadUserLibrary(); renderMyListPage(); renderNotifications(); };
+window._gsSetUser         = (user) => { currentUser = user; loadUserLibrary(); renderMyListPage(); renderNotifications(); updatePinHomeButtonUI(); renderGamesOnSite(); };
 window._gsRender = () => {
   renderProductsOnSite();
   renderGamesOnSite();
@@ -3362,6 +3425,28 @@ function loadUserLibrary() {
 function saveUserLibrary() {
   if (!currentUser) return;
   localStorage.setItem(userLibraryStorageKey(), JSON.stringify(userLibrary));
+}
+// ===== PIN "MA LISTE" SUR L'ACCUEIL =====
+function myListPinStorageKey() { return 'gs_pin_mylist_home_' + (currentUser?.email || 'guest').toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
+function isMyListPinned() {
+  if (!currentUser) return false;
+  try { return localStorage.getItem(myListPinStorageKey()) === '1'; } catch(e) { return false; }
+}
+function updatePinHomeButtonUI() {
+  const btn = document.getElementById('pin-home-btn');
+  if (!btn) return;
+  const pinned = isMyListPinned();
+  btn.classList.toggle('active', pinned);
+  const label = btn.querySelector('.pin-home-label');
+  if (label) label.textContent = pinned ? "Épinglé sur l'accueil" : "Épingler sur l'accueil";
+}
+function toggleMyListPinned() {
+  if (!requireAccount()) return;
+  const pinned = !isMyListPinned();
+  try { localStorage.setItem(myListPinStorageKey(), pinned ? '1' : '0'); } catch(e) {}
+  updatePinHomeButtonUI();
+  renderGamesOnSite();
+  showToast(pinned ? '📌 Ma liste épinglée sur l\'accueil' : 'Ma liste retirée de l\'accueil');
 }
 function requireAccount() {
   if (currentUser) return true;
@@ -3537,7 +3622,7 @@ function renderOrganizeListModal() {
   const gridEl = document.getElementById('organize-list-grid');
   if (gridEl) {
     gridEl.innerHTML = rows.map(r => `
-      <button class="lib-org-btn${r.active ? ' active' : ''}" onclick="organizeListToggle('${r.kind}','${r.catId}')">
+      <button class="lib-org-btn${r.active ? ' active' : ''}" style="--org-color:${r.color}" onclick="organizeListToggle('${r.kind}','${r.catId}')">
         <span class="lib-dot" style="background:${r.color}"></span>
         <span style="flex:1">${escapeHTML(r.name)}</span>
         ${r.active ? '<i data-lucide="check" class="lib-org-check"></i>' : ''}
@@ -3590,7 +3675,7 @@ function allLibraryKeys() {
 function libraryTabOptions() {
   return [
     { id: 'all', label: 'Tous', color: '#9aa0aa', count: allLibraryKeys().length },
-    { id: 'list', label: 'Favoris', color: '#9aa0aa', count: (userLibrary.list || []).length },
+    { id: 'list', label: 'Favoris', color: '#ffd60a', count: (userLibrary.list || []).length },
     { id: 'liked', label: 'Jeux likés', color: '#ff3b30', count: (userLibrary.liked || []).length }
   ].concat((userLibrary.categories || []).map(c => ({ id: 'cat:' + c.id, label: c.name, color: c.color || '#2f7dfa', count: (c.games || []).length })));
 }
@@ -3719,6 +3804,7 @@ function deleteListFromManage(id) {
 function renderMyListPage() {
   const grid = document.getElementById('library-grid');
   const toolbar = document.getElementById('category-toolbar');
+  updatePinHomeButtonUI();
   if (!grid || !toolbar) return;
   const searchWrap = document.querySelector('.lib-search-wrap');
   if (!currentUser) {
@@ -4375,6 +4461,15 @@ function renderGamesOnSite() {
   renderGameRail('popular-games-row', byPopular.slice(0, 12));
   renderGameRail('trending-games-row', byTrending.slice(0, 12));
   renderGameRail('recent-games-row', byRecent.slice(0, 12));
+  const myListSection = document.getElementById('home-my-list-games');
+  if (myListSection) {
+    const pinned = isMyListPinned();
+    myListSection.style.display = pinned ? '' : 'none';
+    if (pinned) {
+      const myItems = indexed.filter(({ g }) => Array.isArray(userLibrary?.list) && userLibrary.list.includes(gameKey(g)));
+      renderGameRail('my-list-games-row', myItems);
+    }
+  }
   const oldGrid = document.getElementById('games-grid');
   if (oldGrid) oldGrid.innerHTML = indexed.slice(0, 10).map(({ g, i }) => renderStreamCard(g, i)).join('');
   if (window.lucide) lucide.createIcons();
@@ -6371,24 +6466,21 @@ async function doSignOut() {
   showToast('Déconnecté.');
 }
 
-function navAvatarHTML(photoURL, username) {
-  if (photoURL) return `<img src="${photoURL}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none">`;
+function navAvatarHTML(photoURL, username, size) {
+  size = size || 24;
+  if (photoURL) return `<img src="${photoURL}" alt="" style="width:${size}px;height:${size}px;border-radius:50%;object-fit:cover;flex:none">`;
   const letter = (username || '?').trim().charAt(0).toUpperCase();
   const colors = ['#2f7dfa','#ff6b6b','#ffb800','#7c5cff','#00c896','#ff5fa2'];
   let hash = 0; for (let i = 0; i < (username || '').length; i++) hash = (username.charCodeAt(i) + ((hash << 5) - hash));
   const color = colors[Math.abs(hash) % colors.length];
-  return `<span style="width:24px;height:24px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex:none">${escapeHTML(letter)}</span>`;
+  return `<span style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.46)}px;font-weight:800;color:#fff;flex:none">${escapeHTML(letter)}</span>`;
 }
 function updateNavAfterLogin(username, photoURL) {
-  // Bouton connexion → affiche l'avatar + le pseudo
+  // Bouton connexion → devient une bulle avatar qui se déplie au survol pour révéler le pseudo
   const btn = document.querySelector('.btn-signin');
   if (btn) {
-    btn.innerHTML = navAvatarHTML(photoURL, username) + `<span>${escapeHTML(username)}</span>`;
-    btn.style.display = 'flex';
-    btn.style.alignItems = 'center';
-    btn.style.gap = '8px';
-    btn.style.paddingLeft = '6px';
-    btn.style.background = 'rgba(var(--lime-rgb),0.1)';
+    btn.classList.add('logged-in');
+    btn.innerHTML = `<span class="nav-user-avatar-wrap">${navAvatarHTML(photoURL, username, 32)}</span><span class="nav-user-label">${escapeHTML(username)}</span>`;
     btn.onclick = () => showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false);
   }
   // Bouton admin → visible seulement si admin
@@ -6402,7 +6494,8 @@ function updateNavAfterLogin(username, photoURL) {
 function updateNavAfterLogout() {
   const btn = document.querySelector('.btn-signin');
   if (btn) {
-    btn.textContent = 'Se connecter';
+    btn.classList.remove('logged-in');
+    btn.textContent = 'Connexion';
     btn.style.background = '';
     btn.style.display = '';
     btn.style.alignItems = '';
