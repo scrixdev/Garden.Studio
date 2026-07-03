@@ -636,7 +636,22 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 
 /* Announcements feed */
 .ann-feed { display: flex; flex-direction: column; gap: 18px; }
-.ann-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px 28px; }
+.ann-card {
+  position: relative;
+  background: var(--glass-highlight), linear-gradient(180deg, rgba(10,10,14,0.75) 0%, rgba(6,6,9,0.85) 100%);
+  backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 12px 34px rgba(0,0,0,0.45);
+  border-radius: 18px; padding: 24px 28px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  overflow: hidden;
+}
+.ann-card::before {
+  content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; border-radius: inherit;
+  background: radial-gradient(600px 200px at 0% 0%, rgba(255,255,255,0.06), transparent 60%);
+}
+.ann-card:hover { border-color: rgba(255,255,255,0.5); box-shadow: var(--glass-shadow), 0 18px 44px rgba(0,0,0,0.55); }
+.ann-card > * { position: relative; z-index: 1; }
 .ann-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .ann-avatar { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; object-fit: cover; background: var(--dark3); }
 .ann-who { min-width: 0; flex: 1; }
@@ -684,6 +699,19 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .poll-option-row .form-input { flex: 1; }
 .poll-option-remove { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid rgba(255,60,60,0.25); background: rgba(255,60,60,0.1); color: #ff6b6b; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .poll-option-remove:hover { background: rgba(255,60,60,0.18); }
+.poll-toggle-btn {
+  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+  padding: 11px 14px; border-radius: 10px; cursor: pointer;
+  border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.75); font-size: 13px; font-weight: 600;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+.poll-toggle-btn:hover { border-color: rgba(255,255,255,0.28); background: rgba(255,255,255,0.06); }
+.poll-toggle-icon { width: 18px; height: 18px; flex-shrink: 0; }
+.poll-toggle-icon-on { display: none; color: var(--lime); }
+.poll-toggle-btn.active { border-color: rgba(var(--lime-rgb),0.5); background: var(--lime-dim); color: var(--white); }
+.poll-toggle-btn.active .poll-toggle-icon-off { display: none; }
+.poll-toggle-btn.active .poll-toggle-icon-on { display: block; }
 
 /* Gamers ranking */
 .gamers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -2973,18 +3001,15 @@ window.fbSignOut      = async () => await signOut(auth);
             </div>
           </div>
           <div class="form-group">
-            <label class="form-label" style="display:flex;align-items:center;gap:8px;cursor:pointer">
-              <input type="checkbox" id="ann-poll-toggle" onchange="togglePollBuilder(this.checked)" style="width:16px;height:16px;accent-color:var(--lime);cursor:pointer">
-              Ajouter un sondage / réaction
-            </label>
+            <button type="button" id="ann-poll-toggle-btn" class="poll-toggle-btn" onclick="togglePollBuilder(!pollBuilderEnabled)">
+              <i data-lucide="square" class="poll-toggle-icon poll-toggle-icon-off"></i>
+              <i data-lucide="square-check-big" class="poll-toggle-icon poll-toggle-icon-on"></i>
+              <span>Ajouter un sondage / réaction</span>
+            </button>
           </div>
           <div id="ann-poll-builder" style="display:none;margin-bottom:16px;padding:16px;border:1px solid rgba(255,255,255,0.1);border-radius:12px;background:rgba(255,255,255,0.02)">
-            <div class="form-group" style="margin-bottom:12px">
-              <label class="form-label">Couleur de la barre</label>
-              <input type="color" id="ann-poll-color" value="#7c5cff" style="width:44px;height:36px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer">
-            </div>
             <div class="form-group" style="margin-bottom:8px">
-              <label class="form-label">Options</label>
+              <label class="form-label">Options (couleur individuelle par option)</label>
               <div id="ann-poll-options"></div>
             </div>
             <button type="button" class="btn-ghost" style="font-size:12px" onclick="addPollOption()"><i data-lucide="plus"></i> Ajouter une option</button>
@@ -4022,20 +4047,25 @@ async function publishNotification(type, title, detail, gameName, targetUserId, 
 // ===== ANNONCES LIBRES (indépendantes des fiches jeux) =====
 // ----- Builder du sondage (panel admin) -----
 let pollOptionCount = 0;
+let pollBuilderEnabled = false;
+const POLL_DEFAULT_COLORS = ['#7c5cff', '#2f7dfa', '#39FF14', '#ff5ba7', '#ffb020', '#ff5252'];
 function togglePollBuilder(show) {
-  document.getElementById('ann-poll-builder').style.display = show ? 'block' : 'none';
-  if (show && !document.getElementById('ann-poll-options').children.length) {
-    addPollOption('Merci'); addPollOption('Non merci');
+  pollBuilderEnabled = !!show;
+  document.getElementById('ann-poll-toggle-btn').classList.toggle('active', pollBuilderEnabled);
+  document.getElementById('ann-poll-builder').style.display = pollBuilderEnabled ? 'block' : 'none';
+  if (pollBuilderEnabled && !document.getElementById('ann-poll-options').children.length) {
+    addPollOption('Merci', POLL_DEFAULT_COLORS[0]); addPollOption('Non merci', POLL_DEFAULT_COLORS[1]);
   }
 }
-function addPollOption(prefill) {
+function addPollOption(prefill, colorPrefill) {
   pollOptionCount++;
   const id = 'poll-opt-' + pollOptionCount;
   const wrap = document.getElementById('ann-poll-options');
+  const color = colorPrefill || POLL_DEFAULT_COLORS[wrap.children.length % POLL_DEFAULT_COLORS.length];
   const row = document.createElement('div');
   row.className = 'poll-option-row';
   row.id = id;
-  row.innerHTML = `<input type="text" class="form-input" placeholder="Texte de l'option" maxlength="40" value="${prefill ? escapeHTML(prefill) : ''}"><button type="button" class="poll-option-remove" onclick="removePollOption('${id}')"><i data-lucide="x"></i></button>`;
+  row.innerHTML = `<input type="color" class="poll-option-color" value="${color}" title="Couleur de cette option" style="width:38px;height:38px;padding:2px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:transparent;cursor:pointer;flex-shrink:0"><input type="text" class="form-input" placeholder="Texte de l'option" maxlength="40" value="${prefill ? escapeHTML(prefill) : ''}"><button type="button" class="poll-option-remove" onclick="removePollOption('${id}')"><i data-lucide="x"></i></button>`;
   wrap.appendChild(row);
   if (window.lucide) lucide.createIcons({ nodes: [row] });
 }
@@ -4044,10 +4074,10 @@ function removePollOption(id) {
   if (row) row.remove();
 }
 function resetPollBuilder() {
-  document.getElementById('ann-poll-toggle').checked = false;
+  pollBuilderEnabled = false;
+  document.getElementById('ann-poll-toggle-btn').classList.remove('active');
   document.getElementById('ann-poll-builder').style.display = 'none';
   document.getElementById('ann-poll-options').innerHTML = '';
-  document.getElementById('ann-poll-color').value = '#7c5cff';
   pollOptionCount = 0;
 }
 async function sendAnnouncement() {
@@ -4063,18 +4093,21 @@ async function sendAnnouncement() {
   const extra = {};
   const imgUrl = tempImgs['ann-img'];
   if (imgUrl) extra.img = imgUrl;
-  const pollEnabled = document.getElementById('ann-poll-toggle').checked;
+  const pollEnabled = pollBuilderEnabled;
   if (pollEnabled) {
-    const optionTexts = [...document.querySelectorAll('#ann-poll-options .poll-option-row input')]
-      .map(inp => inp.value.trim()).filter(Boolean);
-    if (optionTexts.length < 2) {
+    const rows = [...document.querySelectorAll('#ann-poll-options .poll-option-row')]
+      .map(row => ({
+        text: row.querySelector('.form-input').value.trim(),
+        color: row.querySelector('.poll-option-color').value || '#7c5cff'
+      }))
+      .filter(o => o.text);
+    if (rows.length < 2) {
       errEl.textContent = 'Le sondage doit avoir au moins 2 options remplies.';
       errEl.style.display = 'block';
       return;
     }
     extra.poll = {
-      color: document.getElementById('ann-poll-color').value || '#7c5cff',
-      options: optionTexts.map((text, idx) => ({ id: 'opt' + idx, text })),
+      options: rows.map((o, idx) => ({ id: 'opt' + idx, text: o.text, color: o.color })),
       votes: {}
     };
   }
@@ -4153,13 +4186,14 @@ function renderAnnPollHTML(n) {
   n.poll.options.forEach(o => counts[o.id] = 0);
   Object.values(votes).forEach(optId => { if (counts.hasOwnProperty(optId)) counts[optId]++; });
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  const color = n.poll.color || '#7c5cff';
+  const fallbackColor = n.poll.color || '#7c5cff';
   const hasVoted = !!myVote;
   const optionsHTML = n.poll.options.map(o => {
     const c = counts[o.id] || 0;
     const pct = total ? Math.round((c / total) * 100) : 0;
     const isVotedOpt = myVote === o.id;
     const showFill = hasVoted;
+    const color = o.color || fallbackColor;
     return `<button type="button" class="ann-poll-option${isVotedOpt ? ' voted' : ''}" style="--poll-color:${color}" onclick="voteAnnPoll('${n.id}','${o.id}',event)">
       ${showFill ? `<div class="ann-poll-fill" style="width:${pct}%"></div>` : ''}
       <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
