@@ -507,6 +507,20 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
 .library-picker-row:hover { background: rgba(255,255,255,0.06); }
 .library-picker-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--lime); cursor: pointer; }
+.lib-org-icon-box { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,59,48,0.12); border: 1px solid rgba(255,59,48,0.3); display: flex; align-items: center; justify-content: center; flex: none; color: #ff6259; }
+.lib-org-icon-box svg { width: 20px; height: 20px; }
+.lib-org-current { font-size: 12.5px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 7px; margin: 16px 0 20px; }
+.lib-org-current .lib-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.lib-org-label { font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 10px; }
+.lib-org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+.lib-org-btn { position: relative; display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s; text-align: left; }
+.lib-org-btn:hover { background: rgba(255,255,255,0.08); }
+.lib-org-btn.active { border-color: rgba(255,59,48,0.55); background: rgba(255,59,48,0.14); }
+.lib-org-btn .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.lib-org-check { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; color: #ff6259; }
+.lib-org-remove-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,59,48,0.35); background: rgba(255,59,48,0.08); color: #ff6259; font-weight: 800; font-size: 13.5px; cursor: pointer; transition: background 0.15s; }
+.lib-org-remove-btn:hover { background: rgba(255,59,48,0.16); }
+.lib-org-remove-btn svg { width: 15px; height: 15px; }
 .lib-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .lib-select-wrap { position: relative; }
@@ -3486,6 +3500,71 @@ function deleteFavoriteCategory() {
   if (!requireAccount() || !currentLibraryTab.startsWith('cat:')) return;
   deleteListFromManage(currentLibraryTab.slice(4));
 }
+// ===== ORGANISER DANS MA LISTE (modal remplaçant la croix sur les cartes My List) =====
+let _organizeIndex = -1;
+function openOrganizeListModal(index, ev) {
+  if (ev) ev.stopPropagation();
+  if (!requireAccount()) return;
+  _organizeIndex = index;
+  renderOrganizeListModal();
+  document.getElementById('organize-list-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeOrganizeListModal(e) {
+  if (e && e.target !== document.getElementById('organize-list-modal')) return;
+  document.getElementById('organize-list-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _organizeIndex = -1;
+}
+function renderOrganizeListModal() {
+  const index = _organizeIndex;
+  if (index < 0 || !games[index]) return;
+  const g = games[index];
+  const key = gameKey(g);
+  const subtitleEl = document.getElementById('organize-list-subtitle');
+  if (subtitleEl) subtitleEl.textContent = g.name || '';
+  const inFavorites = userLibrary.list.includes(key);
+  const activeCats = userLibrary.categories.filter(c => Array.isArray(c.games) && c.games.includes(key));
+  const currentLabel = inFavorites ? 'Favoris' : (activeCats[0] ? activeCats[0].name : 'Non classé');
+  const currentColor = inFavorites ? '#ffd60a' : (activeCats[0]?.color || 'rgba(255,255,255,0.35)');
+  const currentEl = document.getElementById('organize-list-current');
+  if (currentEl) currentEl.innerHTML = `Actuellement &nbsp;•&nbsp; <span class="lib-dot" style="background:${currentColor}"></span> ${escapeHTML(currentLabel)}`;
+  const rows = [{ kind: 'list', catId: '', name: 'Favoris', color: '#ffd60a', active: inFavorites }]
+    .concat(userLibrary.categories.map(c => ({ kind: 'cat', catId: c.id, name: c.name, color: c.color || 'var(--lime)', active: Array.isArray(c.games) && c.games.includes(key) })));
+  const gridEl = document.getElementById('organize-list-grid');
+  if (gridEl) {
+    gridEl.innerHTML = rows.map(r => `
+      <button class="lib-org-btn${r.active ? ' active' : ''}" onclick="organizeListToggle('${r.kind}','${r.catId}')">
+        <span class="lib-dot" style="background:${r.color}"></span>
+        <span style="flex:1">${escapeHTML(r.name)}</span>
+        ${r.active ? '<i data-lucide="check" class="lib-org-check"></i>' : ''}
+      </button>`).join('');
+  }
+  if (window.lucide) lucide.createIcons();
+}
+function organizeListToggle(kind, catId) {
+  const index = _organizeIndex;
+  if (index < 0 || !games[index]) return;
+  const key = gameKey(games[index]);
+  if (kind === 'list') {
+    toggleArrayValue(userLibrary.list, key);
+  } else if (kind === 'cat') {
+    const cat = userLibrary.categories.find(c => c.id === catId);
+    if (!cat) return;
+    if (!Array.isArray(cat.games)) cat.games = [];
+    toggleArrayValue(cat.games, key);
+  }
+  saveUserLibrary();
+  renderOrganizeListModal();
+  renderGamesOnSite(); renderMyListPage();
+}
+function removeFromOrganizeModal() {
+  const index = _organizeIndex;
+  if (index < 0 || !games[index]) return;
+  const key = gameKey(games[index]);
+  removeFromCurrentCategory(key);
+  closeOrganizeListModal();
+}
 function removeFromCurrentCategory(key) {
   if (currentLibraryTab === 'all') {
     userLibrary.list = userLibrary.list.filter(x => x !== key);
@@ -3661,7 +3740,7 @@ function renderMyListPage() {
   if (!cards.length) {
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:58px 20px;color:rgba(255,255,255,0.55)">${librarySearchQuery ? `Aucun jeu ne correspond à "${escapeHTML(librarySearchQuery)}".` : "Aucun jeu ici pour l'instant."}</div>`;
   } else {
-    grid.innerHTML = cards.map(({ key, index }) => renderStreamCard(games[index], index, false, `<button class="card-icon-btn" onclick="event.stopPropagation();removeFromCurrentCategory('${key}')"><i data-lucide="x"></i></button>`)).join('');
+    grid.innerHTML = cards.map(({ key, index }) => renderStreamCard(games[index], index, false, `<button class="card-icon-btn" title="Changer de liste" onclick="event.stopPropagation();openOrganizeListModal(${index})"><i data-lucide="list"></i></button>`)).join('');
   }
   if (window.lucide) lucide.createIcons();
 }
@@ -6897,6 +6976,24 @@ select.authbox-input option {
         </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- ===== ORGANISER DANS MA LISTE MODAL ===== -->
+<div class="modal-overlay" id="organize-list-modal" style="z-index:99999" onclick="closeOrganizeListModal(event)">
+  <div class="modal-box" style="max-width:400px;width:92%;height:auto;max-height:86vh;overflow-y:auto;background:var(--glass-highlight), rgba(10,10,14,0.92);border:1px solid var(--glass-border);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);box-shadow:var(--glass-shadow), 0 30px 80px rgba(0,0,0,0.55);border-radius:20px;padding:26px 24px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:flex-start;gap:14px">
+      <div class="lib-org-icon-box"><i data-lucide="list"></i></div>
+      <div style="flex:1;min-width:0;padding-top:2px">
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;color:#fff;line-height:1.1">Organiser dans ma liste</div>
+        <div id="organize-list-subtitle" style="font-size:12.5px;color:#999;margin-top:4px"></div>
+      </div>
+      <button class="card-icon-btn" onclick="closeOrganizeListModal()" style="flex:none"><i data-lucide="x"></i></button>
+    </div>
+    <div id="organize-list-current" class="lib-org-current"></div>
+    <div class="lib-org-label">Listes</div>
+    <div id="organize-list-grid" class="lib-org-grid"></div>
+    <button class="lib-org-remove-btn" onclick="removeFromOrganizeModal()"><i data-lucide="trash-2"></i> Retirer de la liste</button>
   </div>
 </div>
 
