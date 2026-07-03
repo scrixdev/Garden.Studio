@@ -465,8 +465,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 @keyframes gsShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 .gs-skeleton { background-image: linear-gradient(100deg, #17171f 20%, #26262f 40%, #17171f 60%); background-size: 400px 100%; animation: gsShimmer 1.3s ease-in-out infinite; }
 .gs-skeleton img { opacity: 0 !important; }
-.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0.85; pointer-events: auto; transition: opacity 0.2s; z-index: 3; }
-.stream-card:hover .game-card-actions { opacity: 1; }
+.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 3; }
+.stream-card:hover .game-card-actions { opacity: 1; pointer-events: auto; }
 .stream-card img { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; -webkit-user-drag: none; user-drag: none; }
 .card-icon-btn, .game-card-actions, .game-card-actions * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
 .game-card-thumb { -webkit-touch-callout: none; }
