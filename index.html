@@ -497,6 +497,22 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
 .library-picker-row:hover { background: rgba(255,255,255,0.06); }
 .library-picker-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--lime); cursor: pointer; }
+.lib-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.lib-select-wrap { position: relative; }
+.lib-select-btn { display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--white); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 700; font-size: 13.5px; transition: all 0.2s; }
+.lib-select-btn:hover, .lib-select-btn.open { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+.lib-select-btn i { width: 15px; height: 15px; color: rgba(255,255,255,0.5); transition: transform 0.2s; }
+.lib-select-btn.open i { transform: rotate(180deg); }
+.lib-select-count { background: rgba(255,255,255,0.12); border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.75); }
+.lib-dropdown { position: absolute; top: calc(100% + 10px); left: 0; min-width: 240px; background: var(--glass-highlight), rgba(20,22,28,0.92); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 200; display: none; }
+.lib-dropdown.open { display: block; }
+.lib-dropdown-row { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.lib-dropdown-row:hover { background: rgba(255,255,255,0.07); }
+.lib-dropdown-row.active { background: rgba(var(--lime-rgb),0.12); color: var(--white); }
+.lib-dropdown-row .lib-select-count { background: rgba(255,255,255,0.08); }
+.color-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; padding: 0; }
+.color-swatch.selected { border-color: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.18); }
 .modal-actions { flex-wrap: wrap; }
 .modal-user-actions { display: flex; gap: 8px; }
 @media (max-width: 860px) {
@@ -1733,7 +1749,18 @@ window.fbSignOut      = async () => await signOut(auth);
         <h1 class="library-title">My List</h1>
         <p style="color:rgba(255,255,255,0.58);max-width:560px;line-height:1.7;margin-top:12px">Retrouve tes jeux ajoutes, tes jeux likes et tes categories de favoris personnalisees.</p>
       </div>
-      <div class="library-tabs" id="library-tabs"></div>
+      <div class="lib-controls">
+        <div class="lib-select-wrap">
+          <button class="lib-select-btn" id="lib-select-btn" onclick="toggleLibraryDropdown(event)">
+            <span class="lib-dot" id="lib-select-dot"></span>
+            <span id="lib-select-label">Tous</span>
+            <span class="lib-select-count" id="lib-select-count">0</span>
+            <i data-lucide="chevron-down"></i>
+          </button>
+          <div class="lib-dropdown" id="lib-dropdown"></div>
+        </div>
+        <button class="btn-ghost" onclick="openManageLists()"><i data-lucide="list-plus"></i> Gérer mes listes</button>
+      </div>
     </div>
     <div class="category-toolbar" id="category-toolbar"></div>
     <div class="library-grid" id="library-grid"></div>
@@ -3208,7 +3235,7 @@ let topGamers = loadGamers();
 let heroSlides = JSON.parse(JSON.stringify(DEFAULT_HERO_SLIDES));
 let notifications = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
 let currentHeroSlide = 0;
-let currentLibraryTab = 'list';
+let currentLibraryTab = 'all';
 let userLibrary = createEmptyLibrary();
 let _heroAutoplayTimer = null;
 let _heroPaused = false;
@@ -3415,10 +3442,12 @@ function toggleVote(index, type, ev) {
   saveData().catch(e => console.error('Erreur sauvegarde vote:', e));
   showToast(isLikedNow ? 'Jeu liké 👍' : 'Like retiré.');
 }
+const LIST_COLORS = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0a84ff','#5e5ce6','#af52de','#ff2d78'];
+let selectedNewListColorIdx = 0;
 function createFavoriteCategory() {
   if (!requireAccount()) return;
   showPrompt('Nouvelle catégorie', 'Nom de la nouvelle catégorie :', 'Mes favoris', (name) => {
-    const cat = { id: 'fav-' + Date.now(), name: name.trim(), games: [] };
+    const cat = { id: 'fav-' + Date.now(), name: name.trim(), games: [], color: LIST_COLORS[0] };
     userLibrary.categories.push(cat);
     currentLibraryTab = 'cat:' + cat.id;
     saveUserLibrary(); renderMyListPage();
@@ -3436,18 +3465,15 @@ function renameFavoriteCategory() {
 }
 function deleteFavoriteCategory() {
   if (!requireAccount() || !currentLibraryTab.startsWith('cat:')) return;
-  const id = currentLibraryTab.slice(4);
-  const cat = userLibrary.categories.find(c => c.id === id);
-  if (!cat) return;
-  showConfirm('Supprimer "' + cat.name + '" ?', 'Cette catégorie et son contenu seront supprimés définitivement. Les jeux resteront dans Ma liste / Jeux likés s\'ils y sont aussi.', () => {
-    userLibrary.categories = userLibrary.categories.filter(c => c.id !== id);
-    currentLibraryTab = 'list';
-    saveUserLibrary(); renderMyListPage(); renderGamesOnSite();
-    showToast('Catégorie supprimée.');
-  });
+  deleteListFromManage(currentLibraryTab.slice(4));
 }
 function removeFromCurrentCategory(key) {
-  if (currentLibraryTab === 'list') userLibrary.list = userLibrary.list.filter(x => x !== key);
+  if (currentLibraryTab === 'all') {
+    userLibrary.list = userLibrary.list.filter(x => x !== key);
+    userLibrary.liked = userLibrary.liked.filter(x => x !== key);
+    userLibrary.categories.forEach(c => { c.games = c.games.filter(x => x !== key); });
+  }
+  else if (currentLibraryTab === 'list') userLibrary.list = userLibrary.list.filter(x => x !== key);
   else if (currentLibraryTab === 'liked') userLibrary.liked = userLibrary.liked.filter(x => x !== key);
   else if (currentLibraryTab.startsWith('cat:')) {
     const cat = userLibrary.categories.find(c => c.id === currentLibraryTab.slice(4));
@@ -3455,29 +3481,119 @@ function removeFromCurrentCategory(key) {
   }
   saveUserLibrary(); renderMyListPage(); renderGamesOnSite();
 }
-function renderLibraryTabs() {
-  const tabs = document.getElementById('library-tabs');
-  if (!tabs) return;
-  const base = [
-    { id: 'list', label: 'Ma liste' },
-    { id: 'liked', label: 'Jeux likés' }
-  ].concat(userLibrary.categories.map(c => ({ id: 'cat:' + c.id, label: c.name })));
-  tabs.innerHTML = base.map(t => `<button class="library-tab ${currentLibraryTab === t.id ? 'active' : ''}" onclick="currentLibraryTab='${t.id}';renderMyListPage()">${escapeHTML(t.label)}</button>`).join('');
+function allLibraryKeys() {
+  const set = new Set([...(userLibrary.list || []), ...(userLibrary.liked || [])]);
+  (userLibrary.categories || []).forEach(c => (c.games || []).forEach(k => set.add(k)));
+  return Array.from(set);
+}
+function libraryTabOptions() {
+  return [
+    { id: 'all', label: 'Tous', color: '#9aa0aa', count: allLibraryKeys().length },
+    { id: 'list', label: 'Ma liste', color: '#9aa0aa', count: (userLibrary.list || []).length },
+    { id: 'liked', label: 'Jeux likés', color: '#ff3b30', count: (userLibrary.liked || []).length }
+  ].concat((userLibrary.categories || []).map(c => ({ id: 'cat:' + c.id, label: c.name, color: c.color || '#2f7dfa', count: (c.games || []).length })));
+}
+function toggleLibraryDropdown(ev) {
+  ev.stopPropagation();
+  const dd = document.getElementById('lib-dropdown');
+  if (!dd) return;
+  dd.classList.toggle('open');
+  document.getElementById('lib-select-btn')?.classList.toggle('open', dd.classList.contains('open'));
+}
+function closeLibraryDropdown() {
+  document.getElementById('lib-dropdown')?.classList.remove('open');
+  document.getElementById('lib-select-btn')?.classList.remove('open');
+}
+function selectLibraryTab(id) {
+  currentLibraryTab = id;
+  closeLibraryDropdown();
+  renderMyListPage();
+}
+function renderLibraryDropdown() {
+  const dd = document.getElementById('lib-dropdown');
+  if (!dd) return;
+  const opts = libraryTabOptions();
+  dd.innerHTML = opts.map(o => `<div class="lib-dropdown-row ${currentLibraryTab === o.id ? 'active' : ''}" onclick="selectLibraryTab('${o.id}')"><span class="lib-dot" style="background:${o.color}"></span><span style="flex:1">${escapeHTML(o.label)}</span><span class="lib-select-count">${o.count}</span></div>`).join('');
+  const current = opts.find(o => o.id === currentLibraryTab) || opts[0];
+  const dot = document.getElementById('lib-select-dot'); if (dot) dot.style.background = current.color;
+  const label = document.getElementById('lib-select-label'); if (label) label.textContent = current.label;
+  const count = document.getElementById('lib-select-count'); if (count) count.textContent = current.count;
+}
+function selectNewListColor(i) { selectedNewListColorIdx = i; renderNewListColors(); }
+function renderNewListColors() {
+  const wrap = document.getElementById('new-list-colors');
+  if (!wrap) return;
+  wrap.innerHTML = LIST_COLORS.map((c, i) => `<button type="button" class="color-swatch ${i === selectedNewListColorIdx ? 'selected' : ''}" style="background:${c}" onclick="selectNewListColor(${i})"></button>`).join('');
+}
+function openManageLists() {
+  if (!requireAccount()) return;
+  selectedNewListColorIdx = 0;
+  document.getElementById('new-list-name').value = '';
+  renderNewListColors();
+  renderManageListsModal();
+  document.getElementById('manage-lists-modal').classList.add('open');
+  if (window.lucide) lucide.createIcons();
+}
+function closeManageLists(e) {
+  if (e && e.target !== document.getElementById('manage-lists-modal')) return;
+  closeManageListsDirect();
+}
+function closeManageListsDirect() { document.getElementById('manage-lists-modal').classList.remove('open'); }
+function renderManageListsModal() {
+  const countEl = document.getElementById('manage-lists-count');
+  if (countEl) countEl.textContent = userLibrary.categories.length + ' / 20 créées';
+  const wrap = document.getElementById('manage-lists-existing');
+  if (!wrap) return;
+  if (!userLibrary.categories.length) {
+    wrap.innerHTML = '<div style="text-align:center;padding:20px;color:#999;font-size:13px;border:1px dashed rgba(255,255,255,0.15);border-radius:10px">Aucune liste personnalisée pour le moment.</div>';
+  } else {
+    wrap.innerHTML = userLibrary.categories.map(c => `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px"><span class="lib-dot" style="background:${c.color || '#2f7dfa'}"></span><span style="flex:1;font-size:13.5px;font-weight:600;color:#fff">${escapeHTML(c.name)}</span><span style="font-size:11px;color:#999">${(c.games || []).length}</span><button class="card-icon-btn" onclick="deleteListFromManage('${c.id}')"><i data-lucide="trash-2" style="width:14px;height:14px"></i></button></div>`).join('');
+  }
+  if (window.lucide) lucide.createIcons({ nodes: [wrap] });
+}
+function addNewList() {
+  if (!requireAccount()) return;
+  const input = document.getElementById('new-list-name');
+  const name = input.value.trim();
+  if (!name) { showToast('Merci de donner un nom à la liste'); return; }
+  if (userLibrary.categories.length >= 20) { showToast('Limite de 20 listes atteinte'); return; }
+  const cat = { id: 'fav-' + Date.now(), name, games: [], color: LIST_COLORS[selectedNewListColorIdx] };
+  userLibrary.categories.push(cat);
+  currentLibraryTab = 'cat:' + cat.id;
+  saveUserLibrary();
+  input.value = '';
+  selectedNewListColorIdx = 0;
+  renderNewListColors();
+  renderManageListsModal();
+  renderMyListPage();
+  showToast('Liste créée !');
+}
+function deleteListFromManage(id) {
+  const cat = userLibrary.categories.find(c => c.id === id);
+  if (!cat) return;
+  showConfirm('Supprimer "' + cat.name + '" ?', 'Cette liste et son contenu seront supprimés définitivement.', () => {
+    userLibrary.categories = userLibrary.categories.filter(c => c.id !== id);
+    if (currentLibraryTab === 'cat:' + id) currentLibraryTab = 'all';
+    saveUserLibrary();
+    renderManageListsModal(); renderMyListPage(); renderGamesOnSite();
+    showToast('Liste supprimée.');
+  });
 }
 function renderMyListPage() {
   const grid = document.getElementById('library-grid');
   const toolbar = document.getElementById('category-toolbar');
   if (!grid || !toolbar) return;
   if (!currentUser) {
-    document.getElementById('library-tabs').innerHTML = '';
+    const dd = document.getElementById('lib-dropdown'); if (dd) dd.innerHTML = '';
     toolbar.innerHTML = '';
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:70px 20px;color:rgba(255,255,255,0.6)"><h2 style="font-family:'Barlow Condensed',sans-serif;font-size:34px;text-transform:uppercase;margin-bottom:12px">Connecte-toi</h2><p style="margin-bottom:22px">Crée un compte pour garder tes jeux, tes likes et tes favoris.</p><button class="btn-primary" onclick="openSignIn()">Connexion / inscription</button></div>`;
     return;
   }
-  renderLibraryTabs();
-  toolbar.innerHTML = `<button class="btn-ghost" onclick="createFavoriteCategory()"><i data-lucide="folder-plus"></i> Nouvelle catégorie</button>${currentLibraryTab.startsWith('cat:') ? `<button class="btn-ghost" onclick="renameFavoriteCategory()"><i data-lucide="pencil"></i> Renommer</button><button class="btn-ghost" onclick="deleteFavoriteCategory()"><i data-lucide="trash-2"></i> Supprimer</button>` : ''}`;
+  renderLibraryDropdown();
+  toolbar.innerHTML = '';
   let keys = [];
-  if (currentLibraryTab === 'list') keys = userLibrary.list;
+  if (currentLibraryTab === 'all') keys = allLibraryKeys();
+  else if (currentLibraryTab === 'list') keys = userLibrary.list;
   else if (currentLibraryTab === 'liked') keys = userLibrary.liked;
   else if (currentLibraryTab.startsWith('cat:')) keys = (userLibrary.categories.find(c => c.id === currentLibraryTab.slice(4)) || {}).games || [];
   const cards = keys.map(key => ({ key, index: gameIndexByKey(key) })).filter(x => x.index >= 0);
@@ -3606,6 +3722,7 @@ function openSearchGame(index) {
 document.addEventListener('click', (ev) => {
   if (!ev.target.closest('.nav-search')) { document.getElementById('search-results')?.classList.remove('open'); document.querySelector('.nav-search')?.classList.remove('expanded'); }
   if (!ev.target.closest('.nav-icon-btn') && !ev.target.closest('.notifications-panel')) document.getElementById('notifications-panel')?.classList.remove('open');
+  if (!ev.target.closest('.lib-select-wrap')) closeLibraryDropdown();
 });
 function toggleMobileSearch(ev) {
   if (window.innerWidth > 480) return;
@@ -6722,6 +6839,32 @@ select.authbox-input option {
           <button class="authbox-btn" onclick="closeLibraryPickerDone()">Terminé</button>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== GERER MES LISTES MODAL ===== -->
+<div class="modal-overlay" id="manage-lists-modal" style="z-index:99999" onclick="closeManageLists(event)">
+  <div class="modal-box" style="max-width:420px;width:92%;height:auto;max-height:86vh;overflow-y:auto;background:var(--glass-highlight), rgba(10,10,14,0.9);border:1px solid var(--glass-border);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);box-shadow:var(--glass-shadow), 0 30px 80px rgba(0,0,0,0.55);border-radius:20px;padding:28px 26px" onclick="event.stopPropagation()">
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:4px">
+      <div style="width:42px;height:42px;border-radius:12px;background:rgba(var(--lime-rgb),0.12);display:flex;align-items:center;justify-content:center;flex:none">
+        <i data-lucide="list" style="width:20px;height:20px;color:var(--lime)"></i>
+      </div>
+      <div style="flex:1">
+        <div style="font-weight:800;font-size:17px;color:#fff">Mes listes personnalisées</div>
+        <div id="manage-lists-count" style="font-size:12px;color:#999">0 / 20 créées</div>
+      </div>
+      <button class="modal-close" onclick="closeManageListsDirect()" style="position:static">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin:22px 0 10px">Listes existantes</div>
+    <div id="manage-lists-existing" style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px"></div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);padding-top:18px">
+      <div style="font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:10px">Nouvelle liste</div>
+      <input type="text" id="new-list-name" class="authbox-input" placeholder="Nom de la liste" style="width:100%;margin-bottom:14px" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addNewList();}">
+      <div id="new-list-colors" style="display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap"></div>
+      <button class="btn-primary" style="width:100%;justify-content:center" onclick="addNewList()"><i data-lucide="plus"></i> Ajouter</button>
     </div>
   </div>
 </div>
