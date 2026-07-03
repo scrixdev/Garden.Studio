@@ -465,8 +465,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 @keyframes gsShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 .gs-skeleton { background-image: linear-gradient(100deg, #17171f 20%, #26262f 40%, #17171f 60%); background-size: 400px 100%; animation: gsShimmer 1.3s ease-in-out infinite; }
 .gs-skeleton img { opacity: 0 !important; }
-.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 3; }
-.stream-card:hover .game-card-actions { opacity: 1; pointer-events: auto; }
+.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0.85; pointer-events: auto; transition: opacity 0.2s; z-index: 3; }
+.stream-card:hover .game-card-actions { opacity: 1; }
 /* Sur écrans tactiles (pas de vrai hover) : boutons toujours visibles + zone de clic plus grande */
 @media (hover: none) {
   .game-card-actions { opacity: 1; }
@@ -507,19 +507,19 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
 .library-picker-row:hover { background: rgba(255,255,255,0.06); }
 .library-picker-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--lime); cursor: pointer; }
-.lib-org-icon-box { width: 44px; height: 44px; border-radius: 12px; background: rgba(255,59,48,0.12); border: 1px solid rgba(255,59,48,0.3); display: flex; align-items: center; justify-content: center; flex: none; color: #ff6259; }
+.lib-org-icon-box { width: 44px; height: 44px; border-radius: 12px; background: var(--glass-highlight), rgba(255,59,48,0.14); border: 1px solid rgba(255,59,48,0.3); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); display: flex; align-items: center; justify-content: center; flex: none; color: #ff6259; }
 .lib-org-icon-box svg { width: 20px; height: 20px; }
 .lib-org-current { font-size: 12.5px; color: rgba(255,255,255,0.55); display: flex; align-items: center; gap: 7px; margin: 16px 0 20px; }
 .lib-org-current .lib-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
 .lib-org-label { font-size: 11px; font-weight: 800; letter-spacing: 0.8px; color: rgba(255,255,255,0.4); text-transform: uppercase; margin-bottom: 10px; }
 .lib-org-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
-.lib-org-btn { position: relative; display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s; text-align: left; }
-.lib-org-btn:hover { background: rgba(255,255,255,0.08); }
-.lib-org-btn.active { border-color: rgba(255,59,48,0.55); background: rgba(255,59,48,0.14); }
+.lib-org-btn { position: relative; display: flex; align-items: center; gap: 9px; padding: 14px 16px; border-radius: 12px; border: 1px solid var(--glass-border); background: var(--glass-highlight), rgba(255,255,255,0.06); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #fff; font-size: 13.5px; font-weight: 700; cursor: pointer; transition: border-color 0.15s, background 0.15s, transform 0.15s; text-align: left; }
+.lib-org-btn:hover { background: var(--glass-highlight), rgba(255,255,255,0.1); transform: translateY(-1px); }
+.lib-org-btn.active { border-color: rgba(255,59,48,0.55); background: var(--glass-highlight), rgba(255,59,48,0.16); }
 .lib-org-btn .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .lib-org-check { position: absolute; top: 10px; right: 10px; width: 16px; height: 16px; color: #ff6259; }
-.lib-org-remove-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,59,48,0.35); background: rgba(255,59,48,0.08); color: #ff6259; font-weight: 800; font-size: 13.5px; cursor: pointer; transition: background 0.15s; }
-.lib-org-remove-btn:hover { background: rgba(255,59,48,0.16); }
+.lib-org-remove-btn { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 14px; border-radius: 12px; border: 1px solid rgba(255,59,48,0.4); background: var(--glass-highlight), rgba(255,59,48,0.1); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); color: #ff6259; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: background 0.15s, transform 0.15s; }
+.lib-org-remove-btn:hover { background: var(--glass-highlight), rgba(255,59,48,0.18); transform: translateY(-1px); }
 .lib-org-remove-btn svg { width: 15px; height: 15px; }
 .lib-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
@@ -6985,7 +6985,7 @@ select.authbox-input option {
     <div style="display:flex;align-items:flex-start;gap:14px">
       <div class="lib-org-icon-box"><i data-lucide="list"></i></div>
       <div style="flex:1;min-width:0;padding-top:2px">
-        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:20px;text-transform:uppercase;color:#fff;line-height:1.1">Organiser dans ma liste</div>
+        <div style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;letter-spacing:0.3px;text-transform:uppercase;color:#fff;line-height:1.15">Organiser dans ma liste</div>
         <div id="organize-list-subtitle" style="font-size:12.5px;color:#999;margin-top:4px"></div>
       </div>
       <button class="card-icon-btn" onclick="closeOrganizeListModal()" style="flex:none"><i data-lucide="x"></i></button>
