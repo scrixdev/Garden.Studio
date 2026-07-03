@@ -102,11 +102,17 @@ nav {
   backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 999px;
   box-shadow: var(--glass-shadow);
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px;
-  letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+  letter-spacing: 1.5px; cursor: pointer; text-transform: uppercase; transition: transform 0.25s cubic-bezier(.4,0,.2,1), background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease;
   display: flex; align-items: center; gap: 6px;
 }
-.btn-admin:hover { background: var(--glass-highlight), var(--glass-bg-strong); }
-.btn-admin:hover { opacity: 0.9; }
+.btn-admin:hover {
+  background: var(--glass-highlight), var(--glass-bg-strong);
+  border-color: var(--lime-soft);
+  color: var(--lime-soft);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--glass-shadow), 0 6px 16px rgba(var(--lime-rgb),0.35);
+}
+.btn-admin:active { transform: translateY(0) scale(0.97); }
 
 /* ===== PAGES ===== */
 .page { display: none; }
@@ -6559,7 +6565,7 @@ function updateNavAfterLogin(username, photoURL) {
   const btn = document.querySelector('.btn-signin');
   if (btn) {
     btn.classList.add('logged-in');
-    btn.innerHTML = `<span class="nav-user-avatar-wrap">${navAvatarHTML(photoURL, username, 32)}</span><span class="nav-user-label">${escapeHTML(username)}</span>`;
+    btn.innerHTML = `<span class="nav-user-avatar-wrap">${navAvatarHTML(photoURL, username, 38)}</span><span class="nav-user-label">${escapeHTML(username)}</span>`;
     btn.onclick = () => showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false);
   }
   // Bouton admin → visible seulement si admin
