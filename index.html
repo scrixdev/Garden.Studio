@@ -4261,22 +4261,15 @@ function renderProductsOnSite() {
 }
 
 function renderStreamCard(g, i, wide, extraActionHTML) {
-  const hasList = currentUser && hasGameInList('list', i);
-  const vote = userVoteOn(g);
-  const hasFav = isFavorited(i);
   const art = g.img
     ? `<img src="${g.img}" alt="${escapeHTML(g.name)}" loading="lazy" style="opacity:0;transition:opacity .35s ease" onload="this.style.opacity=1;this.closest('.game-card-thumb').classList.remove('gs-skeleton')" onerror="this.closest('.game-card-thumb').classList.remove('gs-skeleton')">`
     : `<div style="width:100%;height:100%;position:relative;overflow:hidden;background:${g.color}"><div class="gs-circle b"></div><div class="gs-circle c"></div></div>`;
   const status = gameStatusLabel(g.status);
-  const actions = `
-        ${extraActionHTML || ''}
-        <button class="card-icon-btn ${(hasList || hasFav) ? 'active' : ''}" onclick="event.stopPropagation();openLibraryPicker(${i},event)" title="Ajouter"><i data-lucide="plus"></i></button>
-        <button class="card-icon-btn ${vote === 'like' ? 'like-active' : ''}" onclick="event.stopPropagation();toggleVote(${i},'like',event)" title="Like"><i data-lucide="thumbs-up"></i></button>`;
   return `<div class="stream-card" onclick="openGameModal(${i})">
     <div class="game-card-thumb${g.img ? ' gs-skeleton' : ''}">
       ${art}
       <span class="card-badge">${escapeHTML(status)}</span>
-      <div class="game-card-actions" onclick="event.stopPropagation()">${actions}</div>
+      ${extraActionHTML ? `<div class="game-card-actions" onclick="event.stopPropagation()">${extraActionHTML}</div>` : ''}
     </div>
     <div class="game-card-info">
       <strong>${escapeHTML(g.name)}</strong>
