@@ -1136,8 +1136,8 @@ const googleProvider = new GoogleAuthProvider();
 onAuthStateChanged(auth, (user) => {
   if (user) {
     const username = user.displayName || user.email.split('@')[0];
-    if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid });
-    if (typeof window.updateNavAfterLogin === 'function') window.updateNavAfterLogin(username);
+    if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid, photoURL: user.photoURL || '' });
+    if (typeof window.updateNavAfterLogin === 'function') window.updateNavAfterLogin(username, user.photoURL || '');
   } else {
     if (typeof window._gsSetUser === 'function') window._gsSetUser(null);
     if (typeof window.updateNavAfterLogout === 'function') window.updateNavAfterLogout();
@@ -2385,6 +2385,10 @@ window.fbSignOut      = async () => await signOut(auth);
             </div>
           </div>
           <input type="hidden" id="he-index">
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:4px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px">
+            <button type="button" class="toggle" id="he-notify-toggle" onclick="toggleHeroNotify()"></button>
+            <label style="margin:0;font-size:12.5px;color:var(--white);cursor:pointer" onclick="toggleHeroNotify()">Notifier les joueurs de cette mise à jour</label>
+          </div>
           <button class="btn-primary" style="font-size:12px" onclick="saveHeroEdit()">Sauvegarder</button>
         </div>
       </div>
@@ -4944,6 +4948,7 @@ function addHeroSlide() {
   document.getElementById('he-age').value = '';
   document.getElementById('he-genres').value = '';
   document.getElementById('he-index').value = -1;
+  setHeroNotifyToggle(true);
   document.getElementById('hero-bg-img-preview').style.display = 'none';
   document.getElementById('hero-banner-img-preview').style.display = 'none';
   const bgVidP = document.getElementById('hero-bg-video-preview'); if (bgVidP) { bgVidP.style.display = 'none'; bgVidP.removeAttribute('src'); }
@@ -4981,6 +4986,7 @@ function editHeroSlide(i) {
   document.getElementById('he-age').value = h.ageLimit || '';
   document.getElementById('he-genres').value = h.genres || '';
   document.getElementById('he-index').value = i;
+  setHeroNotifyToggle(false);
   tempImgs['hero-bg'] = h.bg || '';
   tempImgs['hero-bg-isVideo'] = !!h.bgIsVideo;
   tempImgs['hero-banner'] = h.bannerImg || '';
@@ -5006,6 +5012,9 @@ function editHeroSlide(i) {
   document.getElementById('hero-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 function cancelHeroEdit() { document.getElementById('hero-edit-form').style.display = 'none'; delete tempImgs['hero-bg']; delete tempImgs['hero-bg-isVideo']; delete tempImgs['hero-banner']; delete tempImgs['hero-banner-isVideo']; }
+
+function toggleHeroNotify() { document.getElementById('he-notify-toggle').classList.toggle('on'); }
+function setHeroNotifyToggle(on) { document.getElementById('he-notify-toggle').classList.toggle('on', !!on); }
 async function saveHeroEdit() {
   if (_saveInProgress) return;
   const i = parseInt(document.getElementById('he-index').value);
@@ -5040,10 +5049,14 @@ async function saveHeroEdit() {
   showToast('Sauvegarde en cours...');
   try {
     await saveHeroSlides();
+    const shouldNotify = document.getElementById('he-notify-toggle')?.classList.contains('on');
     currentHeroSlide = (i === -1) ? heroSlides.length - 1 : i;
     renderHeroList(); renderHeroSlides(); cancelHeroEdit();
-    showToast('Bannière sauvegardée !'); logChange('Bannière hero modifiée');
-    await publishNotification(i === -1 ? 'hero-created' : 'hero-updated', i === -1 ? 'Hero publié' : 'Hero modifié', (data.gameName || data.title || 'Une bannière') + ' est maintenant en avant.', data.gameName);
+    showToast(shouldNotify ? 'Bannière sauvegardée et joueurs notifiés !' : 'Bannière sauvegardée (sans notification)');
+    logChange('Bannière hero modifiée' + (shouldNotify ? '' : ' — sans notif'));
+    if (shouldNotify) {
+      await publishNotification(i === -1 ? 'hero-created' : 'hero-updated', i === -1 ? 'Hero publié' : 'Hero modifié', (data.gameName || data.title || 'Une bannière') + ' est maintenant en avant.', data.gameName);
+    }
   } catch(e) { if (i === -1) heroSlides.pop(); showToast('Erreur sauvegarde — vérifie ta connexion'); }
 }
 function deleteHeroSlide(i) {
@@ -5909,10 +5922,20 @@ function emptyStateHTML(msg) {
 
 // ===== CUSTOM CONFIRM =====
 let _confirmCallback = null;
-function showConfirm(title, sub, cb) {
+function showConfirm(title, sub, cb, confirmLabel, danger) {
+  danger = danger === undefined ? true : danger;
   _confirmCallback = cb;
   document.getElementById('confirm-title').textContent = title;
   document.getElementById('confirm-subtitle').textContent = sub;
+  const okBtn = document.getElementById('confirm-ok-btn');
+  okBtn.textContent = confirmLabel || 'Supprimer';
+  okBtn.style.background = danger ? '#ff4040' : 'var(--lime)';
+  const iconWrap = document.getElementById('confirm-icon-wrap');
+  iconWrap.innerHTML = danger
+    ? '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>'
+    : '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+  iconWrap.style.background = danger ? 'rgba(255,60,60,0.1)' : 'rgba(var(--lime-rgb),0.12)';
+  iconWrap.style.borderColor = danger ? 'rgba(255,60,60,0.25)' : 'rgba(var(--lime-rgb),0.3)';
   document.getElementById('confirm-modal').classList.add('open');
 }
 async function confirmOk() {
@@ -6092,13 +6115,25 @@ async function doSignOut() {
   showToast('Déconnecté.');
 }
 
-function updateNavAfterLogin(username) {
-  // Bouton connexion → affiche le pseudo
+function navAvatarHTML(photoURL, username) {
+  if (photoURL) return `<img src="${photoURL}" alt="" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex:none">`;
+  const letter = (username || '?').trim().charAt(0).toUpperCase();
+  const colors = ['#2f7dfa','#ff6b6b','#ffb800','#7c5cff','#00c896','#ff5fa2'];
+  let hash = 0; for (let i = 0; i < (username || '').length; i++) hash = (username.charCodeAt(i) + ((hash << 5) - hash));
+  const color = colors[Math.abs(hash) % colors.length];
+  return `<span style="width:24px;height:24px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;flex:none">${escapeHTML(letter)}</span>`;
+}
+function updateNavAfterLogin(username, photoURL) {
+  // Bouton connexion → affiche l'avatar + le pseudo
   const btn = document.querySelector('.btn-signin');
   if (btn) {
-    btn.textContent = username;
+    btn.innerHTML = navAvatarHTML(photoURL, username) + `<span>${escapeHTML(username)}</span>`;
+    btn.style.display = 'flex';
+    btn.style.alignItems = 'center';
+    btn.style.gap = '8px';
+    btn.style.paddingLeft = '6px';
     btn.style.background = 'rgba(var(--lime-rgb),0.1)';
-    btn.onclick = () => showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut);
+    btn.onclick = () => showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false);
   }
   // Bouton admin → visible seulement si admin
   const adminNav    = document.getElementById('btn-admin-nav');
@@ -6113,6 +6148,10 @@ function updateNavAfterLogout() {
   if (btn) {
     btn.textContent = 'Se connecter';
     btn.style.background = '';
+    btn.style.display = '';
+    btn.style.alignItems = '';
+    btn.style.gap = '';
+    btn.style.paddingLeft = '';
     btn.onclick = openSignIn;
   }
   // Cacher le bouton admin
@@ -6629,7 +6668,7 @@ select.authbox-input option {
     <div class="authbox-container">
       <div class="authbox-login-box" style="padding:40px 36px 32px;text-align:center">
         <div class="authbox-content">
-          <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+          <div id="confirm-icon-wrap" style="width:56px;height:56px;border-radius:50%;background:rgba(255,60,60,0.1);border:1px solid rgba(255,60,60,0.25);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
           </div>
           <div id="confirm-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;margin-bottom:8px"></div>
