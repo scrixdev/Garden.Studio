@@ -478,6 +478,11 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .stream-section-header { padding: 0 48px 16px; display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
 .stream-section-title { font-family: 'Barlow', sans-serif; font-size: 22px; line-height: 1; font-weight: 800; letter-spacing: 0; text-transform: none; }
 .stream-section-sub { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 7px; }
+.stream-section-title-wrap { display: flex; flex-direction: column; gap: 10px; }
+.stream-section-title-row { display: flex; align-items: center; gap: 10px; }
+.stream-section-icon { display: flex; align-items: center; justify-content: center; width: 20px; height: 20px; flex: none; color: var(--lime); }
+.stream-section-icon svg { width: 20px; height: 20px; }
+.stream-section-bar { display: block; height: 3px; width: 60px; border-radius: 3px; background: var(--lime); }
 .stream-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(152px, 14vw); gap: 14px; overflow-x: auto; padding: 6px 48px 18px; scroll-snap-type: x proximity; }
 .stream-row.wide { grid-auto-columns: minmax(240px, 25vw); }
 .stream-row::-webkit-scrollbar { height: 7px; }
@@ -1800,28 +1805,52 @@ window.fbSignOut      = async () => await signOut(auth);
     <!-- STREAMING ROWS -->
   <section class="stream-section" id="home-recent-games">
     <div class="stream-section-header">
-      <div><h2 class="stream-section-title">Jeux recents</h2></div>
+      <div class="stream-section-title-wrap">
+        <div class="stream-section-title-row">
+          <span class="stream-section-icon"><i data-lucide="clock"></i></span>
+          <h2 class="stream-section-title">Jeux recents</h2>
+        </div>
+        <span class="stream-section-bar"></span>
+      </div>
     </div>
     <div class="stream-row wide" id="recent-games-row"></div>
   </section>
 
   <section class="stream-section" id="home-popular-games">
     <div class="stream-section-header">
-      <div><h2 class="stream-section-title">Jeux populaires</h2></div>
+      <div class="stream-section-title-wrap">
+        <div class="stream-section-title-row">
+          <span class="stream-section-icon"><i data-lucide="flame"></i></span>
+          <h2 class="stream-section-title">Jeux populaires</h2>
+        </div>
+        <span class="stream-section-bar"></span>
+      </div>
     </div>
     <div class="stream-row" id="popular-games-row"></div>
   </section>
 
   <section class="stream-section" id="home-trending-games">
     <div class="stream-section-header">
-      <div><h2 class="stream-section-title">Trending now</h2></div>
+      <div class="stream-section-title-wrap">
+        <div class="stream-section-title-row">
+          <span class="stream-section-icon"><i data-lucide="trending-up"></i></span>
+          <h2 class="stream-section-title">Trending now</h2>
+        </div>
+        <span class="stream-section-bar"></span>
+      </div>
     </div>
     <div class="stream-row" id="trending-games-row"></div>
   </section>
 
   <section class="stream-section" id="home-my-list-games" style="display:none">
     <div class="stream-section-header">
-      <div><h2 class="stream-section-title">Ma liste</h2></div>
+      <div class="stream-section-title-wrap">
+        <div class="stream-section-title-row">
+          <span class="stream-section-icon" id="my-list-icon"><i data-lucide="list-video"></i></span>
+          <h2 class="stream-section-title" id="my-list-title">Ma liste</h2>
+        </div>
+        <span class="stream-section-bar" id="my-list-bar"></span>
+      </div>
     </div>
     <div class="stream-row" id="my-list-games-row"></div>
   </section>
@@ -3430,25 +3459,63 @@ function saveUserLibrary() {
 }
 // ===== PIN "MA LISTE" SUR L'ACCUEIL =====
 function myListPinStorageKey() { return 'gs_pin_mylist_home_' + (currentUser?.email || 'guest').toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
-function isMyListPinned() {
-  if (!currentUser) return false;
-  try { return localStorage.getItem(myListPinStorageKey()) === '1'; } catch(e) { return false; }
+function getLibraryKeysForTab(tabId) {
+  if (tabId === 'all') return allLibraryKeys();
+  if (tabId === 'list') return userLibrary.list || [];
+  if (tabId === 'liked') return userLibrary.liked || [];
+  if (tabId && tabId.startsWith('cat:')) {
+    const cat = (userLibrary.categories || []).find(c => c.id === tabId.slice(4));
+    return (cat && cat.games) || [];
+  }
+  return [];
 }
+function getPinnedTabId() {
+  if (!currentUser) return null;
+  try {
+    const v = localStorage.getItem(myListPinStorageKey());
+    if (!v || v === '0') return null;
+    if (v === '1') return 'list'; // migration ancien format booléen
+    return v;
+  } catch(e) { return null; }
+}
+function isMyListPinned() { return !!getPinnedTabId(); }
 function updatePinHomeButtonUI() {
   const btn = document.getElementById('pin-home-btn');
   if (!btn) return;
-  const pinned = isMyListPinned();
-  btn.classList.toggle('active', pinned);
+  const pinnedTab = getPinnedTabId();
+  btn.classList.toggle('active', !!pinnedTab);
   const label = btn.querySelector('.pin-home-label');
-  if (label) label.textContent = pinned ? "Épinglé sur l'accueil" : "Épingler sur l'accueil";
+  if (!label) return;
+  if (pinnedTab) {
+    const meta = libraryTabOptions().find(o => o.id === pinnedTab);
+    label.textContent = `Épinglé : ${meta ? meta.label : 'Ma liste'}`;
+  } else {
+    const meta = libraryTabOptions().find(o => o.id === currentLibraryTab);
+    label.textContent = `Épingler ${meta ? meta.label : 'cette liste'}`;
+  }
 }
 function toggleMyListPinned() {
   if (!requireAccount()) return;
-  const pinned = !isMyListPinned();
-  try { localStorage.setItem(myListPinStorageKey(), pinned ? '1' : '0'); } catch(e) {}
-  updatePinHomeButtonUI();
-  renderGamesOnSite();
-  showToast(pinned ? '📌 Ma liste épinglée sur l\'accueil' : 'Ma liste retirée de l\'accueil');
+  const pinnedTab = getPinnedTabId();
+  if (pinnedTab) {
+    showConfirm(
+      "Retirer de l'accueil ?",
+      'Cette liste perdra aussi sa place dans ton ordre personnalisé.',
+      () => {
+        try { localStorage.removeItem(myListPinStorageKey()); } catch(e) {}
+        updatePinHomeButtonUI();
+        renderGamesOnSite();
+        showToast("Retirée de l'accueil.");
+      },
+      'Retirer',
+      true
+    );
+  } else {
+    try { localStorage.setItem(myListPinStorageKey(), currentLibraryTab); } catch(e) {}
+    updatePinHomeButtonUI();
+    renderGamesOnSite();
+    showToast("Ajoutée à l'accueil. Elle apparaît sur ta page d'accueil.");
+  }
 }
 function requireAccount() {
   if (currentUser) return true;
@@ -3732,6 +3799,7 @@ function selectLibraryTab(id) {
   currentLibraryTab = id;
   closeLibraryDropdown();
   renderMyListPage();
+  updatePinHomeButtonUI();
 }
 function renderLibraryDropdown() {
   const dd = document.getElementById('lib-dropdown');
@@ -4465,11 +4533,20 @@ function renderGamesOnSite() {
   renderGameRail('recent-games-row', byRecent.slice(0, 12));
   const myListSection = document.getElementById('home-my-list-games');
   if (myListSection) {
-    const pinned = isMyListPinned();
-    myListSection.style.display = pinned ? '' : 'none';
-    if (pinned) {
-      const myItems = indexed.filter(({ g }) => Array.isArray(userLibrary?.list) && userLibrary.list.includes(gameKey(g)));
+    const pinnedTab = getPinnedTabId();
+    myListSection.style.display = pinnedTab ? '' : 'none';
+    if (pinnedTab) {
+      const keys = getLibraryKeysForTab(pinnedTab);
+      const myItems = indexed.filter(({ g }) => keys.includes(gameKey(g)));
       renderGameRail('my-list-games-row', myItems);
+      const meta = libraryTabOptions().find(o => o.id === pinnedTab);
+      const color = (meta && meta.color) || 'var(--lime)';
+      const titleEl = document.getElementById('my-list-title');
+      const barEl = document.getElementById('my-list-bar');
+      const iconEl = document.getElementById('my-list-icon');
+      if (titleEl) titleEl.textContent = 'Ma liste – ' + (meta ? meta.label : '');
+      if (barEl) barEl.style.background = color;
+      if (iconEl) iconEl.style.color = color;
     }
   }
   const oldGrid = document.getElementById('games-grid');
