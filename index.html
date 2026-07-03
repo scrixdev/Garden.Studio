@@ -465,8 +465,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 @keyframes gsShimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
 .gs-skeleton { background-image: linear-gradient(100deg, #17171f 20%, #26262f 40%, #17171f 60%); background-size: 400px 100%; animation: gsShimmer 1.3s ease-in-out infinite; }
 .gs-skeleton img { opacity: 0 !important; }
-.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; }
-.stream-card:hover .game-card-actions { opacity: 1; }
+.game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 3; }
+.stream-card:hover .game-card-actions { opacity: 1; pointer-events: auto; }
 /* Sur écrans tactiles (pas de vrai hover) : boutons toujours visibles + zone de clic plus grande */
 @media (hover: none) {
   .game-card-actions { opacity: 1; }
@@ -4348,8 +4348,8 @@ function renderStreamCard(g, i, wide, extraActionHTML) {
     <div class="game-card-thumb${g.img ? ' gs-skeleton' : ''}">
       ${art}
       <span class="card-badge">${escapeHTML(status)}</span>
-      ${extraActionHTML ? `<div class="game-card-actions" onclick="event.stopPropagation()">${extraActionHTML}</div>` : ''}
     </div>
+    ${extraActionHTML ? `<div class="game-card-actions" onclick="event.stopPropagation()">${extraActionHTML}</div>` : ''}
     <div class="game-card-info">
       <strong>${escapeHTML(g.name)}</strong>
       <p class="game-card-meta">${starCompactHTML(getGameRating(g), 12)} &nbsp;·&nbsp; ${escapeHTML(g.date || '2026')}</p>
