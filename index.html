@@ -467,6 +467,11 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .gs-skeleton img { opacity: 0 !important; }
 .game-card-actions { position: absolute; top: 8px; right: 8px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; }
 .stream-card:hover .game-card-actions { opacity: 1; }
+/* Sur écrans tactiles (pas de vrai hover) : boutons toujours visibles + zone de clic plus grande */
+@media (hover: none) {
+  .game-card-actions { opacity: 1; }
+  .card-icon-btn { width: 32px; height: 32px; }
+}
 .game-card-info { padding: 10px 2px 0; }
 .game-card-info strong { display: block; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .game-card-meta { display: flex; align-items: center; font-size: 11px; color: rgba(255,255,255,0.55); margin-top: 4px; }
@@ -505,9 +510,9 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .lib-select-btn i { width: 15px; height: 15px; color: rgba(255,255,255,0.5); transition: transform 0.2s; }
 .lib-select-btn.open i { transform: rotate(180deg); }
 .lib-select-count { background: rgba(255,255,255,0.12); border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.75); }
-.lib-dropdown { position: absolute; top: calc(100% + 10px); left: 0; min-width: 240px; background: var(--glass-highlight), rgba(20,22,28,0.92); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 200; display: none; }
+.lib-dropdown { position: fixed; min-width: 240px; background: var(--glass-highlight), rgba(20,22,28,0.92); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.5); z-index: 200000; display: none; overflow-y: auto; }
 .lib-dropdown.open { display: block; }
-.lib-dropdown-row { display: flex; align-items: center; gap: 10px; padding: 10px 10px; border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.85); }
+.lib-dropdown-row { display: flex; align-items: center; gap: 10px; padding: 12px 10px; border-radius: 9px; cursor: pointer; font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,0.85); }
 .lib-dropdown-row:hover { background: rgba(255,255,255,0.07); }
 .lib-dropdown-row.active { background: rgba(var(--lime-rgb),0.12); color: var(--white); }
 .lib-dropdown-row .lib-select-count { background: rgba(255,255,255,0.08); }
@@ -3497,13 +3502,49 @@ function toggleLibraryDropdown(ev) {
   ev.stopPropagation();
   const dd = document.getElementById('lib-dropdown');
   if (!dd) return;
-  dd.classList.toggle('open');
+  // Téléporte le dropdown dans <body> pour échapper à tout overflow/backdrop-filter/scroll
+  // du parent qui pouvait couper ou décaler la dernière ligne (ex: "Jeux likés") et rendre son clic peu fiable.
+  if (dd.parentElement !== document.body) document.body.appendChild(dd);
+  const willOpen = !dd.classList.contains('open');
+  if (willOpen) {
+    positionLibraryDropdown();
+    dd.classList.add('open');
+  } else {
+    dd.classList.remove('open');
+  }
   document.getElementById('lib-select-btn')?.classList.toggle('open', dd.classList.contains('open'));
+}
+function positionLibraryDropdown() {
+  const btn = document.getElementById('lib-select-btn');
+  const dd = document.getElementById('lib-dropdown');
+  if (!btn || !dd) return;
+  const rect = btn.getBoundingClientRect();
+  const spaceBelow = window.innerHeight - rect.bottom;
+  const maxH = 320;
+  dd.style.left = rect.left + 'px';
+  dd.style.minWidth = Math.max(240, rect.width) + 'px';
+  if (spaceBelow < maxH && rect.top > spaceBelow) {
+    dd.style.top = 'auto';
+    dd.style.bottom = (window.innerHeight - rect.top + 10) + 'px';
+    dd.style.maxHeight = Math.min(maxH, rect.top - 12) + 'px';
+  } else {
+    dd.style.bottom = 'auto';
+    dd.style.top = (rect.bottom + 10) + 'px';
+    dd.style.maxHeight = Math.min(maxH, spaceBelow - 12) + 'px';
+  }
 }
 function closeLibraryDropdown() {
   document.getElementById('lib-dropdown')?.classList.remove('open');
   document.getElementById('lib-select-btn')?.classList.remove('open');
 }
+window.addEventListener('scroll', () => {
+  const dd = document.getElementById('lib-dropdown');
+  if (dd && dd.classList.contains('open')) positionLibraryDropdown();
+}, true);
+window.addEventListener('resize', () => {
+  const dd = document.getElementById('lib-dropdown');
+  if (dd && dd.classList.contains('open')) positionLibraryDropdown();
+});
 function selectLibraryTab(id) {
   currentLibraryTab = id;
   closeLibraryDropdown();
@@ -3722,7 +3763,10 @@ function openSearchGame(index) {
 document.addEventListener('click', (ev) => {
   if (!ev.target.closest('.nav-search')) { document.getElementById('search-results')?.classList.remove('open'); document.querySelector('.nav-search')?.classList.remove('expanded'); }
   if (!ev.target.closest('.nav-icon-btn') && !ev.target.closest('.notifications-panel')) document.getElementById('notifications-panel')?.classList.remove('open');
-  if (!ev.target.closest('.lib-select-wrap')) closeLibraryDropdown();
+  const libWrap = ev.target.closest('.lib-select-wrap');
+  const libDropdown = document.getElementById('lib-dropdown');
+  const insideLibDropdown = libDropdown && libDropdown.contains(ev.target);
+  if (!libWrap && !insideLibDropdown) closeLibraryDropdown();
 });
 function toggleMobileSearch(ev) {
   if (window.innerWidth > 480) return;
