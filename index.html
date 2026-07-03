@@ -4124,6 +4124,45 @@ function toggleAnnBody(id) {
   const nowClamped = body.classList.toggle('clamped');
   btn.textContent = nowClamped ? 'Voir plus' : 'Voir moins';
 }
+function renderAnnPollHTML(n) {
+  const votes = n.poll.votes || {};
+  const uid = currentUser?.email || null;
+  const myVote = uid ? votes[uid] : null;
+  const counts = {};
+  n.poll.options.forEach(o => counts[o.id] = 0);
+  Object.values(votes).forEach(optId => { if (counts.hasOwnProperty(optId)) counts[optId]++; });
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  const color = n.poll.color || '#7c5cff';
+  const hasVoted = !!myVote;
+  const optionsHTML = n.poll.options.map(o => {
+    const c = counts[o.id] || 0;
+    const pct = total ? Math.round((c / total) * 100) : 0;
+    const isVotedOpt = myVote === o.id;
+    const showFill = hasVoted;
+    return `<button type="button" class="ann-poll-option${isVotedOpt ? ' voted' : ''}" style="--poll-color:${color}" onclick="voteAnnPoll('${n.id}','${o.id}',event)">
+      ${showFill ? `<div class="ann-poll-fill" style="width:${pct}%"></div>` : ''}
+      <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
+      ${showFill ? `<span class="ann-poll-pct">${pct}%</span>` : ''}
+    </button>`;
+  }).join('');
+  const footer = uid
+    ? `<div class="ann-poll-total">${total} vote${total > 1 ? 's' : ''}</div>`
+    : `<div class="ann-poll-login-hint">Connecte-toi pour voter</div>`;
+  return `<div class="ann-poll">${optionsHTML}${footer}</div>`;
+}
+async function voteAnnPoll(notifId, optionId, ev) {
+  if (ev) ev.stopPropagation();
+  if (!requireAccount()) return;
+  const n = notifications.find(x => x.id === notifId);
+  if (!n || !n.poll) return;
+  if (!n.poll.votes || typeof n.poll.votes !== 'object') n.poll.votes = {};
+  const uid = currentUser.email;
+  // Un clic sur l'option déjà choisie retire le vote, sinon on (re)vote pour cette option
+  if (n.poll.votes[uid] === optionId) delete n.poll.votes[uid];
+  else n.poll.votes[uid] = optionId;
+  renderAnnouncementsFeed();
+  try { await saveNotifications(); } catch (e) { console.warn('Vote non sauvegardé', e); }
+}
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
   if (!feed) return;
@@ -4142,7 +4181,8 @@ function renderAnnouncementsFeed() {
       return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt=""></div>`;
     }
     const isLong = (n.detail || '').length > 220;
-    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}</div>`;
+    const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
+    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}${pollHTML}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
 }
