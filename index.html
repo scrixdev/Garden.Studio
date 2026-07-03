@@ -510,8 +510,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .lib-controls { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .lib-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
 .lib-select-wrap { position: relative; }
-.lib-select-btn { display: flex; align-items: center; gap: 10px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.05); color: var(--white); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 700; font-size: 13.5px; transition: all 0.2s; }
-.lib-select-btn:hover, .lib-select-btn.open { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+.lib-select-btn { display: flex; align-items: center; gap: 10px; border: 1px solid var(--glass-border); background: var(--glass-highlight), var(--glass-bg); backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow); color: var(--white); border-radius: 999px; padding: 10px 16px; cursor: pointer; font-weight: 700; font-size: 13.5px; transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.lib-select-btn:hover, .lib-select-btn.open { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
 .lib-select-btn i { width: 15px; height: 15px; color: rgba(255,255,255,0.5); transition: transform 0.2s; }
 .lib-select-btn.open i { transform: rotate(180deg); }
 .lib-select-count { background: rgba(255,255,255,0.12); border-radius: 999px; padding: 2px 9px; font-size: 11.5px; font-weight: 700; color: rgba(255,255,255,0.75); }
@@ -3329,7 +3329,7 @@ function getGameByHero(h, fallbackIndex) {
   return { game: null, index: -1 };
 }
 function gameStatusLabel(status) { return ({ available: 'Disponible', coming: 'Bientôt', new: 'Nouveau' })[status] || 'Disponible'; }
-function createEmptyLibrary() { return { list: [], liked: [], categories: [{ id: 'fav-default', name: 'Favoris', games: [] }] }; }
+function createEmptyLibrary() { return { list: [], liked: [], categories: [] }; }
 let librarySearchQuery = '';
 function handleLibrarySearch(value) {
   librarySearchQuery = (value || '').trim().toLowerCase();
@@ -3396,7 +3396,7 @@ function renderLibraryPickerList() {
   if (!wrap || _libraryPickerIndex < 0) return;
   const key = gameKey(games[_libraryPickerIndex]);
   const inList = userLibrary.list.includes(key);
-  const rows = [`<label class="library-picker-row"><input type="checkbox" ${inList ? 'checked' : ''} onchange="pickerToggle('list',null,this.checked)"><span>Ma liste</span></label>`]
+  const rows = [`<label class="library-picker-row"><input type="checkbox" ${inList ? 'checked' : ''} onchange="pickerToggle('list',null,this.checked)"><span>Favoris</span></label>`]
     .concat(userLibrary.categories.map(c => `<label class="library-picker-row"><input type="checkbox" ${c.games.includes(key) ? 'checked' : ''} onchange="pickerToggle('cat','${c.id}',this.checked)"><span>${escapeHTML(c.name)}</span></label>`));
   wrap.innerHTML = rows.join('');
 }
@@ -3508,7 +3508,7 @@ function allLibraryKeys() {
 function libraryTabOptions() {
   return [
     { id: 'all', label: 'Tous', color: '#9aa0aa', count: allLibraryKeys().length },
-    { id: 'list', label: 'Ma liste', color: '#9aa0aa', count: (userLibrary.list || []).length },
+    { id: 'list', label: 'Favoris', color: '#9aa0aa', count: (userLibrary.list || []).length },
     { id: 'liked', label: 'Jeux likés', color: '#ff3b30', count: (userLibrary.liked || []).length }
   ].concat((userLibrary.categories || []).map(c => ({ id: 'cat:' + c.id, label: c.name, color: c.color || '#2f7dfa', count: (c.games || []).length })));
 }
