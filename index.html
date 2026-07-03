@@ -497,6 +497,11 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .library-tab { border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.72); border-radius: 6px; padding: 10px 14px; cursor: pointer; font-weight: 700; }
 .library-tab.active { color: #111; background: var(--lime); border-color: var(--lime); }
 .library-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 18px; }
+.lib-search-wrap { position: relative; margin-bottom: 18px; }
+.lib-search-wrap svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.5); pointer-events: none; width: 18px; height: 18px; }
+.lib-search-wrap input { width: 100%; height: 48px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.05); color: var(--white); padding: 0 16px 0 46px; border-radius: 10px; outline: none; font-size: 14.5px; transition: border-color 0.2s, background 0.2s; }
+.lib-search-wrap input:focus { border-color: rgba(var(--lime-rgb),0.55); background: rgba(255,255,255,0.08); }
+.lib-search-wrap input::placeholder { color: rgba(255,255,255,0.4); }
 .category-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 12px 0 20px; }
 .category-toolbar input, .category-toolbar select { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: #fff; height: 38px; border-radius: 6px; padding: 0 12px; }
 .library-picker-row { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; cursor: pointer; font-size: 14px; color: rgba(255,255,255,0.85); }
@@ -1766,6 +1771,10 @@ window.fbSignOut      = async () => await signOut(auth);
         </div>
         <button class="btn-ghost" onclick="openManageLists()"><i data-lucide="list-plus"></i> Gérer mes listes</button>
       </div>
+    </div>
+    <div class="lib-search-wrap">
+      <i data-lucide="search"></i>
+      <input id="lib-search-input" type="search" placeholder="Rechercher un jeu dans ma liste..." oninput="handleLibrarySearch(this.value)">
     </div>
     <div class="category-toolbar" id="category-toolbar"></div>
     <div class="library-grid" id="library-grid"></div>
@@ -3321,6 +3330,11 @@ function getGameByHero(h, fallbackIndex) {
 }
 function gameStatusLabel(status) { return ({ available: 'Disponible', coming: 'Bientôt', new: 'Nouveau' })[status] || 'Disponible'; }
 function createEmptyLibrary() { return { list: [], liked: [], categories: [{ id: 'fav-default', name: 'Favoris', games: [] }] }; }
+let librarySearchQuery = '';
+function handleLibrarySearch(value) {
+  librarySearchQuery = (value || '').trim().toLowerCase();
+  renderMyListPage();
+}
 function userLibraryStorageKey() { return 'gs_library_' + (currentUser?.email || 'guest').toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
 function loadUserLibrary() {
   if (!currentUser) { userLibrary = createEmptyLibrary(); return; }
@@ -3624,12 +3638,15 @@ function renderMyListPage() {
   const grid = document.getElementById('library-grid');
   const toolbar = document.getElementById('category-toolbar');
   if (!grid || !toolbar) return;
+  const searchWrap = document.querySelector('.lib-search-wrap');
   if (!currentUser) {
     const dd = document.getElementById('lib-dropdown'); if (dd) dd.innerHTML = '';
     toolbar.innerHTML = '';
+    if (searchWrap) searchWrap.style.display = 'none';
     grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:70px 20px;color:rgba(255,255,255,0.6)"><h2 style="font-family:'Barlow Condensed',sans-serif;font-size:34px;text-transform:uppercase;margin-bottom:12px">Connecte-toi</h2><p style="margin-bottom:22px">Crée un compte pour garder tes jeux, tes likes et tes favoris.</p><button class="btn-primary" onclick="openSignIn()">Connexion / inscription</button></div>`;
     return;
   }
+  if (searchWrap) searchWrap.style.display = '';
   renderLibraryDropdown();
   toolbar.innerHTML = '';
   let keys = [];
@@ -3637,9 +3654,12 @@ function renderMyListPage() {
   else if (currentLibraryTab === 'list') keys = userLibrary.list;
   else if (currentLibraryTab === 'liked') keys = userLibrary.liked;
   else if (currentLibraryTab.startsWith('cat:')) keys = (userLibrary.categories.find(c => c.id === currentLibraryTab.slice(4)) || {}).games || [];
-  const cards = keys.map(key => ({ key, index: gameIndexByKey(key) })).filter(x => x.index >= 0);
+  let cards = keys.map(key => ({ key, index: gameIndexByKey(key) })).filter(x => x.index >= 0);
+  if (librarySearchQuery) {
+    cards = cards.filter(({ index }) => (games[index]?.name || '').toLowerCase().includes(librarySearchQuery));
+  }
   if (!cards.length) {
-    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:58px 20px;color:rgba(255,255,255,0.55)">Aucun jeu ici pour l'instant.</div>`;
+    grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:58px 20px;color:rgba(255,255,255,0.55)">${librarySearchQuery ? `Aucun jeu ne correspond à "${escapeHTML(librarySearchQuery)}".` : "Aucun jeu ici pour l'instant."}</div>`;
   } else {
     grid.innerHTML = cards.map(({ key, index }) => renderStreamCard(games[index], index, false, `<button class="card-icon-btn" onclick="event.stopPropagation();removeFromCurrentCategory('${key}')"><i data-lucide="x"></i></button>`)).join('');
   }
