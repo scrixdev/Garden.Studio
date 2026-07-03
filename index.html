@@ -636,15 +636,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 
 /* Announcements feed */
 .ann-feed { display: flex; flex-direction: column; gap: 18px; }
-.ann-card {
-  background: var(--glass-highlight), var(--glass-bg);
-  backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-  border-radius: 16px; padding: 24px 28px;
-  transition: background 0.25s ease, border-color 0.25s ease;
-}
-.ann-card:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
+.ann-card { background: var(--card-bg); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 24px 28px; }
 .ann-card-head { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .ann-avatar { width: 40px; height: 40px; border-radius: 8px; flex-shrink: 0; object-fit: cover; background: var(--dark3); }
 .ann-who { min-width: 0; flex: 1; }
@@ -652,19 +644,40 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .ann-handle { font-size: 11.5px; color: var(--gray); font-weight: 600; }
 .ann-time { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; flex-shrink: 0; }
 .ann-title-text { font-size: 14px; color: var(--white); font-weight: 600; line-height: 1.5; margin-bottom: 14px; }
-.ann-banner { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; cursor: pointer; margin-top: 12px; }
+.ann-banner { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; cursor: pointer; }
 .ann-body { font-size: 13.5px; color: rgba(255,255,255,0.75); line-height: 1.65; white-space: pre-line; }
 .ann-body.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .ann-more { display: inline-block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--lime); cursor: pointer; background: none; border: none; padding: 0; }
 .ann-empty { color: rgba(255,255,255,0.5); font-size: 14px; padding: 30px 0; }
-.ann-poll { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-.ann-poll-option { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; padding: 11px 16px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); color: var(--white); font-size: 13px; font-weight: 600; cursor: pointer; overflow: hidden; transition: border-color 0.15s ease, background 0.15s ease; }
-.ann-poll-option:hover { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.06); }
-.ann-poll-option.voted { border-color: var(--poll-color, var(--lime)); }
-.ann-poll-fill { position: absolute; inset: 0; width: 0%; background: var(--poll-color, var(--lime)); opacity: 0.22; transition: width 0.4s ease; z-index: 0; }
+.ann-poll { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+.ann-poll-option {
+  -webkit-appearance: none; appearance: none; isolation: isolate;
+  position: relative; display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  width: 100%; text-align: left; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-highlight), rgba(255,255,255,0.05);
+  backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+  color: var(--white); font-size: 13px; font-weight: 600; cursor: pointer; overflow: hidden; outline: none;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+.ann-poll-option:hover {
+  border-color: rgba(255,255,255,0.45);
+  background: var(--glass-highlight), rgba(255,255,255,0.1);
+  box-shadow: var(--glass-shadow), 0 8px 22px rgba(0,0,0,0.28);
+  transform: translateY(-1px);
+}
+.ann-poll-option:active { transform: translateY(0) scale(0.985); }
+.ann-poll-option:focus-visible { border-color: rgba(255,255,255,0.55); }
+.ann-poll-option.voted {
+  border-color: var(--poll-color, var(--lime));
+  background: var(--glass-highlight), rgba(255,255,255,0.07);
+}
+.ann-poll-option.voted:hover { background: var(--glass-highlight), rgba(255,255,255,0.12); }
+.ann-poll-fill { position: absolute; inset: 0; width: 0%; background: var(--poll-color, var(--lime)); opacity: 0.3; transition: width 0.4s ease; z-index: 0; }
 .ann-poll-label { position: relative; z-index: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
 .ann-poll-check { width: 15px; height: 15px; color: var(--poll-color, var(--lime)); flex-shrink: 0; }
-.ann-poll-pct { position: relative; z-index: 1; font-weight: 800; font-size: 12.5px; color: rgba(255,255,255,0.85); flex-shrink: 0; }
+.ann-poll-pct { position: relative; z-index: 1; font-weight: 800; font-size: 12.5px; color: rgba(255,255,255,0.9); flex-shrink: 0; }
 .ann-poll-total { font-size: 11.5px; color: rgba(255,255,255,0.4); font-weight: 600; margin-top: 2px; }
 .ann-poll-login-hint { font-size: 11.5px; color: rgba(255,255,255,0.4); font-weight: 600; margin-top: 2px; }
 .poll-option-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
@@ -4132,17 +4145,6 @@ function toggleAnnBody(id) {
   const nowClamped = body.classList.toggle('clamped');
   btn.textContent = nowClamped ? 'Voir plus' : 'Voir moins';
 }
-function setupAnnClamps() {
-  document.querySelectorAll('.ann-body[data-clampable]').forEach(body => {
-    const id = body.id.replace('ann-body-', '');
-    const btn = document.getElementById('ann-more-' + id);
-    if (!btn) return;
-    // Mesure le débordement réel du texte plutôt que de deviner via le nombre de caractères
-    const overflowing = body.scrollHeight > body.clientHeight + 2;
-    btn.style.display = overflowing ? 'inline-block' : 'none';
-    if (!overflowing) body.classList.remove('clamped');
-  });
-}
 function renderAnnPollHTML(n) {
   const votes = n.poll.votes || {};
   const uid = currentUser?.email || null;
@@ -4160,7 +4162,7 @@ function renderAnnPollHTML(n) {
     const showFill = hasVoted;
     return `<button type="button" class="ann-poll-option${isVotedOpt ? ' voted' : ''}" style="--poll-color:${color}" onclick="voteAnnPoll('${n.id}','${o.id}',event)">
       ${showFill ? `<div class="ann-poll-fill" style="width:${pct}%"></div>` : ''}
-      <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="circle-check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
+      <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
       ${showFill ? `<span class="ann-poll-pct">${pct}%</span>` : ''}
     </button>`;
   }).join('');
@@ -4177,11 +4179,9 @@ async function voteAnnPoll(notifId, optionId, ev) {
   if (!n.poll.votes || typeof n.poll.votes !== 'object') n.poll.votes = {};
   const uid = currentUser.email;
   // Un clic sur l'option déjà choisie retire le vote, sinon on (re)vote pour cette option
-  const alreadyVoted = n.poll.votes[uid] === optionId;
-  if (alreadyVoted) delete n.poll.votes[uid];
+  if (n.poll.votes[uid] === optionId) delete n.poll.votes[uid];
   else n.poll.votes[uid] = optionId;
   renderAnnouncementsFeed();
-  if (!alreadyVoted) showToast('Vote enregistré ✅');
   try { await saveNotifications(); } catch (e) { console.warn('Vote non sauvegardé', e); }
 }
 function renderAnnouncementsFeed() {
@@ -4201,11 +4201,11 @@ function renderAnnouncementsFeed() {
     if (isGameCard) {
       return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt=""></div>`;
     }
+    const isLong = (n.detail || '').length > 220;
     const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
-    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body clamped" data-clampable id="ann-body-${n.id}">${escapeHTML(n.detail)}</div><button class="ann-more" id="ann-more-${n.id}" style="display:none" onclick="toggleAnnBody('${n.id}')">Voir plus</button>${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}${pollHTML}</div>`;
+    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}${pollHTML}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
-  requestAnimationFrame(setupAnnClamps);
 }
 function handleGameSearch(query) {
   const panel = document.getElementById('search-results');
