@@ -2178,6 +2178,10 @@ window.fbSignOut      = async () => await signOut(auth);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Candidatures <span id="cand-badge" style="background:var(--lime);color:var(--dark);font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
       </div>
+      <div class="sidebar-item" onclick="showSection('announcements',this);renderAnnouncementsHistory()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a2 2 0 0 1-3.2 2.4L6 15"/></svg>
+        Annonces
+      </div>
       <div class="sidebar-item" onclick="showSection('settings',this)">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg>
         Paramètres
@@ -2509,6 +2513,10 @@ window.fbSignOut      = async () => await signOut(auth);
             </div>
           </div>
           <input type="hidden" id="ge-index">
+          <div class="form-group" style="display:flex;align-items:center;gap:10px;margin-top:4px;padding:10px 12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.09);border-radius:10px">
+            <button type="button" class="toggle" id="ge-notify-toggle" onclick="toggleGameNotify()"></button>
+            <label style="margin:0;font-size:12.5px;color:var(--white);cursor:pointer" onclick="toggleGameNotify()">Notifier les joueurs de cette mise à jour</label>
+          </div>
           <div style="display:flex;gap:10px;align-items:center;margin-top:4px">
             <button class="btn-primary" style="font-size:12px" onclick="saveGameEdit()">Sauvegarder</button>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" id="ge-delete-btn" onclick="deleteGameFromForm()"><i data-lucide="trash-2"></i> Supprimer ce jeu</button>
@@ -2726,6 +2734,23 @@ window.fbSignOut      = async () => await signOut(auth);
               <button class="btn-delete" style="font-size:11px;padding:10px 20px" onclick="deleteCandidature()"><i data-lucide="trash-2"></i> Supprimer</button>
             </div>
           </div>
+        </div>
+      </div>
+
+      <!-- ANNONCES -->
+      <div class="admin-section" id="section-announcements">
+        <div class="admin-section-title">Annonces</div>
+        <div class="admin-section-sub">Envoie un message libre à tous les joueurs (maintenance, nouveauté à venir, info générale...) — indépendant des fiches jeux.</div>
+        <div class="admin-card">
+          <div class="admin-card-header"><span class="admin-card-title">Nouvelle annonce</span></div>
+          <div class="form-group"><label class="form-label">Titre</label><input type="text" class="form-input" id="ann-title" placeholder="ex: Maintenance prévue" maxlength="80"></div>
+          <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" style="min-height:90px" id="ann-detail" placeholder="ex: Le site sera mis à jour le 15 août, une courte coupure est possible." maxlength="400"></textarea></div>
+          <div id="ann-error" style="display:none;color:#ff6b6b;font-size:12px;margin-bottom:10px"></div>
+          <button class="btn-primary" style="font-size:12px" onclick="sendAnnouncement()"><i data-lucide="send"></i> Envoyer aux joueurs</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-header"><span class="admin-card-title">Annonces envoyées</span></div>
+          <div id="announcements-list" style="color:var(--gray);font-size:13px">Aucune annonce envoyée pour l'instant.</div>
         </div>
       </div>
 
@@ -3476,6 +3501,51 @@ async function publishNotification(type, title, detail, gameName, targetUserId) 
   renderNotifications();
   try { await saveNotifications(); } catch(e) { console.warn('Notification non sauvegardée', e); }
 }
+
+// ===== ANNONCES LIBRES (indépendantes des fiches jeux) =====
+async function sendAnnouncement() {
+  const errEl = document.getElementById('ann-error');
+  errEl.style.display = 'none';
+  const title = document.getElementById('ann-title').value.trim();
+  const detail = document.getElementById('ann-detail').value.trim();
+  if (!title || !detail) {
+    errEl.textContent = 'Merci de remplir le titre et le message.';
+    errEl.style.display = 'block';
+    return;
+  }
+  showToast('Envoi en cours...');
+  await publishNotification('announcement', title, detail);
+  document.getElementById('ann-title').value = '';
+  document.getElementById('ann-detail').value = '';
+  showToast('✅ Annonce envoyée aux joueurs !');
+  logChange('Annonce envoyée : "' + title + '"');
+  renderAnnouncementsHistory();
+}
+function renderAnnouncementsHistory() {
+  const list = document.getElementById('announcements-list');
+  if (!list) return;
+  const anns = notifications.filter(n => n.type === 'announcement');
+  if (!anns.length) { list.innerHTML = 'Aucune annonce envoyée pour l\'instant.'; return; }
+  list.innerHTML = anns.map(n => `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
+      <div style="min-width:0">
+        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px">${escapeHTML(n.title)}</div>
+        <div style="font-size:12.5px;color:var(--gray);line-height:1.5">${escapeHTML(n.detail)}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">${formatNotifTime(n.date)}</div>
+      </div>
+      <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="deleteAnnouncement('${n.id}')"><i data-lucide="trash-2"></i></button>
+    </div>`).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [list] });
+}
+async function deleteAnnouncement(id) {
+  const idx = notifications.findIndex(n => n.id === id);
+  if (idx === -1) return;
+  notifications.splice(idx, 1);
+  renderNotifications();
+  renderAnnouncementsHistory();
+  try { await saveNotifications(); } catch(e) { console.warn('Suppression non sauvegardée', e); }
+  showToast('Annonce supprimée');
+}
 function renderNotifications() {
   const panel = document.getElementById('notifications-panel');
   const dot = document.getElementById('notif-dot');
@@ -3492,7 +3562,8 @@ function renderNotifications() {
   panel.innerHTML = `<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 4px 16px"><strong style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:22px;text-transform:uppercase;letter-spacing:0.3px">Notifications</strong><button class="btn-outline" style="padding:8px 14px;font-size:11px" onclick="markNotificationsRead()">Tout lire</button></div>` + visible.map(n => {
     const isUnread = !read.includes(n.id);
     const isPrivate = !!n.targetUserId;
-    return `<div class="notification-item ${isUnread ? 'unread' : ''}" onclick="${isPrivate ? '' : `openNotificationGame('${escapeHTML(n.gameName)}')`}"><div class="notif-icon">${n.img ? `<img src="${n.img}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="${isPrivate ? 'user-check' : 'bell'}"></i>`}</div><div><div class="notification-title">${escapeHTML(n.title)}</div><div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.45">${escapeHTML(n.detail)}</div><div class="notification-time">${formatNotifTime(n.date)}</div></div></div>`;
+    const isClickable = !isPrivate && !!n.gameName;
+    return `<div class="notification-item ${isUnread ? 'unread' : ''}" style="${isClickable ? '' : 'cursor:default'}" onclick="${isClickable ? `openNotificationGame('${escapeHTML(n.gameName)}')` : ''}"><div class="notif-icon">${n.img ? `<img src="${n.img}" alt="" style="width:100%;height:100%;object-fit:cover">` : `<i data-lucide="${isPrivate ? 'user-check' : 'bell'}"></i>`}</div><div><div class="notification-title">${escapeHTML(n.title)}</div><div style="font-size:12px;color:rgba(255,255,255,0.62);line-height:1.45">${escapeHTML(n.detail)}</div><div class="notification-time">${formatNotifTime(n.date)}</div></div></div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
 }
@@ -5121,6 +5192,7 @@ function editGame(i) {
   document.getElementById('ge-desc').value = games[i].desc || '';
   document.getElementById('ge-status').value = games[i].status || 'available';
   document.getElementById('ge-index').value = i;
+  setGameNotifyToggle(false);
   applyGameTitleStyleToForm(games[i]);
   document.getElementById('ge-delete-btn').style.display = 'inline-flex';
   document.getElementById('game-edit-form-title').textContent = 'Éditer : ' + games[i].name;
@@ -5133,6 +5205,9 @@ function editGame(i) {
 }
 
 function cancelGameEdit() { document.getElementById('game-edit-form').style.display = 'none'; delete tempImgs['game']; }
+
+function toggleGameNotify() { document.getElementById('ge-notify-toggle').classList.toggle('on'); }
+function setGameNotifyToggle(on) { document.getElementById('ge-notify-toggle').classList.toggle('on', !!on); }
 
 // ===== GAME TITLE STYLE (police / couleur / dégradé, miroir du hero) =====
 function renderGameFontDropdown() {
@@ -5389,9 +5464,13 @@ async function saveGameEdit() {
   showToast('Sauvegarde en cours...');
   try {
     await saveData();
+    const shouldNotify = document.getElementById('ge-notify-toggle')?.classList.contains('on');
     renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); cancelGameEdit();
-    showToast('Jeu sauvegardé !'); logChange('Jeu "' + data.name + '" ' + (wasNew ? 'publié' : 'modifié'));
-    await publishNotification(wasNew ? 'game-created' : 'game-updated', wasNew ? 'Nouveau jeu publié' : 'Jeu modifié', data.name + (wasNew ? ' vient d’être publié.' : ' a été mis à jour.'), data.name);
+    showToast(shouldNotify ? 'Jeu sauvegardé et joueurs notifiés !' : 'Jeu sauvegardé (sans notification)');
+    logChange('Jeu "' + data.name + '" ' + (wasNew ? 'publié' : 'modifié') + (shouldNotify ? '' : ' — sans notif'));
+    if (shouldNotify) {
+      await publishNotification(wasNew ? 'game-created' : 'game-updated', wasNew ? 'Nouveau jeu publié' : 'Jeu modifié', data.name + (wasNew ? ' vient d’être publié.' : ' a été mis à jour.'), data.name);
+    }
     if (!wasNew && previousName && previousName !== data.name) {
       heroSlides.forEach(h => {
         if (h.gameName === previousName) {
@@ -5449,6 +5528,7 @@ function addGame() {
   document.getElementById('ge-desc').value = '';
   document.getElementById('ge-status').value = 'available';
   document.getElementById('ge-index').value = -1;
+  setGameNotifyToggle(true);
   applyGameTitleStyleToForm(null);
   document.getElementById('game-img-preview').style.display = 'none';
   document.getElementById('ge-delete-btn').style.display = 'none';
