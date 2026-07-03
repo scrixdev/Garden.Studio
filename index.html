@@ -638,6 +638,7 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .ann-feed { display: flex; flex-direction: column; gap: 18px; }
 .ann-card {
   position: relative;
+  min-width: 0;
   background: var(--glass-highlight), linear-gradient(180deg, rgba(10,10,14,0.75) 0%, rgba(6,6,9,0.85) 100%);
   backdrop-filter: blur(22px) saturate(160%); -webkit-backdrop-filter: blur(22px) saturate(160%);
   border: 1px solid var(--glass-border);
@@ -658,9 +659,9 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .ann-name { font-weight: 800; font-size: 13.5px; color: var(--white); letter-spacing: 0.2px; }
 .ann-handle { font-size: 11.5px; color: var(--gray); font-weight: 600; }
 .ann-time { font-size: 11px; color: rgba(255,255,255,0.4); white-space: nowrap; flex-shrink: 0; }
-.ann-title-text { font-size: 14px; color: var(--white); font-weight: 600; line-height: 1.5; margin-bottom: 14px; }
+.ann-title-text { font-size: 14px; color: var(--white); font-weight: 600; line-height: 1.5; margin-bottom: 14px; word-break: break-word; overflow-wrap: anywhere; }
 .ann-banner { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; cursor: pointer; }
-.ann-body { font-size: 13.5px; color: rgba(255,255,255,0.75); line-height: 1.65; white-space: pre-line; }
+.ann-body { font-size: 13.5px; color: rgba(255,255,255,0.75); line-height: 1.65; white-space: pre-line; word-break: break-word; overflow-wrap: anywhere; }
 .ann-body.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .ann-more { display: inline-block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--lime); cursor: pointer; background: none; border: none; padding: 0; }
 .ann-empty { color: rgba(255,255,255,0.5); font-size: 14px; padding: 30px 0; }
@@ -1215,6 +1216,17 @@ footer {
   width: 22px; height: 22px; border-radius: 50%; cursor: pointer; display: flex;
   align-items: center; justify-content: center; font-size: 10px;
 }
+.ann-imgs-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.ann-imgs-grid .img-preview { margin-top: 0; }
+.ann-imgs-grid .img-preview img { width: 96px; height: 96px; max-width: 96px; max-height: 96px; object-fit: cover; border-radius: 8px; }
+.ann-gallery { display: grid; gap: 6px; border-radius: 12px; overflow: hidden; }
+.ann-gallery.count-1 { grid-template-columns: 1fr; }
+.ann-gallery.count-2 { grid-template-columns: 1fr 1fr; }
+.ann-gallery.count-3 { grid-template-columns: 1fr 1fr; }
+.ann-gallery.count-3 img:first-child { grid-row: span 2; }
+.ann-gallery.count-4plus { grid-template-columns: 1fr 1fr; }
+.ann-gallery img { width: 100%; height: 100%; max-height: 320px; object-fit: cover; cursor: pointer; display: block; }
+.ann-gallery.count-1 img { max-height: 380px; }
 
 /* Gamer list admin */
 .gamer-list-item { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
@@ -2988,17 +3000,14 @@ window.fbSignOut      = async () => await signOut(auth);
           <div class="form-group"><label class="form-label">Titre</label><input type="text" class="form-input" id="ann-title" placeholder="ex: Maintenance prévue" maxlength="80"></div>
           <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" style="min-height:90px" id="ann-detail" placeholder="ex: Le site sera mis à jour le 15 août, une courte coupure est possible." maxlength="400"></textarea></div>
           <div class="form-group">
-            <label class="form-label">Image (optionnel)</label>
+            <label class="form-label">Images (optionnel)</label>
             <div class="img-upload-zone">
-              <input type="file" accept="image/*" onchange="handleImgUpload(this,'ann-img')">
+              <input type="file" accept="image/*" multiple onchange="handleAnnImgsUpload(this)">
               <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
               <strong>Cliquer pour uploader</strong>
-              <p>PNG, JPG, WEBP — s'affiche sous le texte de l'annonce.</p>
+              <p>PNG, JPG, WEBP — plusieurs images possibles, s'affichent sous le texte de l'annonce.</p>
             </div>
-            <div class="img-preview" id="ann-img-img-preview" style="display:none">
-              <img id="ann-img-img-preview-img" src="" alt="preview">
-              <button class="img-preview-remove" onclick="removeImg('ann-img')"><i data-lucide="x"></i></button>
-            </div>
+            <div class="ann-imgs-grid" id="ann-imgs-grid"></div>
           </div>
           <div class="form-group">
             <button type="button" id="ann-poll-toggle-btn" class="poll-toggle-btn" onclick="togglePollBuilder(!pollBuilderEnabled)">
@@ -4041,7 +4050,7 @@ async function publishNotification(type, title, detail, gameName, targetUserId, 
   );
   notifications.unshift(item);
   renderNotifications();
-  try { await saveNotifications(); } catch(e) { console.warn('Notification non sauvegardée', e); }
+  try { await saveNotifications(); return true; } catch(e) { console.warn('Notification non sauvegardée', e); return false; }
 }
 
 // ===== ANNONCES LIBRES (indépendantes des fiches jeux) =====
@@ -4091,8 +4100,8 @@ async function sendAnnouncement() {
     return;
   }
   const extra = {};
-  const imgUrl = tempImgs['ann-img'];
-  if (imgUrl) extra.img = imgUrl;
+  const imgs = (tempImgs['ann-imgs'] || []).filter(Boolean);
+  if (imgs.length) extra.imgs = imgs;
   const pollEnabled = pollBuilderEnabled;
   if (pollEnabled) {
     const rows = [...document.querySelectorAll('#ann-poll-options .poll-option-row')]
@@ -4112,14 +4121,18 @@ async function sendAnnouncement() {
     };
   }
   showToast('Envoi en cours...');
-  await publishNotification('announcement', title, detail, null, null, extra);
+  const ok = await publishNotification('announcement', title, detail, null, null, extra);
   document.getElementById('ann-title').value = '';
   document.getElementById('ann-detail').value = '';
-  delete tempImgs['ann-img'];
-  document.getElementById('ann-img-img-preview').style.display = 'none';
+  tempImgs['ann-imgs'] = [];
+  renderAnnImgsPreview();
   resetPollBuilder();
-  showToast('✅ Annonce envoyée aux joueurs !');
-  logChange('Annonce envoyée : "' + title + '"');
+  if (ok) {
+    showToast('✅ Annonce envoyée aux joueurs !');
+    logChange('Annonce envoyée : "' + title + '"');
+  } else {
+    showToast('❌ Erreur : l\'annonce n\'a pas pu être sauvegardée. Réessaie.');
+  }
   renderAnnouncementsHistory();
 }
 function renderAnnouncementsHistory() {
@@ -4196,7 +4209,7 @@ function renderAnnPollHTML(n) {
     const color = o.color || fallbackColor;
     return `<button type="button" class="ann-poll-option${isVotedOpt ? ' voted' : ''}" style="--poll-color:${color}" onclick="voteAnnPoll('${n.id}','${o.id}',event)">
       ${showFill ? `<div class="ann-poll-fill" style="width:${pct}%"></div>` : ''}
-      <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
+      <span class="ann-poll-label">${isVotedOpt ? '<i data-lucide="circle-check" class="ann-poll-check"></i>' : ''}${escapeHTML(o.text)}</span>
       ${showFill ? `<span class="ann-poll-pct">${pct}%</span>` : ''}
     </button>`;
   }).join('');
@@ -4218,6 +4231,13 @@ async function voteAnnPoll(notifId, optionId, ev) {
   renderAnnouncementsFeed();
   try { await saveNotifications(); } catch (e) { console.warn('Vote non sauvegardé', e); }
 }
+function renderAnnGalleryHTML(n) {
+  const imgs = (Array.isArray(n.imgs) && n.imgs.length) ? n.imgs : (n.img ? [n.img] : []);
+  if (!imgs.length) return '';
+  const countClass = imgs.length >= 4 ? 'count-4plus' : `count-${imgs.length}`;
+  const shown = imgs.slice(0, 4);
+  return `<div class="ann-gallery ${countClass}">${shown.map(url => `<img src="${escapeHTML(url)}" alt="" onclick="window.open('${escapeHTML(url)}','_blank')">`).join('')}</div>`;
+}
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
   if (!feed) return;
@@ -4237,7 +4257,7 @@ function renderAnnouncementsFeed() {
     }
     const isLong = (n.detail || '').length > 220;
     const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
-    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}${pollHTML}</div>`;
+    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${renderAnnGalleryHTML(n)}${pollHTML}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
 }
@@ -4809,7 +4829,7 @@ async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
   // Upload hero-bg / hero-banner / staff (gamer, gamer-banner) vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
-  if (key === 'hero-bg' || key === 'hero-banner' || key === 'gamer' || key === 'gamer-banner' || key === 'game') {
+  if (key === 'hero-bg' || key === 'hero-banner' || key === 'gamer' || key === 'gamer-banner' || key === 'game' || key === 'ann-img') {
     showToast('Upload en cours...');
     const isVideo = file.type.startsWith('video/');
     try {
@@ -4859,6 +4879,46 @@ function removeImg(key) {
   tempImgs[key] = '';
   const preview = document.getElementById(key + '-img-preview');
   if (preview) preview.style.display = 'none';
+}
+
+// ===== ANNONCES : upload multi-images =====
+async function handleAnnImgsUpload(input) {
+  const files = [...(input.files || [])];
+  if (!files.length) return;
+  if (!Array.isArray(tempImgs['ann-imgs'])) tempImgs['ann-imgs'] = [];
+  showToast(files.length > 1 ? 'Upload des images en cours...' : 'Upload en cours...');
+  for (const file of files) {
+    try {
+      let url;
+      if (window.fbUploadImage) {
+        url = await window.fbUploadImage(file, 'ann-img');
+      } else {
+        url = await new Promise(res => { const r = new FileReader(); r.onload = e => res(e.target.result); r.readAsDataURL(file); });
+      }
+      tempImgs['ann-imgs'].push(url);
+    } catch (e) {
+      console.error('Upload error:', e);
+      showToast('Erreur upload — vérifie les règles Firebase Storage');
+    }
+  }
+  input.value = '';
+  renderAnnImgsPreview();
+  showToast('Images uploadées — clique sur Envoyer ✅');
+}
+function renderAnnImgsPreview() {
+  const grid = document.getElementById('ann-imgs-grid');
+  if (!grid) return;
+  const imgs = tempImgs['ann-imgs'] || [];
+  grid.innerHTML = imgs.map((url, i) => `<div class="img-preview" style="display:inline-block">
+    <img src="${url}" alt="preview">
+    <button class="img-preview-remove" onclick="removeAnnImg(${i})"><i data-lucide="x"></i></button>
+  </div>`).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [grid] });
+}
+function removeAnnImg(index) {
+  if (!Array.isArray(tempImgs['ann-imgs'])) return;
+  tempImgs['ann-imgs'].splice(index, 1);
+  renderAnnImgsPreview();
 }
 
 // ===== ADMINS AUTORISÉS =====
