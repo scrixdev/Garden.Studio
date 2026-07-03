@@ -4142,7 +4142,7 @@ function renderAnnouncementsFeed() {
       return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt=""></div>`;
     }
     const isLong = (n.detail || '').length > 220;
-    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}</div>`;
+    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${n.img ? `<img class="ann-banner" src="${n.img}" alt="">` : ''}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
 }
