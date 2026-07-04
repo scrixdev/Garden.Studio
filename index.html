@@ -110,6 +110,16 @@ nav {
 .account-edit-form { margin-top: 24px; display: flex; flex-direction: column; gap: 18px; }
 .account-upload-row { display: flex; align-items: center; gap: 14px; }
 .account-upload-row .form-input[type="file"] { padding: 8px; font-size: 12px; }
+.upload-dropzone {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  padding: 20px; border-radius: 14px; cursor: pointer; text-align: center;
+  border: 1.5px dashed rgba(255,255,255,0.14); background: rgba(255,255,255,0.025);
+  transition: all 0.2s ease;
+}
+.upload-dropzone:hover { border-color: rgba(var(--lime-rgb),0.45); background: rgba(var(--lime-rgb),0.05); }
+.upload-dropzone i { width: 20px; height: 20px; color: var(--lime); }
+.upload-dropzone-text { font-size: 12.5px; font-weight: 700; color: var(--lime); }
+.upload-dropzone-sub { font-size: 11px; color: var(--gray); }
 .account-menu-wrap { position: relative; }
 .account-dropdown {
   position: absolute; top: calc(100% + 12px); right: 0; width: 260px; z-index: 500;
@@ -148,21 +158,21 @@ nav {
 /* ===== SETTINGS LAYOUT (sidebar + content) ===== */
 .settings-layout { display: flex; gap: 28px; align-items: flex-start; max-width: 1140px; width: 100%; margin: 0 auto; }
 .settings-sidebar {
-  width: 230px; flex: none; border-radius: 18px; padding: 12px;
+  width: 210px; flex: none; border-radius: 18px; padding: 10px;
   display: flex; flex-direction: column; gap: 4px;
   background: var(--glass-highlight), rgba(20,20,24,0.4); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
   border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); position: sticky; top: 24px;
 }
 .settings-sidebar-item {
   display: flex; align-items: center; gap: 11px; padding: 12px 14px; border-radius: 12px; cursor: pointer;
-  color: rgba(255,255,255,0.6); font-size: 13.5px; font-weight: 600; letter-spacing: 0.2px;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.03);
+  color: rgba(255,255,255,0.5); font-size: 13.5px; font-weight: 600; letter-spacing: 0.2px;
+  background: transparent; border: 1px solid transparent;
   transition: all 0.2s cubic-bezier(.4,0,.2,1);
 }
 .settings-sidebar-item i { width: 16px; height: 16px; flex: none; opacity: 0.85; }
-.settings-sidebar-item:hover { background: var(--glass-highlight), rgba(255,255,255,0.08); border-color: var(--glass-border); color: var(--white); transform: translateX(3px); }
-.settings-sidebar-item.active { background: var(--glass-highlight), rgba(var(--lime-rgb),0.16); border-color: rgba(var(--lime-rgb),0.4); color: var(--lime); box-shadow: var(--glass-shadow), 0 4px 14px rgba(var(--lime-rgb),0.15); }
-.settings-sidebar-item.active i { opacity: 1; }
+.settings-sidebar-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+.settings-sidebar-item.active { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.08); color: var(--white); }
+.settings-sidebar-item.active i { opacity: 1; color: var(--lime); }
 .settings-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
 .settings-section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--white); margin-bottom: -8px; }
 .settings-tab-panel { display: none; flex-direction: column; gap: 24px; }
@@ -7559,29 +7569,41 @@ function renderSettingsPage() {
         <!-- ===== TAB: COMPTE ===== -->
         <div class="settings-tab-panel ${settingsActiveTab === 'compte' ? 'active' : ''}" id="settings-tab-compte">
           <div class="settings-section-label">Compte</div>
-          <div class="glass-card settings-section settings-profile-card">
-            <div class="account-banner" style="height:160px">${bannerURL ? `<div class="account-banner-bg" style="background-image:url('${bannerURL}')"></div><img class="account-banner-fg" src="${bannerURL}" alt="">` : ''}</div>
-            <div class="account-head" style="margin-top:-38px">
-              ${avatarURL ? `<img class="account-avatar-lg" style="width:64px;height:64px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="width:64px;height:64px;font-size:24px;background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
-              <div class="account-head-info" style="padding-bottom:2px">
-                <div class="account-username" style="font-size:16px;text-transform:none">${escapeHTML(displayName || 'Sans nom')}</div>
-                <div class="account-email" style="margin-top:1px">@${escapeHTML(username || '—')}</div>
-                <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
+          <div class="glass-card settings-section settings-profile-card" style="padding:0;overflow:hidden">
+            <div class="account-banner" style="height:150px;border-radius:0">${bannerURL ? `<div class="account-banner-bg" style="background-image:url('${bannerURL}')"></div><img class="account-banner-fg" src="${bannerURL}" alt="">` : ''}</div>
+            <div style="padding:0 28px 28px">
+              <div class="account-head" style="margin-top:-32px">
+                ${avatarURL ? `<img class="account-avatar-lg" style="width:64px;height:64px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="width:64px;height:64px;font-size:24px;background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
+                <div class="account-head-info" style="padding-bottom:2px">
+                  <div class="account-username" style="font-size:16px;text-transform:none">${escapeHTML(displayName || 'Sans nom')}</div>
+                  <div class="account-email" style="margin-top:1px">@${escapeHTML(username || '—')}</div>
+                  <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
+                </div>
               </div>
-            </div>
-            <div class="form-group" style="margin-top:24px"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-displayname" value="${escapeHTML(displayName)}" maxlength="30"></div>
-            <div class="form-group"><label class="form-label">Nom d'utilisateur</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
-            <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
-            <div class="form-group">
-              <label class="form-label">Avatar</label>
-              <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'avatar')"></div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Bannière</label>
-              <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'banner')"></div>
-            </div>
-            <div class="account-actions" style="margin-top:6px">
-              <button class="btn-primary" onclick="saveSettingsProfile()"><i data-lucide="check"></i> Save</button>
+              <div class="form-group" style="margin-top:24px"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-displayname" value="${escapeHTML(displayName)}" maxlength="30"></div>
+              <div class="form-group"><label class="form-label">Nom d'utilisateur</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
+              <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
+              <div class="form-group">
+                <label class="form-label">Avatar</label>
+                <label class="upload-dropzone" id="set-avatar-dropzone">
+                  <input type="file" accept="image/*" style="display:none" onchange="handleSettingsImageUpload(this,'avatar')">
+                  <i data-lucide="upload-cloud"></i>
+                  <span class="upload-dropzone-text">Cliquer pour choisir un fichier</span>
+                  <span class="upload-dropzone-sub">${settingsTempAvatar ? 'Image sélectionnée' : 'Aucun fichier choisi'}</span>
+                </label>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Bannière</label>
+                <label class="upload-dropzone" id="set-banner-dropzone">
+                  <input type="file" accept="image/*" style="display:none" onchange="handleSettingsImageUpload(this,'banner')">
+                  <i data-lucide="upload-cloud"></i>
+                  <span class="upload-dropzone-text">Cliquer pour choisir un fichier</span>
+                  <span class="upload-dropzone-sub">${settingsTempBanner ? 'Image sélectionnée' : 'Aucun fichier choisi'}</span>
+                </label>
+              </div>
+              <div class="account-actions" style="margin-top:6px">
+                <button class="btn-primary" onclick="saveSettingsProfile()"><i data-lucide="check"></i> Save</button>
+              </div>
             </div>
           </div>
 
