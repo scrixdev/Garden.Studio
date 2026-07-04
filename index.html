@@ -130,9 +130,10 @@ nav {
 .account-menu-wrap { position: relative; }
 .account-dropdown {
   position: absolute; top: calc(100% + 12px); right: 0; width: 260px; z-index: 500;
-  background: rgba(22,22,26,0.97); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px;
+  background: var(--glass-highlight), rgba(24,26,32,0.55); border: 1px solid var(--glass-border); border-radius: 18px;
   padding: 8px; display: none; flex-direction: column; gap: 2px;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.5); backdrop-filter: blur(16px) saturate(150%); -webkit-backdrop-filter: blur(16px) saturate(150%);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55), var(--glass-shadow);
+  backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
 }
 .account-dropdown.open { display: flex; }
 .account-dropdown-head { display: flex; align-items: center; gap: 12px; padding: 12px 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px; }
@@ -155,6 +156,19 @@ nav {
 .settings-info-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.45); flex: none; }
 .settings-info-value { font-size: 13.5px; color: rgba(255,255,255,0.85); text-align: right; word-break: break-all; }
 .settings-role-box { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.login-history-item { display: flex; align-items: center; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.login-history-item:last-child { border-bottom: none; }
+.login-history-icon {
+  width: 38px; height: 38px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow); color: var(--lime);
+}
+.login-history-icon i { width: 17px; height: 17px; }
+.login-history-info { flex: 1; min-width: 0; }
+.login-history-device { font-size: 13.5px; font-weight: 700; color: rgba(255,255,255,0.9); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.login-history-time { font-size: 12px; color: var(--gray); margin-top: 2px; }
+.login-history-current { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; color: var(--lime); background: var(--lime-dim); border: 1px solid var(--lime-border); padding: 2px 8px; border-radius: 999px; }
 .settings-role-note { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 6px; margin-top: 14px; }
 .settings-role-note i { width: 14px; height: 14px; flex: none; }
 .settings-locked { text-align: center; padding: 80px 24px; color: var(--gray); }
@@ -214,7 +228,7 @@ nav {
   font-size: 13.5px; font-weight: 700; color: var(--white); background: transparent; border: none; width: 100%; text-align: left;
   transition: background 0.15s ease;
 }
-.account-dropdown-item:hover { background: rgba(255,255,255,0.08); }
+.account-dropdown-item:hover { background: var(--glass-highlight), rgba(255,255,255,0.08); }
 .account-dropdown-item i { width: 16px; height: 16px; color: rgba(255,255,255,0.55); flex-shrink: 0; }
 .account-dropdown-item.danger { color: #ff6b6b; }
 .account-dropdown-item.danger i { color: #ff6b6b; }
@@ -1497,7 +1511,7 @@ footer {
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1732,6 +1746,51 @@ window.fbRegister = async (email, pwd, username) => {
 window.fbSignIn       = async (email, pwd) => (await signInWithEmailAndPassword(auth, email, pwd)).user;
 window.fbSignInGoogle = async () => (await signInWithPopup(auth, googleProvider)).user;
 window.fbSignOut      = async () => await signOut(auth);
+
+// ===== JOURNAL DE CONNEXION (users/{uid}/loginHistory) =====
+function parseUserAgent(ua) {
+  ua = ua || '';
+  let browser = 'Navigateur inconnu';
+  if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\//.test(ua) || /Opera/.test(ua)) browser = 'Opera';
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+  else if (/CriOS/.test(ua)) browser = 'Chrome (iOS)';
+  else if (/FxiOS/.test(ua)) browser = 'Firefox (iOS)';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+  else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'Safari';
+  let os = 'Système inconnu';
+  if (/Windows/.test(ua)) os = 'Windows';
+  else if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Mac OS X/.test(ua)) os = 'macOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Linux/.test(ua)) os = 'Linux';
+  const isMobile = /Mobi|Android|iPhone|iPad|iPod/.test(ua);
+  const device = /iPad|Tablet/.test(ua) ? 'tablet' : (isMobile ? 'mobile' : 'desktop');
+  return { browser, os, device };
+}
+window.fbLogLogin = async function(uid, method) {
+  try {
+    const { browser, os, device } = parseUserAgent(navigator.userAgent);
+    await addDoc(collection(db, 'users', uid, 'loginHistory'), {
+      browser, os, device, method: method || 'password',
+      language: navigator.language || '',
+      timestamp: serverTimestamp()
+    });
+  } catch (e) { console.error('Erreur enregistrement journal de connexion:', e); }
+};
+window.fbGetLoginHistory = async function(uid, max) {
+  try {
+    const q = query(collection(db, 'users', uid, 'loginHistory'), orderBy('timestamp', 'desc'), limit(max || 25));
+    const snap = await getDocs(q);
+    const arr = [];
+    snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+    return arr;
+  } catch (e) { console.error('Erreur lecture journal de connexion:', e); return []; }
+};
+window.fbClearLoginHistory = async function(uid) {
+  const snap = await getDocs(collection(db, 'users', uid, 'loginHistory'));
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+};
 
 </script>
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
@@ -7342,7 +7401,8 @@ async function doRegister() {
   if (pwd.length < 6)             { showAuthError('Mot de passe trop court (min 6 caractères).'); return; }
   if (pwd !== pwd2)               { showAuthError('Les mots de passe ne correspondent pas.'); return; }
   try {
-    await window.fbRegister(email, pwd, username);
+    const user = await window.fbRegister(email, pwd, username);
+    if (window.fbLogLogin && user) window.fbLogLogin(user.uid, 'register');
     showAuthSuccess('<i data-lucide="check"></i> Compte créé ! Bienvenue ' + username);
     setTimeout(() => { closeSignInDirect(); showToast('Bienvenue sur Garden Studio, ' + username + ' !'); }, 1200);
   } catch(e) {
@@ -7358,6 +7418,7 @@ async function doSignIn() {
   if (pwd.length < 4) { showAuthError('Mot de passe trop court.'); return; }
   try {
     const user = await window.fbSignIn(email, pwd);
+    if (window.fbLogLogin && user) window.fbLogLogin(user.uid, 'password');
     const username = user.displayName || email.split('@')[0];
     closeSignInDirect();
     showToast('Connexion réussie ! Bienvenue ' + username + ' 👋');
@@ -7370,6 +7431,7 @@ async function doSignIn() {
 async function doSignInGoogle() {
   try {
     const user = await window.fbSignInGoogle();
+    if (window.fbLogLogin && user) window.fbLogLogin(user.uid, 'google');
     const username = user.displayName || user.email.split('@')[0];
     closeSignInDirect();
     showToast('Connecté avec Google ! Bienvenue ' + username + ' 👋');
@@ -7634,34 +7696,6 @@ function renderSettingsPage() {
 
           <div class="glass-card settings-section">
             <div class="settings-section-head">
-              <i data-lucide="shield"></i>
-              <div>
-                <div class="settings-section-title">Compte</div>
-                <div class="settings-section-sub">Informations liées à ton compte, non modifiables ici.</div>
-              </div>
-            </div>
-            <div class="settings-info-row"><span class="settings-info-label">User ID</span><span class="settings-info-value">${escapeHTML(currentUser.uid || '')}</span></div>
-            <div class="settings-info-row"><span class="settings-info-label">Email</span><span class="settings-info-value">${escapeHTML(currentUser.email || '')}</span></div>
-            <div class="settings-info-row"><span class="settings-info-label">Créé le</span><span class="settings-info-value">${formatAccountDate(p.createdAt)}</span></div>
-            <div class="settings-info-row"><span class="settings-info-label">Rôle actuel</span><span class="settings-info-value">${escapeHTML(role)}</span></div>
-          </div>
-
-          <div class="glass-card settings-section">
-            <div class="settings-section-head">
-              <i data-lucide="badge-check"></i>
-              <div>
-                <div class="settings-section-title">Rôle</div>
-                <div class="settings-section-sub">Ton rôle est attribué par l'équipe Garden Studio.</div>
-              </div>
-            </div>
-            <div class="settings-role-box">
-              <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};font-size:12px;padding:6px 14px">${escapeHTML(role)}</span>
-            </div>
-            <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
-          </div>
-
-          <div class="glass-card settings-section">
-            <div class="settings-section-head">
               <i data-lucide="briefcase"></i>
               <div>
                 <div class="settings-section-title">À propos</div>
@@ -7706,6 +7740,34 @@ function renderSettingsPage() {
               <button class="btn-outline" onclick="addSettingsTag('softSkills')"><i data-lucide="plus"></i> Ajouter</button>
             </div>
             <div class="tag-list" id="settings-softskills-list"></div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="shield"></i>
+              <div>
+                <div class="settings-section-title">Compte</div>
+                <div class="settings-section-sub">Informations liées à ton compte, non modifiables ici.</div>
+              </div>
+            </div>
+            <div class="settings-info-row"><span class="settings-info-label">User ID</span><span class="settings-info-value">${escapeHTML(currentUser.uid || '')}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Email</span><span class="settings-info-value">${escapeHTML(currentUser.email || '')}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Créé le</span><span class="settings-info-value">${formatAccountDate(p.createdAt)}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Rôle actuel</span><span class="settings-info-value">${escapeHTML(role)}</span></div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="badge-check"></i>
+              <div>
+                <div class="settings-section-title">Rôle</div>
+                <div class="settings-section-sub">Ton rôle est attribué par l'équipe Garden Studio.</div>
+              </div>
+            </div>
+            <div class="settings-role-box">
+              <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};font-size:12px;padding:6px 14px">${escapeHTML(role)}</span>
+            </div>
+            <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
           </div>
         </div>
 
@@ -7753,6 +7815,22 @@ function renderSettingsPage() {
             </div>
           </div>
 
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="history"></i>
+              <div>
+                <div class="settings-section-title">Journal de connexion</div>
+                <div class="settings-section-sub">Les dernières connexions à ton compte : appareil, navigateur et date.</div>
+              </div>
+            </div>
+            <div id="settings-login-history">
+              <div class="settings-locked" style="padding:30px 24px"><i data-lucide="loader" style="width:20px;height:20px"></i></div>
+            </div>
+            <div class="account-actions" style="margin-top:16px">
+              <button class="btn-outline" onclick="clearLoginHistoryFlow()"><i data-lucide="trash-2"></i> Vider l'historique</button>
+            </div>
+          </div>
+
           ${isOwner ? `
           <div class="glass-card settings-section">
             <div class="settings-section-head">
@@ -7787,6 +7865,84 @@ function renderSettingsPage() {
   renderSettingsTagList('skills');
   renderSettingsTagList('softSkills');
   if (window.lucide) lucide.createIcons({ nodes: [wrap] });
+  loadLoginHistory();
+}
+function timeAgoFr(date) {
+  const diffMs = Date.now() - date.getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "À l'instant";
+  if (min < 60) return 'Il y a ' + min + ' min';
+  const h = Math.floor(min / 60);
+  if (h < 24) return 'Il y a ' + h + 'h';
+  const d = Math.floor(h / 24);
+  if (d < 7) return 'Il y a ' + d + ' j';
+  return date.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' à ' + date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+async function loadLoginHistory() {
+  const el = document.getElementById('settings-login-history');
+  if (!el || !currentUser || !window.fbGetLoginHistory) return;
+  try {
+    const entries = await window.fbGetLoginHistory(currentUser.uid, 25);
+    if (!entries.length) {
+      el.innerHTML = `<div class="tag-empty-note">Aucune connexion enregistrée pour l'instant.</div>`;
+      if (window.lucide) lucide.createIcons({ nodes: [el] });
+      return;
+    }
+    const currentUA = parseCurrentUAFallback();
+    el.innerHTML = entries.map((e, i) => {
+      const date = e.timestamp && e.timestamp.toDate ? e.timestamp.toDate() : null;
+      const icon = e.device === 'mobile' ? 'smartphone' : (e.device === 'tablet' ? 'tablet' : 'monitor');
+      const isLikelyCurrent = i === 0 && e.browser === currentUA.browser && e.os === currentUA.os;
+      const methodLabel = e.method === 'google' ? ' · Google' : (e.method === 'register' ? ' · Inscription' : '');
+      return `
+        <div class="login-history-item">
+          <div class="login-history-icon"><i data-lucide="${icon}"></i></div>
+          <div class="login-history-info">
+            <div class="login-history-device">${escapeHTML(e.browser || 'Navigateur')} sur ${escapeHTML(e.os || 'Système')}${methodLabel} ${isLikelyCurrent ? '<span class="login-history-current">Session actuelle</span>' : ''}</div>
+            <div class="login-history-time">${date ? timeAgoFr(date) : '—'}</div>
+          </div>
+        </div>`;
+    }).join('');
+    if (window.lucide) lucide.createIcons({ nodes: [el] });
+  } catch (e) {
+    console.error(e);
+    el.innerHTML = `<div class="tag-empty-note">Impossible de charger le journal de connexion.</div>`;
+  }
+}
+function parseCurrentUAFallback() {
+  const ua = navigator.userAgent || '';
+  let browser = 'Navigateur inconnu';
+  if (/Edg\//.test(ua)) browser = 'Edge';
+  else if (/OPR\//.test(ua) || /Opera/.test(ua)) browser = 'Opera';
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+  else if (/Firefox\//.test(ua)) browser = 'Firefox';
+  else if (/Safari\//.test(ua) && /Version\//.test(ua)) browser = 'Safari';
+  let os = 'Système inconnu';
+  if (/Windows/.test(ua)) os = 'Windows';
+  else if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+  else if (/Mac OS X/.test(ua)) os = 'macOS';
+  else if (/Android/.test(ua)) os = 'Android';
+  else if (/Linux/.test(ua)) os = 'Linux';
+  return { browser, os };
+}
+function clearLoginHistoryFlow() {
+  if (!currentUser) return;
+  showConfirm(
+    "Vider le journal de connexion ?",
+    "L'historique des connexions à ton compte sera définitivement supprimé.",
+    async () => {
+      try {
+        if (window.fbClearLoginHistory) await window.fbClearLoginHistory(currentUser.uid);
+        showToast('✅ Journal de connexion vidé');
+        loadLoginHistory();
+      } catch (e) {
+        console.error(e);
+        showToast('❌ Erreur lors du vidage du journal');
+      }
+    },
+    'Vider',
+    true
+  );
 }
 async function handleSettingsImageUpload(input, kind) {
   const file = input.files && input.files[0];
