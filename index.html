@@ -425,8 +425,10 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .search-result > div:last-child, .notification-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
 .gs-rating { display: inline-flex; }
 .gs-star-btn { cursor: pointer; width: var(--gs-star-size, 22px); height: var(--gs-star-size, 22px); box-sizing: content-box; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 6px 2px; user-select: none; }
-.gs-star-btn svg { width: 100%; height: 100%; display: block; fill: currentColor; pointer-events: none; }
-.gs-star-btn.filled, .gs-star-btn.preview { color: #ffa723; }
+.gs-star-btn svg { width: 100%; height: 100%; display: block; pointer-events: none; }
+.gs-star-btn .gs-star-outline { fill: currentColor; }
+.gs-star-btn .gs-star-fill { opacity: 0; transition: opacity 0.15s; }
+.gs-star-btn.filled .gs-star-fill, .gs-star-btn.preview .gs-star-fill { opacity: 1; }
 .gs-bookmark-icon { position: relative; display: inline-flex; width: 20px; height: 20px; flex-shrink: 0; }
 .nav-links a .gs-bookmark-icon { width: 16px; height: 16px; }
 .gs-bookmark-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.15s; }
@@ -680,7 +682,7 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .ann-banner { display: block; width: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; cursor: pointer; }
 .ann-body { font-size: 13.5px; color: rgba(255,255,255,0.75); line-height: 1.65; white-space: pre-line; word-break: break-word; overflow-wrap: anywhere; }
 .ann-body.clamped { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
-.ann-more { display: inline-block; margin-top: 6px; font-size: 12.5px; font-weight: 700; color: var(--lime); cursor: pointer; background: none; border: none; padding: 0; }
+.ann-more { display: inline-block; margin: 6px 0 14px; font-size: 12.5px; font-weight: 700; color: var(--lime); cursor: pointer; background: none; border: none; padding: 0; }
 .ann-empty { color: rgba(255,255,255,0.5); font-size: 14px; padding: 30px 0; }
 .ann-poll { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
 .ann-poll-option {
@@ -1837,6 +1839,14 @@ window.fbSignOut      = async () => await signOut(auth);
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="starGradient" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FEE854"/>
+      <stop offset="100%" stop-color="#FF7801"/>
+    </linearGradient>
+  </defs>
+</svg>
 
 <!-- ===== SITE LOADER ===== -->
 <div id="site-loader">
@@ -3052,7 +3062,7 @@ window.fbSignOut      = async () => await signOut(auth);
         <div class="admin-card">
           <div class="admin-card-header"><span class="admin-card-title">Nouvelle annonce</span></div>
           <div class="form-group"><label class="form-label">Titre</label><input type="text" class="form-input" id="ann-title" placeholder="ex: Maintenance prévue" maxlength="80"></div>
-          <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" style="min-height:90px" id="ann-detail" placeholder="ex: Le site sera mis à jour le 15 août, une courte coupure est possible." maxlength="400"></textarea></div>
+          <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" style="min-height:90px" id="ann-detail" placeholder="ex: Le site sera mis à jour le 15 août, une courte coupure est possible."></textarea></div>
           <div class="form-group">
             <label class="form-label">Images (optionnel)</label>
             <div class="img-upload-zone">
@@ -4461,7 +4471,7 @@ function bookmarkIconHTML() {
 function ratingPickerHTML(g, index, size) {
   size = size || 22;
   const current = userRatingOn(g);
-  const starSVG = `<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z"/></svg>`;
+  const starSVG = `<svg viewBox="0 0 24 24"><path class="gs-star-outline" d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z"/><path class="gs-star-fill" fill="url(#starGradient)" d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z"/></svg>`;
   let stars = '';
   for (let v = 1; v <= 5; v++) {
     const filled = v <= current;
@@ -4494,11 +4504,11 @@ function starsHTML(rating, size) {
   const half = (rating - full) >= 0.4 && (rating - full) < 0.9;
   let svgs = '';
   for (let i = 0; i < 5; i++) {
-    const fillId = `gs-star-grad-${Math.random().toString(36).slice(2,8)}`;
+    const clipId = `gs-star-clip-${Math.random().toString(36).slice(2,8)}`;
     if (i < full) {
-      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb800" stroke="#ffb800" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
+      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="url(#starGradient)" stroke="url(#starGradient)" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
     } else if (i === full && half) {
-      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><defs><linearGradient id="${fillId}"><stop offset="50%" stop-color="#ffb800"/><stop offset="50%" stop-color="transparent"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="url(#${fillId})" stroke="#ffb800" stroke-width="1"/></svg>`;
+      svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24"><defs><clipPath id="${clipId}"><rect x="0" y="0" width="12" height="24"/></clipPath></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="none" stroke="url(#starGradient)" stroke-width="1"/><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26" fill="url(#starGradient)" clip-path="url(#${clipId})"/></svg>`;
     } else {
       svgs += `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>`;
     }
@@ -4511,7 +4521,7 @@ function starCompactHTML(rating, size) {
   size = size || 16;
   if (!rating) return '';
   return `<span style="display:inline-flex;align-items:center;gap:4px">
-    <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="#ffb800" stroke="#ffb800" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
+    <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="url(#starGradient)" stroke="url(#starGradient)" stroke-width="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26"/></svg>
     <span style="font-weight:700;color:#ffb800">${rating.toFixed(1)}</span>
   </span>`;
 }
