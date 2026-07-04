@@ -1234,7 +1234,20 @@ footer {
 .member-info { flex: 1; min-width: 0; }
 .member-name { font-weight: 700; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-meta { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.member-role-select { flex-shrink: 0; width: 150px; }
+.member-role-slot { flex-shrink: 0; width: 152px; display: flex; align-items: center; justify-content: flex-end; }
+.member-role-select {
+  width: 100%; appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  border: 1.5px solid; border-radius: 999px; padding: 7px 30px 7px 16px;
+  font-family: 'Barlow', sans-serif; font-size: 11.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.5px; text-align: left; cursor: pointer;
+  background-repeat: no-repeat; background-position: right 12px center; background-size: 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  transition: filter 0.15s, transform 0.1s;
+}
+.member-role-select:hover { filter: brightness(1.25); }
+.member-role-select:active { transform: scale(0.97); }
+.member-role-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.08); }
+.member-role-select option { background: var(--dark2, #1a1a1a); color: #fff; }
 .game-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .game-list-item:last-child { border-bottom: none; }
 .game-list-thumb {
@@ -5521,14 +5534,16 @@ async function renderMembersSection() {
     return `<div class="member-item">
       ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
       <div class="member-info">
-        <div class="member-name">${escapeHTML(u.username || '(sans pseudo)')}</div>
+        <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
         <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
       </div>
+      <div class="member-role-slot">
       ${owner
         ? `<span class="account-role-badge" style="background:${rs.bg};color:${rs.color}" title="Rôle fixe, non modifiable">🔒 Owner</span>`
-        : `<select class="form-select member-role-select" onchange="changeMemberRole('${u.id}', this.value)">
+        : `<select class="member-role-select" style="background:${rs.bg};color:${rs.color};border-color:${rs.color}55" onchange="changeMemberRole('${u.id}', this.value); const _rs=roleBadgeStyle(this.value); this.style.background=_rs.bg; this.style.color=_rs.color; this.style.borderColor=_rs.color+'55';">
             ${ALL_ROLES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
           </select>`}
+      </div>
     </div>`;
   }).join('');
 }
@@ -7529,7 +7544,7 @@ function renderAccountPage() {
           ${avatarURL ? `<img class="account-avatar-lg" style="margin-top:-40px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color};margin-top:-40px">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
           <div class="account-head-info" style="padding-top:10px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <div class="account-username">${escapeHTML(displayName)}</div>
+              <div class="account-username"><span class="verified-name">${escapeHTML(displayName)}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
               <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
             </div>
             <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
@@ -8148,7 +8163,7 @@ function renderAccountDropdownContent(username, photoURL) {
     <div class="account-dropdown-head">
       ${navAvatarHTML(photoURL, username, 44)}
       <div style="min-width:0">
-        <div class="account-dropdown-name">${escapeHTML(username || '')}</div>
+        <div class="account-dropdown-name"><span class="verified-name">${escapeHTML(username || '')}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
         <div class="account-dropdown-email">${escapeHTML(currentUser?.email || '')}</div>
         <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
       </div>
