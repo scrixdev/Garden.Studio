@@ -143,66 +143,46 @@ nav {
 .settings-section.danger-zone .settings-section-head i { color: #ff3b30; }
 .settings-inline-note { font-size: 12px; color: var(--gray); margin-top: -6px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
 .settings-inline-note i { width: 13px; height: 13px; flex: none; }
-/* ===== SETTINGS SHELL (sidebar + tabs) ===== */
-.settings-shell { max-width: 980px; margin: 0 auto; display: grid; grid-template-columns: 220px 1fr; gap: 24px; align-items: flex-start; }
-.settings-sidebar { border-radius: 16px; padding: 10px; position: sticky; top: 100px; }
-.settings-nav-item {
-  display: flex; align-items: center; gap: 10px; padding: 11px 14px; margin-bottom: 4px;
-  border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.6); font-size: 13.5px; font-weight: 600;
-  transition: all 0.15s; border-left: 3px solid transparent;
+/* ===== SETTINGS LAYOUT (sidebar + content) ===== */
+.settings-layout { display: flex; gap: 28px; align-items: flex-start; max-width: 980px; margin: 0 auto; }
+.settings-sidebar {
+  width: 200px; flex: none; border-radius: 16px; padding: 10px;
+  background: var(--glass-highlight), rgba(20,20,24,0.4); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow); position: sticky; top: 24px;
 }
-.settings-nav-item i { width: 16px; height: 16px; flex: none; }
-.settings-nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
-.settings-nav-item.active { background: rgba(var(--lime-rgb),0.1); color: var(--lime); border-left-color: var(--lime); }
-.settings-tab-wrap { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
-@media (max-width: 760px) {
-  .settings-shell { grid-template-columns: 1fr; }
-  .settings-sidebar { position: static; display: flex; overflow-x: auto; gap: 4px; padding: 8px; }
-  .settings-nav-item { border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
-  .settings-nav-item.active { border-bottom-color: var(--lime); }
+.settings-sidebar-item { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 10px; cursor: pointer; color: rgba(255,255,255,0.55); font-size: 13.5px; font-weight: 600; transition: all 0.15s; margin-bottom: 2px; }
+.settings-sidebar-item i { width: 15px; height: 15px; flex: none; }
+.settings-sidebar-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
+.settings-sidebar-item.active { background: rgba(var(--lime-rgb),0.12); color: var(--lime); }
+.settings-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.settings-tab-panel { display: none; flex-direction: column; gap: 24px; }
+.settings-tab-panel.active { display: flex; }
+@media (max-width: 860px) {
+  .settings-layout { flex-direction: column; }
+  .settings-sidebar { width: 100%; display: flex; overflow-x: auto; gap: 4px; position: static; }
+  .settings-sidebar-item { white-space: nowrap; }
 }
-/* ===== TAG EDITOR (skills / soft skills) ===== */
-.tag-editor-input-row { display: flex; gap: 10px; margin-bottom: 14px; }
-.tag-editor-input-row .form-input { flex: 1; margin-bottom: 0; }
-.tag-editor-list { display: flex; flex-wrap: wrap; gap: 8px; }
+/* ===== SKILLS / TAGS ===== */
+.tag-input-row { display: flex; gap: 10px; margin-bottom: 12px; }
+.tag-input-row .form-input { flex: 1; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
 .tag-chip {
-  display: inline-flex; align-items: center; gap: 7px; padding: 7px 8px 7px 14px;
-  border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
-  font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.85);
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 8px 7px 14px; border-radius: 999px;
+  background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow); color: var(--white); font-size: 12.5px; font-weight: 600;
 }
-.tag-chip button { display: flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 50%; background: rgba(255,255,255,0.08); border: none; color: rgba(255,255,255,0.6); cursor: pointer; flex: none; }
-.tag-chip button:hover { background: rgba(255,59,48,0.25); color: #ff6060; }
-.tag-chip.soft { background: rgba(124,92,255,0.1); border-color: rgba(124,92,255,0.25); color: #b9a9ff; }
-.lang-row { display: grid; grid-template-columns: 1fr 160px 40px; gap: 10px; margin-bottom: 10px; align-items: center; }
-.lang-row .form-input, .lang-row .form-select { margin-bottom: 0; }
-.lang-row-remove { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; border-radius: 10px; background: rgba(255,59,48,0.1); border: 1px solid rgba(255,59,48,0.25); color: #ff6060; cursor: pointer; flex: none; }
-.lang-row-remove i { width: 15px; height: 15px; }
-/* ===== PUBLIC PROFILE (v2) ===== */
-.profile-v2 { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-.profile-v2-hero { border-radius: 18px; overflow: hidden; padding-bottom: 24px; }
-.profile-v2-banner { position: relative; height: 200px; background: linear-gradient(135deg, rgba(var(--lime-rgb),0.25), rgba(124,92,255,0.25)); overflow: hidden; }
-.profile-v2-banner img { width: 100%; height: 100%; object-fit: cover; }
-.profile-v2-id { position: absolute; top: 14px; right: 16px; display: flex; align-items: center; gap: 5px; font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px; letter-spacing: 1px; color: rgba(255,255,255,0.75); background: rgba(0,0,0,0.35); padding: 5px 11px; border-radius: 999px; backdrop-filter: blur(6px); }
-.profile-v2-id i { width: 13px; height: 13px; }
-.profile-v2-head { display: flex; align-items: flex-end; gap: 18px; margin-top: -44px; padding: 0 24px; }
-.profile-v2-avatar { width: 92px; height: 92px; border-radius: 50%; border: 4px solid var(--dark2, #101014); object-fit: cover; flex: none; position: relative; z-index: 2; background: var(--dark3); }
-.profile-v2-avatar-fallback { width: 92px; height: 92px; border-radius: 50%; border: 4px solid var(--dark2, #101014); display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 800; color: #fff; flex: none; position: relative; z-index: 2; }
-.profile-v2-name-row { display: flex; align-items: center; gap: 10px; padding-bottom: 6px; flex-wrap: wrap; }
-.profile-v2-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 0.5px; }
-.profile-v2-subtitle { padding: 8px 24px 0; font-size: 13px; color: var(--gray); }
-.profile-v2-card { border-radius: 16px; padding: 24px 26px; }
-.profile-v2-card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px; }
-.profile-v2-bio { font-size: 13.5px; line-height: 1.85; color: rgba(255,255,255,0.75); white-space: pre-wrap; overflow-wrap: anywhere; margin-bottom: 18px; }
-.profile-v2-meta-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid rgba(255,255,255,0.06); }
-.profile-v2-meta-row:first-of-type { border-top: none; padding-top: 0; }
-.profile-v2-meta-icon { width: 32px; height: 32px; border-radius: 9px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; flex: none; }
-.profile-v2-meta-icon i { width: 15px; height: 15px; color: rgba(255,255,255,0.7); }
-.profile-v2-meta-label { font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 2px; }
-.profile-v2-meta-value { font-size: 13.5px; color: rgba(255,255,255,0.9); font-weight: 600; }
-.profile-v2-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-.profile-v2-tag { padding: 7px 14px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); font-size: 12.5px; font-weight: 600; color: rgba(255,255,255,0.85); }
-.profile-v2-tag.soft { background: rgba(124,92,255,0.1); border-color: rgba(124,92,255,0.25); color: #b9a9ff; }
-.profile-v2-empty { font-size: 12.5px; color: var(--gray); }
+.tag-chip.static { padding: 7px 14px; }
+.tag-chip button { width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
+.tag-chip button:hover { background: rgba(255,59,48,0.5); color: #fff; }
+.tag-empty-note { font-size: 12px; color: var(--gray); }
+/* ===== PROFIL PUBLIC ===== */
+.profile-meta-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--gray); margin-top: 6px; }
+.profile-meta-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--gray); flex: none; }
+.profile-lang-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; font-size: 13px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.profile-lang-row:last-child { border-bottom: none; }
+.profile-lang-name { color: var(--white); font-weight: 600; }
+.profile-lang-level { color: var(--gray); font-size: 12px; }
 .account-dropdown-item {
   display: flex; align-items: center; gap: 11px; padding: 10px 10px; border-radius: 10px; cursor: pointer;
   font-size: 13.5px; font-weight: 700; color: var(--white); background: transparent; border: none; width: 100%; text-align: left;
@@ -2267,16 +2247,13 @@ window.fbSignOut      = async () => await signOut(auth);
 <div class="page" id="page-settings">
   <div class="page-hero" style="padding-bottom:0">
     <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:5px 14px;margin-bottom:20px">
-      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">Paramètres</span>
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">Ton compte</span>
     </div>
     <h1>Paramètres <span>Utilisateur</span></h1>
-    <p>Gère ton profil public, tes notifications et ta confidentialité sur Garden Studio.</p>
+    <p>Gère ton profil public, consulte les infos de ton compte et ton rôle sur Garden Studio.</p>
   </div>
   <div class="page-content">
-    <div class="settings-shell" id="settings-page-wrap">
-      <div class="glass-card settings-sidebar" id="settings-sidebar"></div>
-      <div class="settings-tab-wrap" id="settings-tab-content"></div>
-    </div>
+    <div class="settings-wrap" id="settings-page-wrap"></div>
   </div>
 </div>
 
@@ -7391,7 +7368,6 @@ function navAvatarHTML(photoURL, username, size) {
   const color = colors[Math.abs(hash) % colors.length];
   return `<span style="width:${size}px;height:${size}px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:${Math.round(size*0.46)}px;font-weight:800;color:#fff;flex:none">${escapeHTML(letter)}</span>`;
 }
-let accountEditMode = false;
 let accountTempAvatar = null;
 let accountTempBanner = null;
 function renderAccountPage() {
@@ -7401,381 +7377,364 @@ function renderAccountPage() {
   const p = currentUserProfile || {};
   const role = getEffectiveRole(currentUser.email, p.role);
   const rs = roleBadgeStyle(role);
-  const avatarURL = accountTempAvatar || p.avatarURL || currentUser.photoURL || '';
-  const bannerURL = accountTempBanner || p.bannerURL || '';
+  const avatarURL = p.avatarURL || currentUser.photoURL || '';
+  const bannerURL = p.bannerURL || '';
   const username = p.username || currentUser.username || '';
-  if (accountEditMode) {
-    wrap.innerHTML = `
-      <div class="account-banner">${bannerURL ? `<img src="${bannerURL}" alt="">` : ''}</div>
-      <div class="account-head">
-        ${avatarURL ? `<img class="account-avatar-lg" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
-        <div class="account-head-info">
+  const skills = Array.isArray(p.skills) ? p.skills : [];
+  const softSkills = Array.isArray(p.softSkills) ? p.softSkills : [];
+  const languages = Array.isArray(p.languages) ? p.languages : [];
+  const metaParts = [p.jobTitle, p.location].filter(Boolean).map(escapeHTML);
+  wrap.innerHTML = `
+    <div class="account-banner">${bannerURL ? `<img src="${bannerURL}" alt="">` : ''}</div>
+    <div class="account-head">
+      ${avatarURL ? `<img class="account-avatar-lg" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
+      <div class="account-head-info">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
           <div class="account-username">${escapeHTML(username)}</div>
-          <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
-        </div>
-      </div>
-      <div class="account-edit-form">
-        <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="acc-edit-username" value="${escapeHTML(username)}" maxlength="30"></div>
-        <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="acc-edit-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
-        <div class="form-group">
-          <label class="form-label">Avatar</label>
-          <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleAccountImageUpload(this,'avatar')"></div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Bannière</label>
-          <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleAccountImageUpload(this,'banner')"></div>
-        </div>
-        <div class="account-actions">
-          <button class="btn-primary" onclick="saveAccountProfile()"><i data-lucide="check"></i> Enregistrer</button>
-          <button class="btn-ghost" onclick="toggleAccountEdit(false)"><i data-lucide="x"></i> Annuler</button>
-        </div>
-      </div>
-    `;
-  } else {
-    wrap.innerHTML = `
-      <div class="account-banner">${bannerURL ? `<img src="${bannerURL}" alt="">` : ''}</div>
-      <div class="account-head">
-        ${avatarURL ? `<img class="account-avatar-lg" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
-        <div class="account-head-info">
-          <div class="account-username">${escapeHTML(username)}</div>
-          <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
           <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
         </div>
+        ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : `<div class="account-email">${escapeHTML(currentUser.email || '')}</div>`}
       </div>
-      <p class="account-bio">${p.bio ? escapeHTML(p.bio) : '<span style="color:var(--gray)">Aucune bio pour l\'instant.</span>'}</p>
-      <div class="account-actions">
-        <button class="btn-primary" onclick="toggleAccountEdit(true)"><i data-lucide="pencil"></i> Edit Profile</button>
-        <button class="btn-ghost" onclick="showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false)"><i data-lucide="log-out"></i> Logout</button>
+    </div>
+    <div class="account-actions">
+      <button class="btn-primary" onclick="goEditProfile()"><i data-lucide="pencil"></i> Edit Profile</button>
+      <button class="btn-ghost" onclick="showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false)"><i data-lucide="log-out"></i> Logout</button>
+    </div>
+
+    <div class="glass-card settings-section" style="margin-top:24px">
+      <div class="settings-section-head">
+        <i data-lucide="user-round"></i>
+        <div><div class="settings-section-title">About Me</div></div>
       </div>
-    `;
-  }
+      <p class="account-bio" style="margin-top:0">${p.bio ? escapeHTML(p.bio) : '<span style="color:var(--gray)">Aucune bio pour l\'instant.</span>'}</p>
+      ${languages.length ? `
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.06)">
+        <div class="settings-info-label" style="margin-bottom:4px">Langues</div>
+        ${languages.map(l => {
+          const parts = String(l).split(':');
+          const name = escapeHTML((parts[0] || '').trim());
+          const level = escapeHTML((parts.slice(1).join(':') || '').trim());
+          return `<div class="profile-lang-row"><span class="profile-lang-name">${name}</span>${level ? `<span class="profile-lang-level">${level}</span>` : ''}</div>`;
+        }).join('')}
+      </div>` : ''}
+    </div>
+
+    ${skills.length ? `
+    <div class="glass-card settings-section" style="margin-top:24px">
+      <div class="settings-section-head">
+        <i data-lucide="sparkles"></i>
+        <div><div class="settings-section-title">Skills</div></div>
+      </div>
+      <div class="tag-list">${skills.map(s => `<span class="tag-chip static">${escapeHTML(s)}</span>`).join('')}</div>
+    </div>` : ''}
+
+    ${softSkills.length ? `
+    <div class="glass-card settings-section" style="margin-top:24px">
+      <div class="settings-section-head">
+        <i data-lucide="heart-handshake"></i>
+        <div><div class="settings-section-title">Soft Skills</div></div>
+      </div>
+      <div class="tag-list">${softSkills.map(s => `<span class="tag-chip static">${escapeHTML(s)}</span>`).join('')}</div>
+    </div>` : ''}
+  `;
   if (window.lucide) lucide.createIcons({ nodes: [wrap] });
-}
-function toggleAccountEdit(open) {
-  accountEditMode = !!open;
-  if (!open) { accountTempAvatar = null; accountTempBanner = null; }
-  renderAccountPage();
-}
-async function handleAccountImageUpload(input, kind) {
-  const file = input.files && input.files[0];
-  if (!file || !window.fbUploadImage) return;
-  try {
-    showToast('Upload en cours...');
-    const url = await window.fbUploadImage(file, 'user-' + kind);
-    if (kind === 'avatar') accountTempAvatar = url; else accountTempBanner = url;
-    renderAccountPage();
-    showToast('✅ Image ajoutée — n\'oublie pas d\'enregistrer');
-  } catch (e) {
-    console.error(e);
-    showToast('❌ Erreur upload image');
-  }
-}
-async function saveAccountProfile() {
-  if (!currentUser || !window.fbSaveUserProfile) return;
-  const username = document.getElementById('acc-edit-username').value.trim();
-  const bio = document.getElementById('acc-edit-bio').value.trim();
-  if (!username) { showToast('❌ Le username ne peut pas être vide'); return; }
-  const data = { username, bio };
-  if (accountTempAvatar) data.avatarURL = accountTempAvatar;
-  if (accountTempBanner) data.bannerURL = accountTempBanner;
-  try {
-    await window.fbSaveUserProfile(currentUser.uid, data);
-    currentUserProfile = { ...(currentUserProfile || {}), ...data };
-    accountTempAvatar = null; accountTempBanner = null;
-    accountEditMode = false;
-    renderAccountPage();
-    renderAccountDropdownContent(currentUserProfile.username, currentUserProfile.avatarURL || currentUser.photoURL || '');
-    showToast('✅ Profil mis à jour');
-  } catch (e) {
-    console.error(e);
-    showToast('❌ Erreur lors de la sauvegarde du profil');
-  }
 }
 // ===== PAGE: SETTINGS =====
 let settingsTempAvatar = null;
 let settingsTempBanner = null;
 let settingsActiveTab = 'compte';
-let settingsSkills = null;
-let settingsSoftSkills = null;
-let settingsLanguages = null;
-const LANGUAGE_LEVELS = ['Basic', 'Intermediate', 'Fluent', 'Native or Bilingual'];
+let settingsTempSkills = null;
+let settingsTempSoftSkills = null;
+function showSettingsTab(tab, el) {
+  settingsActiveTab = tab;
+  document.querySelectorAll('.settings-sidebar-item').forEach(it => it.classList.toggle('active', it.dataset.settingsTab === tab));
+  document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'settings-tab-' + tab));
+}
+function renderSettingsTagList(kind) {
+  const list = kind === 'skills' ? settingsTempSkills : settingsTempSoftSkills;
+  const el = document.getElementById(kind === 'skills' ? 'settings-skills-list' : 'settings-softskills-list');
+  if (!el || !list) return;
+  if (!list.length) { el.innerHTML = '<div class="tag-empty-note">Aucune compétence ajoutée pour l\'instant.</div>'; return; }
+  el.innerHTML = list.map((s, i) => `<span class="tag-chip">${escapeHTML(s)}<button onclick="removeSettingsTag('${kind}',${i})"><i data-lucide="x" style="width:11px;height:11px"></i></button></span>`).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [el] });
+}
+function addSettingsTag(kind) {
+  const inputId = kind === 'skills' ? 'set-skill-input' : 'set-softskill-input';
+  const input = document.getElementById(inputId);
+  const val = (input?.value || '').trim();
+  if (!val) return;
+  const list = kind === 'skills' ? settingsTempSkills : settingsTempSoftSkills;
+  if (list.some(s => s.toLowerCase() === val.toLowerCase())) { showToast('Déjà dans la liste'); input.value = ''; return; }
+  list.push(val);
+  input.value = '';
+  renderSettingsTagList(kind);
+  saveSettingsSkills();
+}
+function removeSettingsTag(kind, idx) {
+  const list = kind === 'skills' ? settingsTempSkills : settingsTempSoftSkills;
+  list.splice(idx, 1);
+  renderSettingsTagList(kind);
+  saveSettingsSkills();
+}
+async function saveSettingsSkills() {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, { skills: settingsTempSkills, softSkills: settingsTempSoftSkills });
+    currentUserProfile = { ...(currentUserProfile || {}), skills: [...settingsTempSkills], softSkills: [...settingsTempSoftSkills] };
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+async function saveSettingsAbout() {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  const jobTitle = document.getElementById('set-jobtitle').value.trim();
+  const location = document.getElementById('set-location').value.trim();
+  const languages = document.getElementById('set-languages').value.split('\n').map(s => s.trim()).filter(Boolean);
+  const data = { jobTitle, location, languages };
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, data);
+    currentUserProfile = { ...(currentUserProfile || {}), ...data };
+    showToast('✅ Infos mises à jour');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+function goEditProfile() {
+  showPage('settings');
+  setTimeout(() => {
+    const tab = document.querySelector('.settings-sidebar-item[data-settings-tab="compte"]');
+    if (tab) showSettingsTab('compte', tab);
+  }, 60);
+}
 function formatAccountDate(iso) {
   const d = iso ? new Date(iso) : null;
   if (!d || isNaN(d.getTime())) return '—';
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
 }
-function slugifyHandle(name) { return (name || '').trim().toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, ''); }
-function resetSettingsWorkingCopies() { settingsSkills = null; settingsSoftSkills = null; settingsLanguages = null; }
-function ensureSettingsWorkingCopies(p) {
-  if (settingsSkills === null) settingsSkills = Array.isArray(p.skills) ? [...p.skills] : [];
-  if (settingsSoftSkills === null) settingsSoftSkills = Array.isArray(p.softSkills) ? [...p.softSkills] : [];
-  if (settingsLanguages === null) settingsLanguages = Array.isArray(p.languages) ? p.languages.map(l => ({ ...l })) : [];
-}
-function switchSettingsTab(tab) { settingsActiveTab = tab; renderSettingsPage(); }
-function renderSettingsSidebar() {
-  const el = document.getElementById('settings-sidebar');
-  if (!el) return;
-  const tabs = [
-    { id: 'compte', label: 'Compte', icon: 'user' },
-    { id: 'notifications', label: 'Notifications', icon: 'bell' },
-    { id: 'confidentialite', label: 'Confidentialité', icon: 'eye-off' }
-  ];
-  el.innerHTML = tabs.map(t => `<div class="settings-nav-item ${settingsActiveTab === t.id ? 'active' : ''}" onclick="switchSettingsTab('${t.id}')"><i data-lucide="${t.icon}"></i>${t.label}</div>`).join('');
-  if (window.lucide) lucide.createIcons({ nodes: [el] });
-}
 function renderSettingsPage() {
-  const shell = document.getElementById('settings-page-wrap');
-  if (!shell) return;
+  const wrap = document.getElementById('settings-page-wrap');
+  if (!wrap) return;
   // Accès uniquement aux utilisateurs connectés
   if (!currentUser) {
     showPage('home');
     openSignIn();
     return;
   }
-  renderSettingsSidebar();
-  const content = document.getElementById('settings-tab-content');
-  if (!content) return;
   const p = currentUserProfile || {};
-  ensureSettingsWorkingCopies(p);
-  if (settingsActiveTab === 'notifications') content.innerHTML = settingsNotificationsTabHTML(p);
-  else if (settingsActiveTab === 'confidentialite') content.innerHTML = settingsPrivacyTabHTML(p);
-  else content.innerHTML = settingsCompteTabHTML(p);
-  if (window.lucide) lucide.createIcons({ nodes: [content] });
-  if (settingsActiveTab === 'compte') {
-    renderTagChips('skills-tag-list', settingsSkills, 'removeSkillTag', '');
-    renderTagChips('softskills-tag-list', settingsSoftSkills, 'removeSoftSkillTag', 'soft');
-    renderLanguageRows();
-  }
-}
-function settingsCompteTabHTML(p) {
   const role = getEffectiveRole(currentUser.email, p.role);
   const rs = roleBadgeStyle(role);
   const avatarURL = settingsTempAvatar || p.avatarURL || currentUser.photoURL || '';
   const bannerURL = settingsTempBanner || p.bannerURL || '';
-  const displayName = p.username || currentUser.username || '';
-  const handle = p.handle || slugifyHandle(displayName);
-  const isGoogleAuth = currentUser.provider === 'google.com';
-  const isOwnerAccount = isOwnerEmail(currentUser.email);
-  return `
-    <!-- ===== PROFIL ===== -->
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="user-round"></i>
-        <div>
-          <div class="settings-section-title">Profil</div>
-          <div class="settings-section-sub">Modifie ton profil public : identité, bio, avatar, bannière et compétences.</div>
-        </div>
-      </div>
-      ${bannerURL ? `<img class="settings-banner-preview" src="${bannerURL}" alt="">` : `<div class="settings-banner-preview"></div>`}
-      <div class="settings-avatar-row">
-        ${avatarURL ? `<img class="settings-avatar-preview" src="${avatarURL}" alt="">` : `<div class="settings-avatar-fallback" style="background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
-        <div style="min-width:0">
-          <div class="account-username" style="font-size:18px">${escapeHTML(displayName || 'Sans nom')}</div>
-          <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
-        </div>
-      </div>
-      <div class="form-group"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(displayName)}" maxlength="30"></div>
-      <div class="form-group"><label class="form-label">Nom d'utilisateur</label><input type="text" class="form-input" id="set-handle" value="${escapeHTML(handle)}" maxlength="30" placeholder="ex: suco_theshadow"></div>
-      <div class="form-group"><label class="form-label">Titre / Poste</label><input type="text" class="form-input" id="set-title" value="${escapeHTML(p.title || '')}" maxlength="60" placeholder="ex: UX/UI Designer"></div>
-      <div class="form-group"><label class="form-label">Localisation</label><input type="text" class="form-input" id="set-location" value="${escapeHTML(p.location || '')}" maxlength="60" placeholder="ex: Cayenne, Guyane (UTC-3)"></div>
-      <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
-      <div class="form-group">
-        <label class="form-label">Avatar</label>
-        <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'avatar')"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Bannière</label>
-        <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'banner')"></div>
-      </div>
-
-      <div class="form-group" style="margin-top:28px">
-        <label class="form-label">Skills</label>
-        <div class="tag-editor-input-row">
-          <input type="text" class="form-input" id="skill-input" placeholder="ex: HTML/CSS" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addSkillTag();}">
-          <button type="button" class="btn-ghost" onclick="addSkillTag()"><i data-lucide="plus"></i> Ajouter</button>
-        </div>
-        <div class="tag-editor-list" id="skills-tag-list"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Soft Skills</label>
-        <div class="tag-editor-input-row">
-          <input type="text" class="form-input" id="softskill-input" placeholder="ex: Communication" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addSoftSkillTag();}">
-          <button type="button" class="btn-ghost" onclick="addSoftSkillTag()"><i data-lucide="plus"></i> Ajouter</button>
-        </div>
-        <div class="tag-editor-list" id="softskills-tag-list"></div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Langues</label>
-        <div id="languages-list"></div>
-        <button type="button" class="btn-ghost" onclick="addLanguageRow()"><i data-lucide="plus"></i> Ajouter une langue</button>
-      </div>
-
-      <div class="account-actions" style="margin-top:22px">
-        <button class="btn-primary" onclick="saveSettingsProfile()"><i data-lucide="check"></i> Save</button>
-      </div>
-    </div>
-
-    <!-- ===== COMPTE (lecture seule) ===== -->
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="shield"></i>
-        <div>
-          <div class="settings-section-title">Compte</div>
-          <div class="settings-section-sub">Informations liées à ton compte, non modifiables ici.</div>
-        </div>
-      </div>
-      <div class="settings-info-row"><span class="settings-info-label">User ID</span><span class="settings-info-value">${escapeHTML(currentUser.uid || '')}</span></div>
-      <div class="settings-info-row"><span class="settings-info-label">Email</span><span class="settings-info-value">${escapeHTML(currentUser.email || '')}</span></div>
-      <div class="settings-info-row"><span class="settings-info-label">Créé le</span><span class="settings-info-value">${formatAccountDate(p.createdAt)}</span></div>
-      <div class="settings-info-row"><span class="settings-info-label">Rôle actuel</span><span class="settings-info-value">${escapeHTML(role)}</span></div>
-    </div>
-
-    <!-- ===== RÔLE (lecture seule) ===== -->
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="badge-check"></i>
-        <div>
-          <div class="settings-section-title">Rôle</div>
-          <div class="settings-section-sub">Ton rôle est attribué par l'équipe Garden Studio.</div>
-        </div>
-      </div>
-      <div class="settings-role-box">
-        <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};font-size:12px;padding:6px 14px">${escapeHTML(role)}</span>
-      </div>
-      <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
-    </div>
-
-    <!-- ===== SÉCURITÉ ===== -->
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="lock-keyhole"></i>
-        <div>
-          <div class="settings-section-title">Sécurité</div>
-          <div class="settings-section-sub">Change ton mot de passe ou ton email de connexion.</div>
-        </div>
-      </div>
-      ${isGoogleAuth ? `<div class="settings-inline-note"><i data-lucide="info"></i> Ton compte est connecté avec Google — une fenêtre Google s'ouvrira pour confirmer chaque action.</div>` : ''}
-      <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-input" id="sec-new-pwd" placeholder="Min. 6 caractères" autocomplete="new-password"></div>
-      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
-      <div class="account-actions" style="margin-top:6px;margin-bottom:26px">
-        <button class="btn-primary" onclick="changeAccountPassword()"><i data-lucide="key-round"></i> Changer le mot de passe</button>
-      </div>
-      <div class="form-group"><label class="form-label">Nouvel email</label><input type="email" class="form-input" id="sec-new-email" placeholder="nouveau@email.com"></div>
-      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-email" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
-      <div class="account-actions" style="margin-top:6px">
-        <button class="btn-primary" onclick="changeAccountEmail()"><i data-lucide="mail"></i> Changer l'email</button>
-      </div>
-    </div>
-
-    <!-- ===== ZONE DE DANGER ===== -->
-    <div class="glass-card settings-section danger-zone">
-      <div class="settings-section-head">
-        <i data-lucide="triangle-alert"></i>
-        <div>
-          <div class="settings-section-title">Zone de danger</div>
-          <div class="settings-section-sub">La suppression de ton compte est définitive et irréversible.</div>
-        </div>
-      </div>
-      ${isOwnerAccount ? `
-      <div class="settings-inline-note"><i data-lucide="shield"></i> Le compte Owner (créateur du studio) ne peut pas être supprimé depuis cette page, pour éviter de perdre l'accès admin racine du site.</div>
-      ` : `
-      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-delete" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
-      <div class="account-actions" style="margin-top:6px">
-        <button class="btn-delete" style="padding:12px 20px" onclick="confirmDeleteAccountFlow()"><i data-lucide="trash-2"></i> Supprimer mon compte</button>
-      </div>
-      `}
-    </div>
-  `;
-}
-function settingsNotificationsTabHTML(p) {
+  const username = p.username || currentUser.username || '';
   const notifPrefs = p.notifPrefs || { announcements: true, games: true };
-  return `
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="bell"></i>
-        <div>
-          <div class="settings-section-title">Notifications</div>
-          <div class="settings-section-sub">Choisis les annonces que tu veux voir dans ton fil.</div>
+  const isGoogleAuth = currentUser.provider === 'google.com';
+  const isOwner = isOwnerEmail(currentUser.email);
+  if (!settingsTempSkills) settingsTempSkills = Array.isArray(p.skills) ? [...p.skills] : [];
+  if (!settingsTempSoftSkills) settingsTempSoftSkills = Array.isArray(p.softSkills) ? [...p.softSkills] : [];
+  wrap.innerHTML = `
+    <div class="settings-layout">
+      <aside class="settings-sidebar">
+        <div class="settings-sidebar-item ${settingsActiveTab === 'compte' ? 'active' : ''}" data-settings-tab="compte" onclick="showSettingsTab('compte',this)"><i data-lucide="user-round"></i> Compte</div>
+        <div class="settings-sidebar-item ${settingsActiveTab === 'profil' ? 'active' : ''}" data-settings-tab="profil" onclick="showSettingsTab('profil',this)"><i data-lucide="badge-check"></i> Profil public</div>
+        <div class="settings-sidebar-item ${settingsActiveTab === 'notifications' ? 'active' : ''}" data-settings-tab="notifications" onclick="showSettingsTab('notifications',this)"><i data-lucide="bell"></i> Notifications</div>
+        <div class="settings-sidebar-item ${settingsActiveTab === 'confidentialite' ? 'active' : ''}" data-settings-tab="confidentialite" onclick="showSettingsTab('confidentialite',this)"><i data-lucide="lock-keyhole"></i> Confidentialité</div>
+      </aside>
+      <div class="settings-content">
+
+        <!-- ===== TAB: COMPTE ===== -->
+        <div class="settings-tab-panel ${settingsActiveTab === 'compte' ? 'active' : ''}" id="settings-tab-compte">
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="user-round"></i>
+              <div>
+                <div class="settings-section-title">Profil</div>
+                <div class="settings-section-sub">Modifie ton nom d'affichage, ta bio, ton avatar et ta bannière.</div>
+              </div>
+            </div>
+            ${bannerURL ? `<img class="settings-banner-preview" src="${bannerURL}" alt="">` : `<div class="settings-banner-preview"></div>`}
+            <div class="settings-avatar-row">
+              ${avatarURL ? `<img class="settings-avatar-preview" src="${avatarURL}" alt="">` : `<div class="settings-avatar-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
+              <div style="min-width:0">
+                <div class="account-username" style="font-size:18px">${escapeHTML(username || 'Sans nom')}</div>
+                <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
+              </div>
+            </div>
+            <div class="form-group"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
+            <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
+            <div class="form-group">
+              <label class="form-label">Avatar</label>
+              <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'avatar')"></div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Bannière</label>
+              <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'banner')"></div>
+            </div>
+            <div class="account-actions" style="margin-top:6px">
+              <button class="btn-primary" onclick="saveSettingsProfile()"><i data-lucide="check"></i> Save</button>
+            </div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="shield"></i>
+              <div>
+                <div class="settings-section-title">Compte</div>
+                <div class="settings-section-sub">Informations liées à ton compte, non modifiables ici.</div>
+              </div>
+            </div>
+            <div class="settings-info-row"><span class="settings-info-label">User ID</span><span class="settings-info-value">${escapeHTML(currentUser.uid || '')}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Email</span><span class="settings-info-value">${escapeHTML(currentUser.email || '')}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Créé le</span><span class="settings-info-value">${formatAccountDate(p.createdAt)}</span></div>
+            <div class="settings-info-row"><span class="settings-info-label">Rôle actuel</span><span class="settings-info-value">${escapeHTML(role)}</span></div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="badge-check"></i>
+              <div>
+                <div class="settings-section-title">Rôle</div>
+                <div class="settings-section-sub">Ton rôle est attribué par l'équipe Garden Studio.</div>
+              </div>
+            </div>
+            <div class="settings-role-box">
+              <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};font-size:12px;padding:6px 14px">${escapeHTML(role)}</span>
+            </div>
+            <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
+          </div>
         </div>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label">Annonces du studio</span>
-        <button type="button" class="toggle ${notifPrefs.announcements !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('announcements',this)"></button>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label">Nouveaux jeux &amp; mises à jour</span>
-        <button type="button" class="toggle ${notifPrefs.games !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('games',this)"></button>
+
+        <!-- ===== TAB: PROFIL PUBLIC ===== -->
+        <div class="settings-tab-panel ${settingsActiveTab === 'profil' ? 'active' : ''}" id="settings-tab-profil">
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="briefcase"></i>
+              <div>
+                <div class="settings-section-title">À propos</div>
+                <div class="settings-section-sub">Ces infos apparaissent sur ta page de profil public.</div>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label class="form-label">Poste / rôle</label><input type="text" class="form-input" id="set-jobtitle" value="${escapeHTML(p.jobTitle || '')}" placeholder="Ex: Game Developer" maxlength="60"></div>
+              <div class="form-group"><label class="form-label">Localisation</label><input type="text" class="form-input" id="set-location" value="${escapeHTML(p.location || '')}" placeholder="Ex: Cayenne, Guyane" maxlength="60"></div>
+            </div>
+            <div class="form-group"><label class="form-label">Langues</label><textarea class="form-input" id="set-languages" rows="3" placeholder="Une langue par ligne, ex : Français: Natif">${escapeHTML((Array.isArray(p.languages) ? p.languages : []).join('\n'))}</textarea></div>
+            <div class="account-actions" style="margin-top:6px">
+              <button class="btn-primary" onclick="saveSettingsAbout()"><i data-lucide="check"></i> Save</button>
+            </div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="sparkles"></i>
+              <div>
+                <div class="settings-section-title">Skills</div>
+                <div class="settings-section-sub">Ajoute tes compétences techniques — elles s'affichent sur ton profil.</div>
+              </div>
+            </div>
+            <div class="tag-input-row">
+              <input type="text" class="form-input" id="set-skill-input" placeholder="Ex: HTML/CSS" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addSettingsTag('skills')}">
+              <button class="btn-outline" onclick="addSettingsTag('skills')"><i data-lucide="plus"></i> Ajouter</button>
+            </div>
+            <div class="tag-list" id="settings-skills-list"></div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="heart-handshake"></i>
+              <div>
+                <div class="settings-section-title">Soft Skills</div>
+                <div class="settings-section-sub">Ajoute tes qualités humaines — elles s'affichent sur ton profil.</div>
+              </div>
+            </div>
+            <div class="tag-input-row">
+              <input type="text" class="form-input" id="set-softskill-input" placeholder="Ex: Communication" maxlength="30" onkeydown="if(event.key==='Enter'){event.preventDefault();addSettingsTag('softSkills')}">
+              <button class="btn-outline" onclick="addSettingsTag('softSkills')"><i data-lucide="plus"></i> Ajouter</button>
+            </div>
+            <div class="tag-list" id="settings-softskills-list"></div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: NOTIFICATIONS ===== -->
+        <div class="settings-tab-panel ${settingsActiveTab === 'notifications' ? 'active' : ''}" id="settings-tab-notifications">
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="bell"></i>
+              <div>
+                <div class="settings-section-title">Notifications</div>
+                <div class="settings-section-sub">Choisis les annonces que tu veux voir dans ton fil.</div>
+              </div>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Annonces du studio</span>
+              <button type="button" class="toggle ${notifPrefs.announcements !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('announcements',this)"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Nouveaux jeux &amp; mises à jour</span>
+              <button type="button" class="toggle ${notifPrefs.games !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('games',this)"></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== TAB: CONFIDENTIALITÉ ===== -->
+        <div class="settings-tab-panel ${settingsActiveTab === 'confidentialite' ? 'active' : ''}" id="settings-tab-confidentialite">
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="lock-keyhole"></i>
+              <div>
+                <div class="settings-section-title">Sécurité</div>
+                <div class="settings-section-sub">Change ton mot de passe ou ton email de connexion.</div>
+              </div>
+            </div>
+            ${isGoogleAuth ? `<div class="settings-inline-note"><i data-lucide="info"></i> Ton compte est connecté avec Google — une fenêtre Google s'ouvrira pour confirmer chaque action.</div>` : ''}
+            <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-input" id="sec-new-pwd" placeholder="Min. 6 caractères" autocomplete="new-password"></div>
+            ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+            <div class="account-actions" style="margin-top:6px;margin-bottom:26px">
+              <button class="btn-primary" onclick="changeAccountPassword()"><i data-lucide="key-round"></i> Changer le mot de passe</button>
+            </div>
+            <div class="form-group"><label class="form-label">Nouvel email</label><input type="email" class="form-input" id="sec-new-email" placeholder="nouveau@email.com"></div>
+            ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-email" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+            <div class="account-actions" style="margin-top:6px">
+              <button class="btn-primary" onclick="changeAccountEmail()"><i data-lucide="mail"></i> Changer l'email</button>
+            </div>
+          </div>
+
+          ${isOwner ? `
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="crown"></i>
+              <div>
+                <div class="settings-section-title">Compte fondateur</div>
+                <div class="settings-section-sub">Ce compte est le propriétaire de Garden Studio.</div>
+              </div>
+            </div>
+            <div class="settings-inline-note"><i data-lucide="info"></i> En tant qu'Owner, ce compte ne peut pas être supprimé depuis cette page — ça bloquerait l'accès à l'admin du site.</div>
+          </div>
+          ` : `
+          <div class="glass-card settings-section danger-zone">
+            <div class="settings-section-head">
+              <i data-lucide="triangle-alert"></i>
+              <div>
+                <div class="settings-section-title">Zone de danger</div>
+                <div class="settings-section-sub">La suppression de ton compte est définitive et irréversible.</div>
+              </div>
+            </div>
+            ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-delete" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+            <div class="account-actions" style="margin-top:6px">
+              <button class="btn-delete" style="padding:12px 20px" onclick="confirmDeleteAccountFlow()"><i data-lucide="trash-2"></i> Supprimer mon compte</button>
+            </div>
+          </div>
+          `}
+        </div>
+
       </div>
     </div>
   `;
+  renderSettingsTagList('skills');
+  renderSettingsTagList('softSkills');
+  if (window.lucide) lucide.createIcons({ nodes: [wrap] });
 }
-function settingsPrivacyTabHTML(p) {
-  const privacy = p.privacy || { publicProfile: true, showEmail: false };
-  return `
-    <div class="glass-card settings-section">
-      <div class="settings-section-head">
-        <i data-lucide="eye-off"></i>
-        <div>
-          <div class="settings-section-title">Confidentialité</div>
-          <div class="settings-section-sub">Contrôle ce que les autres membres peuvent voir sur ton profil.</div>
-        </div>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label">Profil public visible</span>
-        <button type="button" class="toggle ${privacy.publicProfile !== false ? 'on' : ''}" onclick="toggleSettingsPrivacyPref('publicProfile',this)"></button>
-      </div>
-      <div class="toggle-row">
-        <span class="toggle-label">Afficher mon email sur mon profil</span>
-        <button type="button" class="toggle ${privacy.showEmail === true ? 'on' : ''}" onclick="toggleSettingsPrivacyPref('showEmail',this)"></button>
-      </div>
-      <div class="settings-inline-note" style="margin-top:16px"><i data-lucide="info"></i> Ces réglages s'appliqueront dès que les profils publics seront consultables par les autres membres.</div>
-    </div>
-  `;
-}
-function renderTagChips(containerId, arr, removeFn, variantClass) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-  el.innerHTML = arr.length
-    ? arr.map((s, i) => `<span class="tag-chip ${variantClass || ''}">${escapeHTML(s)}<button type="button" onclick="${removeFn}(${i})"><i data-lucide="x"></i></button></span>`).join('')
-    : `<span class="profile-v2-empty">Aucun tag ajouté.</span>`;
-  if (window.lucide) lucide.createIcons({ nodes: [el] });
-}
-function addSkillTag() {
-  const input = document.getElementById('skill-input');
-  const val = (input.value || '').trim();
-  if (!val) return;
-  if (settingsSkills.some(s => s.toLowerCase() === val.toLowerCase())) { showToast('Déjà dans la liste'); input.value = ''; return; }
-  settingsSkills.push(val);
-  input.value = '';
-  renderTagChips('skills-tag-list', settingsSkills, 'removeSkillTag', '');
-}
-function removeSkillTag(i) { settingsSkills.splice(i, 1); renderTagChips('skills-tag-list', settingsSkills, 'removeSkillTag', ''); }
-function addSoftSkillTag() {
-  const input = document.getElementById('softskill-input');
-  const val = (input.value || '').trim();
-  if (!val) return;
-  if (settingsSoftSkills.some(s => s.toLowerCase() === val.toLowerCase())) { showToast('Déjà dans la liste'); input.value = ''; return; }
-  settingsSoftSkills.push(val);
-  input.value = '';
-  renderTagChips('softskills-tag-list', settingsSoftSkills, 'removeSoftSkillTag', 'soft');
-}
-function removeSoftSkillTag(i) { settingsSoftSkills.splice(i, 1); renderTagChips('softskills-tag-list', settingsSoftSkills, 'removeSoftSkillTag', 'soft'); }
-function renderLanguageRows() {
-  const el = document.getElementById('languages-list');
-  if (!el || !settingsLanguages) return;
-  el.innerHTML = settingsLanguages.length ? settingsLanguages.map((l, i) => `
-    <div class="lang-row">
-      <input type="text" class="form-input" placeholder="Langue (ex: Français)" value="${escapeHTML(l.name || '')}" oninput="settingsLanguages[${i}].name=this.value">
-      <select class="form-select" onchange="settingsLanguages[${i}].level=this.value">
-        ${LANGUAGE_LEVELS.map(lv => `<option value="${lv}" ${l.level === lv ? 'selected' : ''}>${lv}</option>`).join('')}
-      </select>
-      <button type="button" class="lang-row-remove" onclick="removeLanguageRow(${i})"><i data-lucide="x"></i></button>
-    </div>
-  `).join('') : `<div class="profile-v2-empty" style="margin-bottom:10px">Aucune langue ajoutée.</div>`;
-  if (window.lucide) lucide.createIcons({ nodes: [el] });
-}
-function addLanguageRow() { settingsLanguages.push({ name: '', level: 'Basic' }); renderLanguageRows(); }
-function removeLanguageRow(i) { settingsLanguages.splice(i, 1); renderLanguageRows(); }
 async function handleSettingsImageUpload(input, kind) {
   const file = input.files && input.files[0];
   if (!file || !window.fbUploadImage) return;
@@ -7793,13 +7752,9 @@ async function handleSettingsImageUpload(input, kind) {
 async function saveSettingsProfile() {
   if (!currentUser || !window.fbSaveUserProfile) return;
   const username = document.getElementById('set-username').value.trim();
-  const handle = slugifyHandle(document.getElementById('set-handle').value.trim());
-  const title = document.getElementById('set-title').value.trim();
-  const location = document.getElementById('set-location').value.trim();
   const bio = document.getElementById('set-bio').value.trim();
   if (!username) { showToast('❌ Le username ne peut pas être vide'); return; }
-  const languages = (settingsLanguages || []).filter(l => l.name && l.name.trim());
-  const data = { username, handle, title, location, bio, skills: settingsSkills || [], softSkills: settingsSoftSkills || [], languages };
+  const data = { username, bio };
   if (settingsTempAvatar) data.avatarURL = settingsTempAvatar;
   if (settingsTempBanner) data.bannerURL = settingsTempBanner;
   try {
@@ -7825,23 +7780,6 @@ async function toggleSettingsNotifPref(key, btn) {
     currentUserProfile = { ...(currentUserProfile || {}), notifPrefs };
     renderNotifications();
     showToast(nextVal ? '🔔 Notifications activées' : '🔕 Notifications désactivées');
-  } catch (e) {
-    console.error(e);
-    btn.classList.toggle('on', !nextVal);
-    showToast('❌ Erreur lors de la mise à jour des préférences');
-  }
-}
-async function toggleSettingsPrivacyPref(key, btn) {
-  if (!currentUser || !window.fbSaveUserProfile) return;
-  const current = (currentUserProfile && currentUserProfile.privacy) || { publicProfile: true, showEmail: false };
-  const defaultOn = key === 'publicProfile' ? (current[key] !== false) : (current[key] === true);
-  const nextVal = !defaultOn;
-  const privacy = { ...current, [key]: nextVal };
-  btn.classList.toggle('on', nextVal);
-  try {
-    await window.fbSaveUserProfile(currentUser.uid, { privacy });
-    currentUserProfile = { ...(currentUserProfile || {}), privacy };
-    showToast('✅ Préférence mise à jour');
   } catch (e) {
     console.error(e);
     btn.classList.toggle('on', !nextVal);
@@ -7905,7 +7843,6 @@ function confirmDeleteAccountFlow() {
 }
 async function deleteAccountNow() {
   if (!currentUser || !window.fbDeleteAccount) return;
-  if (isOwnerEmail(currentUser.email)) { showToast('❌ Le compte Owner ne peut pas être supprimé.'); return; }
   const curPwd = document.getElementById('sec-cur-pwd-delete')?.value || '';
   try {
     showToast('Suppression en cours...');
