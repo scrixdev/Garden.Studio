@@ -4984,6 +4984,7 @@ function renderGamesPage() {
 }
 
 // ===== RENDER: GAMERS PAGE =====
+let teamStaffCache = [];
 function renderGamersPage() {
   const grid = document.getElementById('gamers-grid');
   const countBadge = document.getElementById('gamers-count-badge');
@@ -4995,6 +4996,7 @@ function renderGamersPage() {
     // Owner puis Co-Owner puis Admin puis les autres rôles staff, alphabétique par username ensuite
     const order = { 'Owner': -1, 'Co-Owner': 0, 'Admin': 1, 'Scripter': 2, 'Graphiste': 2, 'Helper': 2 };
     staff.sort((a, b) => (order[getEffectiveRole(a.email, a.role)] ?? 3) - (order[getEffectiveRole(b.email, b.role)] ?? 3) || (a.username || '').localeCompare(b.username || ''));
+    teamStaffCache = staff;
     if (countBadge) countBadge.textContent = `— ${staff.length} membre${staff.length > 1 ? 's' : ''}`;
     if (!staff.length) {
       grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Aucun membre du staff pour l\'instant.</div>';
@@ -5005,7 +5007,7 @@ function renderGamersPage() {
       const rs = roleBadgeStyle(role);
       const letter = (g.username || '?').trim().charAt(0).toUpperCase();
       return `
-      <div class="gamer-card">
+      <div class="gamer-card" style="cursor:pointer" onclick="openTeamMemberModal('${g.id}')">
         <div class="gamer-banner">
           ${g.bannerURL ? `<img src="${g.bannerURL}" alt="">` : `<div class="gs-circle b"></div><div class="gs-circle c"></div>`}
         </div>
@@ -7542,6 +7544,7 @@ function renderAccountPage() {
   const skills = Array.isArray(p.skills) ? p.skills : [];
   const softSkills = Array.isArray(p.softSkills) ? p.softSkills : [];
   const languages = Array.isArray(p.languages) ? p.languages : [];
+  const socialLinks = Array.isArray(p.socialLinks) ? p.socialLinks : [];
   const metaParts = [p.jobTitle, p.location].filter(Boolean).map(escapeHTML);
   wrap.innerHTML = `
     <div class="glass-card account-hero-card">
@@ -7558,6 +7561,7 @@ function renderAccountPage() {
             </div>
             <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
             ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : ''}
+            ${socialLinks.length ? `<div class="social-links" style="margin-top:10px">${socialLinks.map(l => { const meta = SOCIAL_LINK_TYPES[l.type] || SOCIAL_LINK_TYPES.website; return `<a href="${escapeHTML(l.url)}" target="_blank" rel="noopener" title="${escapeHTML(meta.label)}"><i data-lucide="${meta.icon}" style="width:18px;height:18px"></i></a>`; }).join('')}</div>` : ''}
           </div>
         </div>
         <div class="account-actions">
@@ -7625,6 +7629,15 @@ let settingsTempBanner = null;
 let settingsActiveTab = 'compte';
 let settingsTempSkills = null;
 let settingsTempSoftSkills = null;
+let settingsTempSocialLinks = null;
+const SOCIAL_LINK_TYPES = {
+  website:   { label: 'Site perso', icon: 'globe' },
+  youtube:   { label: 'YouTube',    icon: 'youtube' },
+  twitter:   { label: 'Twitter / X', icon: 'twitter' },
+  instagram: { label: 'Instagram',  icon: 'instagram' },
+  discord:   { label: 'Discord',    icon: 'message-circle' },
+  roblox:    { label: 'Roblox',     icon: 'gamepad-2' }
+};
 function showSettingsTab(tab, el) {
   settingsActiveTab = tab;
   document.querySelectorAll('.settings-sidebar-item').forEach(it => it.classList.toggle('active', it.dataset.settingsTab === tab));
@@ -7661,6 +7674,44 @@ async function saveSettingsSkills() {
   try {
     await window.fbSaveUserProfile(currentUser.uid, { skills: settingsTempSkills, softSkills: settingsTempSoftSkills });
     currentUserProfile = { ...(currentUserProfile || {}), skills: [...settingsTempSkills], softSkills: [...settingsTempSoftSkills] };
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+function renderSettingsSocialLinks() {
+  const el = document.getElementById('settings-social-list');
+  if (!el || !settingsTempSocialLinks) return;
+  if (!settingsTempSocialLinks.length) { el.innerHTML = '<div class="tag-empty-note">Aucun lien ajouté pour l\'instant.</div>'; return; }
+  el.innerHTML = settingsTempSocialLinks.map((l, i) => {
+    const meta = SOCIAL_LINK_TYPES[l.type] || SOCIAL_LINK_TYPES.website;
+    return `<span class="tag-chip"><i data-lucide="${meta.icon}" style="width:13px;height:13px"></i> ${escapeHTML(meta.label)}<button onclick="removeSettingsSocialLink(${i})"><i data-lucide="x" style="width:11px;height:11px"></i></button></span>`;
+  }).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [el] });
+}
+function addSettingsSocialLink() {
+  const typeSel = document.getElementById('set-social-type');
+  const urlInput = document.getElementById('set-social-url');
+  const type = typeSel?.value || 'website';
+  let url = (urlInput?.value || '').trim();
+  if (!url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  settingsTempSocialLinks.push({ type, url });
+  urlInput.value = '';
+  renderSettingsSocialLinks();
+  saveSettingsSocialLinks();
+}
+function removeSettingsSocialLink(idx) {
+  settingsTempSocialLinks.splice(idx, 1);
+  renderSettingsSocialLinks();
+  saveSettingsSocialLinks();
+}
+async function saveSettingsSocialLinks() {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, { socialLinks: settingsTempSocialLinks });
+    currentUserProfile = { ...(currentUserProfile || {}), socialLinks: [...settingsTempSocialLinks] };
+    showToast('✅ Lien mis à jour');
   } catch (e) {
     console.error(e);
     showToast('❌ Erreur lors de la sauvegarde');
@@ -7714,6 +7765,7 @@ function renderSettingsPage() {
   const isOwner = isOwnerEmail(currentUser.email);
   if (!settingsTempSkills) settingsTempSkills = Array.isArray(p.skills) ? [...p.skills] : [];
   if (!settingsTempSoftSkills) settingsTempSoftSkills = Array.isArray(p.softSkills) ? [...p.softSkills] : [];
+  if (!settingsTempSocialLinks) settingsTempSocialLinks = Array.isArray(p.socialLinks) ? [...p.socialLinks] : [];
   wrap.innerHTML = `
     <div class="settings-layout">
       <aside class="settings-sidebar">
@@ -7810,6 +7862,31 @@ function renderSettingsPage() {
               <button class="btn-outline" onclick="addSettingsTag('softSkills')"><i data-lucide="plus"></i> Ajouter</button>
             </div>
             <div class="tag-list" id="settings-softskills-list"></div>
+          </div>
+
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="link"></i>
+              <div>
+                <div class="settings-section-title">Réseaux sociaux</div>
+                <div class="settings-section-sub">${STAFF_ROLES.includes(role) ? 'Ajoute tes liens — ils s\'affichent sur ta fiche dans l\'Équipe.' : 'Débloqué dès que tu obtiens un rôle dans l\'équipe (Helper, Scripter, Graphiste, Admin...).'}</div>
+              </div>
+            </div>
+            ${STAFF_ROLES.includes(role) ? `
+            <div class="tag-input-row">
+              <select class="form-select" id="set-social-type" style="max-width:150px;flex:none">
+                ${Object.entries(SOCIAL_LINK_TYPES).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('')}
+              </select>
+              <input type="url" class="form-input" id="set-social-url" placeholder="https://..." onkeydown="if(event.key==='Enter'){event.preventDefault();addSettingsSocialLink()}">
+              <button class="btn-outline" onclick="addSettingsSocialLink()"><i data-lucide="plus"></i> Ajouter</button>
+            </div>
+            <div class="tag-list" id="settings-social-list"></div>
+            ` : `
+            <div class="settings-locked" style="padding:24px 20px">
+              <i data-lucide="lock" style="width:20px;height:20px"></i>
+              <div style="margin-top:8px;font-size:13px">Rejoins le staff pour débloquer l'ajout de liens (YouTube, Discord, Instagram...) sur ton profil.</div>
+            </div>
+            `}
           </div>
 
           <div class="glass-card settings-section">
@@ -7934,6 +8011,7 @@ function renderSettingsPage() {
   `;
   renderSettingsTagList('skills');
   renderSettingsTagList('softSkills');
+  if (STAFF_ROLES.includes(role)) renderSettingsSocialLinks();
   if (window.lucide) lucide.createIcons({ nodes: [wrap] });
   loadLoginHistory();
 }
@@ -8241,6 +8319,53 @@ function closeGamerModal(e) {
 }
 function closeGamerModalDirect() {
   document.getElementById('gamer-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// ===== TEAM MEMBER PROFILE MODAL =====
+function openTeamMemberModal(id) {
+  const g = (teamStaffCache || []).find(u => u.id === id);
+  if (!g) return;
+  const role = getEffectiveRole(g.email, g.role);
+  const rs = roleBadgeStyle(role);
+  const displayName = g.displayName || g.username || 'Membre';
+  const avatarIcon = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
+  document.getElementById('tm-banner').innerHTML = g.bannerURL ? `<img class="account-banner-fg" src="${g.bannerURL}" alt="">` : '';
+  document.getElementById('tm-avatar-wrap').innerHTML = g.avatarURL
+    ? `<img class="account-avatar-lg" style="width:80px;height:80px;margin:0" src="${g.avatarURL}" alt="">`
+    : `<div class="account-avatar-lg-fallback" style="width:80px;height:80px;margin:0;font-size:28px;background:${rs.color};display:flex;align-items:center;justify-content:center">${escapeHTML((g.username || '?').trim().charAt(0).toUpperCase())}</div>`;
+  document.getElementById('tm-name').innerHTML = `<span class="verified-name">${escapeHTML(displayName)}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>`;
+  const roleBadgeEl = document.getElementById('tm-role-badge');
+  roleBadgeEl.textContent = role;
+  roleBadgeEl.style.background = rs.bg;
+  roleBadgeEl.style.color = rs.color;
+  document.getElementById('tm-username').textContent = '@' + (g.username || '—');
+  const metaParts = [g.jobTitle, g.location].filter(Boolean).map(escapeHTML);
+  const metaEl = document.getElementById('tm-meta');
+  if (metaParts.length) { metaEl.style.display = ''; metaEl.innerHTML = metaParts.join('<span class="profile-meta-dot"></span>'); }
+  else metaEl.style.display = 'none';
+  const socialLinks = Array.isArray(g.socialLinks) ? g.socialLinks : [];
+  const socialEl = document.getElementById('tm-social');
+  if (socialLinks.length) {
+    socialEl.style.display = '';
+    socialEl.innerHTML = socialLinks.map(l => { const meta = SOCIAL_LINK_TYPES[l.type] || SOCIAL_LINK_TYPES.website; return `<a href="${escapeHTML(l.url)}" target="_blank" rel="noopener" title="${escapeHTML(meta.label)}"><i data-lucide="${meta.icon}" style="width:18px;height:18px"></i></a>`; }).join('');
+  } else socialEl.style.display = 'none';
+  document.getElementById('tm-bio').innerHTML = g.bio ? escapeHTML(g.bio) : '<span style="color:var(--gray)">Aucune bio pour l\'instant.</span>';
+  const skills = Array.isArray(g.skills) ? g.skills : [];
+  const skillsWrap = document.getElementById('tm-skills-wrap');
+  if (skills.length) {
+    skillsWrap.style.display = '';
+    document.getElementById('tm-skills').innerHTML = skills.map(s => `<span class="tag-chip static">${escapeHTML(s)}</span>`).join('');
+  } else skillsWrap.style.display = 'none';
+  document.getElementById('team-member-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (window.lucide) lucide.createIcons({ nodes: [document.getElementById('team-member-modal')] });
+}
+function closeTeamMemberModal(e) {
+  if (e.target === document.getElementById('team-member-modal')) closeTeamMemberModalDirect();
+}
+function closeTeamMemberModalDirect() {
+  document.getElementById('team-member-modal').classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -8691,6 +8816,36 @@ select.authbox-input option {
     </div>
   </div>
 </div>
+
+<!-- ===== TEAM MEMBER PROFILE MODAL ===== -->
+<div class="modal-overlay" id="team-member-modal" onclick="closeTeamMemberModal(event)">
+  <div class="modal-box" style="max-width:520px;padding:0;overflow:hidden">
+    <button class="modal-close" onclick="closeTeamMemberModalDirect()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div id="tm-banner" class="account-banner" style="height:120px;border-radius:0"></div>
+    <div style="padding:0 28px 28px">
+      <div class="account-head" style="margin-top:0">
+        <div id="tm-avatar-wrap" style="margin-top:-40px"></div>
+        <div class="account-head-info" style="padding-top:10px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <div class="account-username" id="tm-name" style="font-size:20px"></div>
+            <span class="account-role-badge" id="tm-role-badge"></span>
+          </div>
+          <div class="account-email" id="tm-username" style="margin-top:2px"></div>
+          <div class="profile-meta-line" id="tm-meta" style="display:none"></div>
+          <div class="social-links" id="tm-social" style="margin-top:10px;display:none"></div>
+        </div>
+      </div>
+      <p class="account-bio" id="tm-bio" style="margin-top:18px"></p>
+      <div id="tm-skills-wrap" style="margin-top:6px;display:none">
+        <div class="settings-section-title" style="font-size:12px;margin-bottom:8px">Compétences</div>
+        <div class="tag-list" id="tm-skills"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
 
 <!-- ===== PRODUCT INSPECT MODAL ===== -->
