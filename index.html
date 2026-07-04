@@ -202,6 +202,36 @@ nav {
   .settings-sidebar { width: 100%; display: flex; overflow-x: auto; gap: 4px; position: static; }
   .settings-sidebar-item { white-space: nowrap; }
 }
+/* ===== ROLE CHOICE CARDS (candidature libre) ===== */
+.role-choice-card {
+  position: relative; display: flex; align-items: flex-start; gap: 12px;
+  background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: var(--glass-shadow); border-radius: 14px; padding: 16px; cursor: pointer;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1), border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
+}
+.role-choice-card:hover { transform: translateY(-3px); border-color: rgba(var(--lime-rgb),0.55); }
+.role-choice-card.selected {
+  border-color: var(--lime); transform: translateY(-3px);
+  background: var(--glass-highlight), rgba(var(--lime-rgb),0.16);
+  box-shadow: 0 10px 30px rgba(var(--lime-rgb),0.22), var(--glass-shadow);
+}
+.role-choice-icon {
+  width: 40px; height: 40px; border-radius: 12px; flex: none; display: flex; align-items: center; justify-content: center;
+  background: var(--glass-highlight), rgba(255,255,255,0.06); border: 1px solid var(--glass-border); color: var(--lime);
+  transition: background 0.25s ease, transform 0.25s ease;
+}
+.role-choice-card.selected .role-choice-icon { background: var(--glass-highlight), rgba(var(--lime-rgb),0.28); transform: scale(1.06); }
+.role-choice-icon i { width: 19px; height: 19px; }
+.role-choice-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 3px; }
+.role-choice-desc { font-size: 11px; color: var(--gray); line-height: 1.5; }
+.role-choice-check {
+  position: absolute; top: 10px; right: 10px; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--lime); color: #04140b; display: none; align-items: center; justify-content: center;
+  box-shadow: 0 2px 10px rgba(var(--lime-rgb),0.55);
+}
+.role-choice-card.selected .role-choice-check { display: flex; }
+.role-choice-check i { width: 12px; height: 12px; stroke-width: 3.5; }
 /* ===== SKILLS / TAGS ===== */
 .tag-input-row { display: flex; gap: 10px; margin-bottom: 12px; }
 .tag-input-row .form-input { flex: 1; }
@@ -1545,6 +1575,13 @@ onAuthStateChanged(auth, async (user) => {
         catch (e) { console.error('Erreur correction email profil:', e); }
       }
       if (typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(profile);
+      // Recharge les notifications à jour depuis Firestore à chaque connexion,
+      // pour éviter qu'un ancien instantané (chargé avant la connexion, ou lors
+      // d'un test avec un autre compte dans le même onglet) ne reste affiché.
+      try {
+        const freshNotifs = await fsGet('site/notifications');
+        if (freshNotifs?.list && typeof window._gsSetNotifications === 'function') { window._gsSetNotifications(freshNotifs.list); if (typeof window.renderNotifications === 'function') window.renderNotifications(); }
+      } catch (e) { console.error('Erreur rechargement notifications:', e); }
     } catch (e) { console.error('Erreur chargement profil utilisateur:', e); }
   } else {
     if (typeof window._gsSetUser === 'function') window._gsSetUser(null);
@@ -3675,39 +3712,47 @@ function closeCandDetail(e) {
   document.getElementById('cand-detail').classList.remove('open');
 }
 
+let candStatusInFlight = false;
 async function setCandStatus(status) {
-  if (currentCandIndex < 0) return;
-  const c = candidatures[currentCandIndex];
-  c.status = status;
+  if (currentCandIndex < 0 || candStatusInFlight) return;
+  candStatusInFlight = true;
   try {
-    if (window.fbUpdateCandidature) await window.fbUpdateCandidature(c.id, { status });
-  } catch (e) {
-    console.error('❌ Erreur mise à jour candidature:', e);
-    showToast('❌ Erreur lors de la mise à jour');
-    return;
-  }
-  renderCandidatures();
-  openCandDetail(currentCandIndex);
-  if (c.userId) {
-    if (status === 'accepted') {
-      publishNotification(
-        'candidature-accepted',
-        'Candidature acceptée 🎉',
-        `Ta candidature pour "${c.poste}" a été acceptée ! On va te contacter très prochainement via Discord et une demande d'ami Roblox — accepte bien les demandes venant de nos comptes officiels.`,
-        null,
-        c.userId
-      );
-    } else if (status === 'refused') {
-      publishNotification(
-        'candidature-refused',
-        'Réponse à ta candidature',
-        `Merci pour ton intérêt envers Garden Studio. Ta candidature pour "${c.poste}" n'a pas été retenue cette fois-ci, mais n'hésite pas à retenter ta chance sur une prochaine ouverture de poste !`,
-        null,
-        c.userId
-      );
+    const c = candidatures[currentCandIndex];
+    c.status = status;
+    try {
+      if (window.fbUpdateCandidature) await window.fbUpdateCandidature(c.id, { status });
+    } catch (e) {
+      console.error('❌ Erreur mise à jour candidature:', e);
+      showToast('❌ Erreur lors de la mise à jour');
+      return;
     }
+    renderCandidatures();
+    openCandDetail(currentCandIndex);
+    if (c.userId) {
+      if (status === 'accepted') {
+        publishNotification(
+          'candidature-accepted',
+          'Candidature acceptée 🎉',
+          `Ta candidature pour "${c.poste}" a été acceptée ! On va te contacter très prochainement via Discord et une demande d'ami Roblox — accepte bien les demandes venant de nos comptes officiels.`,
+          null,
+          c.userId,
+          { targetUid: c.uid || null }
+        );
+      } else if (status === 'refused') {
+        publishNotification(
+          'candidature-refused',
+          'Réponse à ta candidature',
+          `Merci pour ton intérêt envers Garden Studio. Ta candidature pour "${c.poste}" n'a pas été retenue cette fois-ci, mais n'hésite pas à retenter ta chance sur une prochaine ouverture de poste !`,
+          null,
+          c.userId,
+          { targetUid: c.uid || null }
+        );
+      }
+    }
+    showToast(status === 'accepted' ? 'Candidature acceptée !' : 'Candidature refusée.');
+  } finally {
+    candStatusInFlight = false;
   }
-  showToast(status === 'accepted' ? 'Candidature acceptée !' : 'Candidature refusée.');
 }
 
 function deleteCandidature() {
@@ -3748,16 +3793,7 @@ function selectRole(role) {
   _applyRole = role;
   ['Testeur','Helper'].forEach(r => {
     const opt = document.getElementById('role-opt-' + r.toLowerCase());
-    const dot = document.getElementById('radio-dot-' + r.toLowerCase());
-    const circle = document.getElementById('radio-' + r.toLowerCase());
-    if (opt && dot && circle) {
-      const active = r === role;
-      opt.style.borderColor = active ? 'var(--lime)' : 'var(--glass-border)';
-      opt.style.background = active ? 'var(--glass-highlight), rgba(var(--lime-rgb),0.16)' : 'var(--glass-highlight), var(--glass-bg)';
-      opt.style.transform = active ? 'translateY(-2px)' : 'translateY(0)';
-      dot.style.display = active ? 'block' : 'none';
-      circle.style.borderColor = active ? 'var(--lime)' : 'rgba(var(--lime-rgb),0.4)';
-    }
+    if (opt) opt.classList.toggle('selected', r === role);
   });
 }
 
@@ -3765,6 +3801,7 @@ async function openApplyModal(poste, skills) {
   _applyPoste = poste;
   _applySkills = skills;
   _applyRole = '';
+  document.querySelectorAll('.role-choice-card').forEach(c => c.classList.remove('selected'));
   const overlay = document.getElementById('apply-modal');
   const notLogged = document.getElementById('apply-not-logged');
   const formWrap = document.getElementById('apply-form-wrap');
@@ -3866,6 +3903,7 @@ async function submitApplyModal() {
 
   const cand = {
     userId: currentUser.email,
+    uid: currentUser.uid,
     roblox, discord,
     email: currentUser.email,
     poste: _applyPoste,
@@ -4466,6 +4504,14 @@ function notifAllowed(n) {
   if (n.type === 'announcement') return prefs.announcements !== false;
   return prefs.games !== false;
 }
+function notifIsForCurrentUser(n) {
+  // Notif publique (aucune cible) → visible par tout le monde
+  if (!n.targetUserId && !n.targetUid) return true;
+  if (!currentUser) return false;
+  const emailMatch = n.targetUserId && currentUser.email && n.targetUserId.trim().toLowerCase() === currentUser.email.trim().toLowerCase();
+  const uidMatch = n.targetUid && currentUser.uid && n.targetUid === currentUser.uid;
+  return !!(emailMatch || uidMatch);
+}
 async function publishNotification(type, title, detail, gameName, targetUserId, extra) {
   const linkedGame = (gameName && typeof games !== 'undefined') ? games.find(g => g.name === gameName) : null;
   const item = Object.assign(
@@ -4604,13 +4650,13 @@ function renderNotifications() {
   // Met juste à jour le petit point "non lu" sur la cloche. Le contenu s'affiche sur la page Annonces.
   const dot = document.getElementById('notif-dot');
   if (!dot) return;
-  const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n));
+  const visible = notifications.filter(n => notifIsForCurrentUser(n) && notifAllowed(n));
   const read = getReadNotificationIds();
   const unread = visible.filter(n => !read.includes(n.id)).length;
   dot.style.display = unread ? '' : 'none';
   renderAnnouncementsFeed();
 }
-function markNotificationsRead() { const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n)); setReadNotificationIds(visible.map(n => n.id)); renderNotifications(); }
+function markNotificationsRead() { const visible = notifications.filter(n => notifIsForCurrentUser(n) && notifAllowed(n)); setReadNotificationIds(visible.map(n => n.id)); renderNotifications(); }
 function openAnnouncementsPage(ev) {
   if (ev) ev.stopPropagation();
   document.getElementById('search-results')?.classList.remove('open');
@@ -4684,7 +4730,7 @@ function renderAnnGalleryHTML(n) {
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
   if (!feed) return;
-  const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n));
+  const visible = notifications.filter(n => notifIsForCurrentUser(n) && notifAllowed(n));
   if (!visible.length) {
     feed.innerHTML = `<div class="ann-empty">Aucune annonce pour l'instant.</div>`;
     return;
@@ -4692,7 +4738,7 @@ function renderAnnouncementsFeed() {
   const GS_LOGO = document.querySelector('nav .logo img')?.getAttribute('src') || '';
   feed.innerHTML = visible.map(n => {
     const isGameCard = !!n.gameName && !!n.img;
-    const isClickable = !n.targetUserId && !!n.gameName;
+    const isClickable = !n.targetUserId && !n.targetUid && !!n.gameName;
     const clickAttr = isClickable ? ` onclick="openNotificationGame('${escapeHTML(n.gameName)}')"` : '';
     const timeBlock = n.poll
       ? `<div class="ann-time-col"><div class="ann-time">${formatNotifTime(n.date)}</div>${renderAnnVoteBadgeHTML(n)}</div>`
@@ -8282,25 +8328,23 @@ setTimeout(() => { if (window.lucide) lucide.createIcons(); }, 100);
           </div>
           <div style="margin-bottom:12px">
             <label style="display:block;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.35);margin-bottom:7px">Rôle souhaité *</label>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px" id="apm-role-choices">
-              <label id="role-opt-testeur" style="display:flex;align-items:flex-start;gap:10px;background:var(--glass-highlight), var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:var(--glass-shadow);border-radius:12px;padding:14px;cursor:pointer;transition:transform 0.2s ease, border-color 0.2s ease, background 0.2s ease" onclick="selectRole('Testeur')">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="apm-role-choices">
+              <label id="role-opt-testeur" class="role-choice-card" onclick="selectRole('Testeur')">
                 <input type="radio" name="apm-role" value="Testeur" style="display:none">
-                <div style="width:16px;height:16px;border:2px solid rgba(var(--lime-rgb),0.4);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center" id="radio-testeur">
-                  <div style="width:8px;height:8px;border-radius:50%;background:var(--lime);display:none" id="radio-dot-testeur"></div>
-                </div>
+                <div class="role-choice-check"><i data-lucide="check"></i></div>
+                <div class="role-choice-icon"><i data-lucide="bug"></i></div>
                 <div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;text-transform:uppercase;margin-bottom:3px">Testeur</div>
-                  <div style="font-size:11px;color:var(--gray);line-height:1.5">Tu joues aux jeux du studio, tu remontes les bugs et partages ton avis.</div>
+                  <div class="role-choice-title">Testeur</div>
+                  <div class="role-choice-desc">Tu joues aux jeux du studio, tu remontes les bugs et partages ton avis.</div>
                 </div>
               </label>
-              <label id="role-opt-helper" style="display:flex;align-items:flex-start;gap:10px;background:var(--glass-highlight), var(--glass-bg);border:1px solid var(--glass-border);backdrop-filter:blur(8px) saturate(150%);-webkit-backdrop-filter:blur(8px) saturate(150%);box-shadow:var(--glass-shadow);border-radius:12px;padding:14px;cursor:pointer;transition:transform 0.2s ease, border-color 0.2s ease, background 0.2s ease" onclick="selectRole('Helper')">
+              <label id="role-opt-helper" class="role-choice-card" onclick="selectRole('Helper')">
                 <input type="radio" name="apm-role" value="Helper" style="display:none">
-                <div style="width:16px;height:16px;border:2px solid rgba(var(--lime-rgb),0.4);border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center" id="radio-helper">
-                  <div style="width:8px;height:8px;border-radius:50%;background:var(--lime);display:none" id="radio-dot-helper"></div>
-                </div>
+                <div class="role-choice-check"><i data-lucide="check"></i></div>
+                <div class="role-choice-icon"><i data-lucide="life-buoy"></i></div>
                 <div>
-                  <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:14px;text-transform:uppercase;margin-bottom:3px">Helper</div>
-                  <div style="font-size:11px;color:var(--gray);line-height:1.5">Tu aides la communauté, réponds aux questions, modères les espaces du studio.</div>
+                  <div class="role-choice-title">Helper</div>
+                  <div class="role-choice-desc">Tu aides la communauté, réponds aux questions, modères les espaces du studio.</div>
                 </div>
               </label>
             </div>
