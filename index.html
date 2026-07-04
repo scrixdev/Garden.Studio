@@ -410,14 +410,18 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .notification-time, .search-meta { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .search-result { min-width: 0; }
 .search-result > div:last-child, .notification-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
-.gs-rating { display: inline-flex; flex-direction: row-reverse; justify-content: flex-end; }
-.gs-rating input { position: absolute; appearance: none; -webkit-appearance: none; width: 0; height: 0; opacity: 0; }
-.gs-rating label { cursor: pointer; font-size: var(--gs-star-size, 1.6rem); line-height: 1; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 6px 2px; }
-.gs-rating label:before { content: '★'; }
-.gs-rating label:hover, .gs-rating label:hover ~ label { color: #ff9e0b; }
-.gs-rating input:checked ~ label { color: #ffa723; }
-.gs-rating input:checked ~ label:hover, .gs-rating input:checked ~ label:hover ~ label,
-.gs-rating input:checked ~ label ~ input:checked ~ label { color: #ffa723; }
+.gs-rating { display: inline-flex; }
+.gs-star-btn { cursor: pointer; width: var(--gs-star-size, 22px); height: var(--gs-star-size, 22px); box-sizing: content-box; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 6px 2px; user-select: none; }
+.gs-star-btn svg { width: 100%; height: 100%; display: block; fill: currentColor; pointer-events: none; }
+.gs-star-btn.filled, .gs-star-btn.preview { color: #ffa723; }
+.gs-bookmark-icon { position: relative; display: inline-flex; width: 20px; height: 20px; flex-shrink: 0; }
+.nav-links a .gs-bookmark-icon { width: 16px; height: 16px; }
+.gs-bookmark-icon svg { position: absolute; inset: 0; width: 100%; height: 100%; transition: opacity 0.15s; }
+.gs-bookmark-icon .gs-bm-solid { opacity: 0; }
+a:hover .gs-bookmark-icon .gs-bm-outline, .btn-ghost:hover .gs-bookmark-icon .gs-bm-outline,
+.btn-ghost.icon-only.active .gs-bookmark-icon .gs-bm-outline { opacity: 0; }
+a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-bm-solid,
+.btn-ghost.icon-only.active .gs-bookmark-icon .gs-bm-solid { opacity: 1; }
 @keyframes gsYippee {
   0% { transform: scale(1); fill: var(--fill); fill-opacity: 0; stroke-opacity: 1; stroke: var(--stroke); stroke-dasharray: 10; stroke-width: 1px; stroke-linejoin: bevel; }
   30% { transform: scale(0); fill: var(--fill); fill-opacity: 0; stroke-opacity: 1; stroke: var(--stroke); stroke-dasharray: 10; stroke-width: 1px; stroke-linejoin: bevel; }
@@ -1811,11 +1815,11 @@ window.fbSignOut      = async () => await signOut(auth);
     GARDEN STUDIO
   </span>
     <ul class="nav-links" id="nav-links">
-    <li><a onclick="goHome()" id="nav-home" class="active"><i data-lucide="home"></i><span>Accueil</span></a></li>
-    <li><a onclick="showPage('about')" id="nav-about"><i data-lucide="landmark"></i><span>Studio</span></a></li>
-    <li><a onclick="showPage('top-gamers')" id="nav-top-gamers"><i data-lucide="users"></i><span>Equipe</span></a></li>
-    <li><a onclick="showPage('recruit')" id="nav-recruit"><i data-lucide="briefcase"></i><span>On recrute</span></a></li>
-    <li><a onclick="showPage('my-list')" id="nav-my-list"><i data-lucide="bookmark"></i><span>My List</span></a></li>
+    <li><a onclick="goHome()" id="nav-home" class="active"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.47 3.841a.75.75 0 0 1 1.06 0l8.69 8.69a.75.75 0 1 0 1.06-1.061l-8.689-8.69a2.25 2.25 0 0 0-3.182 0l-8.69 8.69a.75.75 0 1 0 1.061 1.06l8.69-8.689Z" /><path d="m12 5.432 8.159 8.159c.03.03.06.058.091.086v6.198c0 1.035-.84 1.875-1.875 1.875H15a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 0-.75-.75h-3a.75.75 0 0 0-.75.75V21a.75.75 0 0 1-.75.75H5.625a1.875 1.875 0 0 1-1.875-1.875v-6.198a2.29 2.29 0 0 0 .091-.086L12 5.432Z" /></svg><span>Accueil</span></a></li>
+    <li><a onclick="showPage('about')" id="nav-about"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5h16.5a.75.75 0 0 0 0-1.5h-.75V3.75a.75.75 0 0 0 0-1.5h-15ZM9 6a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm-.75 3.75A.75.75 0 0 1 9 9h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75ZM9 12a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm3.75-5.25A.75.75 0 0 1 13.5 6H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM13.5 9a.75.75 0 0 0 0 1.5H15A.75.75 0 0 0 15 9h-1.5Zm-.75 3.75a.75.75 0 0 1 .75-.75H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM9 19.5v-2.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 9 19.5Z" clip-rule="evenodd" /></svg><span>Studio</span></a></li>
+    <li><a onclick="showPage('top-gamers')" id="nav-top-gamers"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM17.25 19.128l-.001.144a2.25 2.25 0 0 1-.233.96 10.088 10.088 0 0 0 5.06-1.01.75.75 0 0 0 .42-.643 4.875 4.875 0 0 0-6.957-4.611 8.586 8.586 0 0 1 1.71 5.157v.003Z" /></svg><span>Equipe</span></a></li>
+    <li><a onclick="showPage('recruit')" id="nav-recruit"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg><span>On recrute</span></a></li>
+    <li><a onclick="showPage('my-list')" id="nav-my-list"><span class="gs-bookmark-icon"><svg class="gs-bm-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg><svg class="gs-bm-solid" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" /></svg></span><span>My List</span></a></li>
   </ul>
     <div class="nav-right">
     <div class="nav-search" onclick="toggleMobileSearch(event)">
@@ -1897,7 +1901,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <div class="stream-section-header">
       <div class="stream-section-title-wrap">
         <div class="stream-section-title-row">
-          <span class="stream-section-icon"><i data-lucide="clock"></i></span>
+          <span class="stream-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
           <h2 class="stream-section-title">Jeux recents</h2>
         </div>
         <span class="stream-section-bar"></span>
@@ -1923,7 +1927,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <div class="stream-section-header">
       <div class="stream-section-title-wrap">
         <div class="stream-section-title-row">
-          <span class="stream-section-icon"><i data-lucide="trending-up"></i></span>
+          <span class="stream-section-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M15.22 6.268a.75.75 0 0 1 .968-.431l5.942 2.28a.75.75 0 0 1 .431.97l-2.28 5.94a.75.75 0 1 1-1.4-.537l1.63-4.251-1.086.484a11.2 11.2 0 0 0-5.45 5.173.75.75 0 0 1-1.199.19L9 12.312l-6.22 6.22a.75.75 0 0 1-1.06-1.061l6.75-6.75a.75.75 0 0 1 1.06 0l3.606 3.606a12.695 12.695 0 0 1 5.68-4.974l1.086-.483-4.251-1.632a.75.75 0 0 1-.432-.97Z" clip-rule="evenodd" /></svg></span>
           <h2 class="stream-section-title">Trending now</h2>
         </div>
         <span class="stream-section-bar"></span>
@@ -4392,17 +4396,32 @@ function setUserRating(index, value, ev) {
   saveData().catch(e => console.error('Erreur sauvegarde note:', e));
   showToast(removed ? 'Note retirée.' : 'Note enregistrée : ' + value + '/5.');
 }
+function bookmarkIconHTML() {
+  return `<span class="gs-bookmark-icon">
+    <svg class="gs-bm-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
+    <svg class="gs-bm-solid" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" /></svg>
+  </span>`;
+}
 function ratingPickerHTML(g, index, size) {
   size = size || 22;
   const current = userRatingOn(g);
-  const name = 'gs-star-' + index;
+  const starSVG = `<svg viewBox="0 0 24 24"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87L18.18 21 12 17.27 5.82 21 7 14.14l-5-4.87 7.1-1.01L12 2z"/></svg>`;
   let stars = '';
-  for (let v = 5; v >= 1; v--) {
-    const id = name + '-' + v;
-    stars += `<input type="radio" id="${id}" name="${name}" value="${v}" ${current === v ? 'checked' : ''} onchange="setUserRating(${index},${v},event)">
-    <label for="${id}" title="${v}/5" onclick="if(${current}===${v}){event.preventDefault();setUserRating(${index},${v},event);}"></label>`;
+  for (let v = 1; v <= 5; v++) {
+    const filled = v <= current;
+    stars += `<span class="gs-star-btn${filled ? ' filled' : ''}" data-value="${v}" title="${v}/5"
+      onmouseenter="gsPreviewStars(this,${v})" onmouseleave="gsResetStars(this)"
+      onclick="setUserRating(${index},${v},event)">${starSVG}</span>`;
   }
   return `<div class="gs-rating" style="--gs-star-size:${size}px">${stars}</div>`;
+}
+function gsPreviewStars(el, v) {
+  const wrap = el.parentElement;
+  [...wrap.children].forEach((s, i) => s.classList.toggle('preview', i < v));
+}
+function gsResetStars(el) {
+  const wrap = el.parentElement;
+  [...wrap.children].forEach(s => s.classList.remove('preview'));
 }
 function userVoteOn(g) {
   if (!currentUser || !g) return null;
@@ -4615,7 +4634,7 @@ function openGameModalDirect(i) {
   if (ratingPicker) ratingPicker.innerHTML = `<div class="modal-meta-label" style="margin-bottom:8px">Ta note</div>${ratingPickerHTML(g, i, 28)}`;
   const userActions = document.getElementById('modal-user-actions');
   if (userActions) userActions.innerHTML = `
-    <button class="btn-ghost icon-only ${(currentUser && (hasGameInList('list', i) || isFavorited(i))) ? 'active' : ''}" onclick="openLibraryPicker(${i},event)" title="Ajouter"><i data-lucide="bookmark"></i></button>
+    <button class="btn-ghost icon-only ${(currentUser && (hasGameInList('list', i) || isFavorited(i))) ? 'active' : ''}" onclick="openLibraryPicker(${i},event)" title="Ajouter">${bookmarkIconHTML()}</button>
     <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)"><i data-lucide="thumbs-up"></i> ${(g.likes || []).length}</button>`;
   document.getElementById('game-modal').dataset.index = i;
   document.getElementById('game-modal').classList.add('open');
@@ -5068,7 +5087,7 @@ function renderHeroSlides() {
         <div class="hero-btns">
           <button class="btn-primary" onclick="${heroButtonAction(h, heroGame)}"><i data-lucide="play"></i>${escapeHTML(h.btn1 || 'Voir details')}</button>
           ${h.btn2 ? `<button class="btn-outline" onclick="showPage('${h.btn2Page || 'about'}')"><i data-lucide="info"></i>${escapeHTML(h.btn2)}</button>` : ''}
-          ${heroGame.index >= 0 ? `<button class="btn-ghost icon-only ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)" title="Ajouter"><i data-lucide="bookmark"></i></button>` : ''}
+          ${heroGame.index >= 0 ? `<button class="btn-ghost icon-only ${currentUser && (hasGameInList('list', heroGame.index) || isFavorited(heroGame.index)) ? 'active' : ''}" onclick="openLibraryPicker(${heroGame.index},event)" title="Ajouter">${bookmarkIconHTML()}</button>` : ''}
           ${hasVideoBannerToggle ? `<div class="hero-toggle-group">
             <button class="hero-toggle-btn" onclick="toggleHeroBanner(${i},event)" title="${showingBanner ? 'Revenir à la bande-annonce' : 'Voir la bannière'}" aria-label="Basculer vidéo / bannière"><i data-lucide="${showingBanner ? 'clapperboard' : 'image'}"></i></button>
             <button class="hero-toggle-btn hero-trailer-btn" onclick="event.stopPropagation();openTrailerModal(${i})" title="Lire la bande-annonce" aria-label="Lire la bande-annonce en plein écran"><i data-lucide="play"></i></button>
