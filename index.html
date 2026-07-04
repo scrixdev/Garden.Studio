@@ -951,7 +951,9 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .gamer-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .gamer-avatar svg { color: rgba(255,255,255,0.5); }
 .gamer-info { padding: 14px 20px 0; }
-.gamer-name { font-weight: 800; font-size: 16px; margin-bottom: 2px; overflow-wrap: anywhere; word-break: break-word; }
+.gamer-name-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 2px; }
+.gamer-name-row .account-role-badge { margin-top: 0; }
+.gamer-name { font-weight: 800; font-size: 16px; overflow-wrap: anywhere; word-break: break-word; margin-bottom: 0; }
 .gamer-meta { font-size: 12px; color: var(--gray); margin-bottom: 12px; overflow-wrap: anywhere; word-break: break-word; }
 .gamer-desc { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.65; padding: 0 20px; margin-bottom: 16px; overflow-wrap: anywhere; word-break: break-word; }
 .gamer-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0 20px; padding: 14px 0 18px; border-top: 1px solid rgba(255,255,255,0.08); }
@@ -1236,6 +1238,7 @@ footer {
 .member-name { font-weight: 700; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-meta { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-role-slot { flex-shrink: 0; width: 152px; display: flex; align-items: center; justify-content: flex-end; }
+.member-role-slot .account-role-badge { margin-top: 0; }
 .member-role-select {
   width: 100%; appearance: none; -webkit-appearance: none; -moz-appearance: none;
   border: 1.5px solid; border-radius: 999px; padding: 7px 30px 7px 16px;
@@ -5008,8 +5011,10 @@ function renderGamersPage() {
         </div>
         <div class="gamer-avatar">${g.avatarURL ? `<img src="${g.avatarURL}" alt="${escapeHTML(g.username || '')}">` : avatarIcon}</div>
         <div class="gamer-info">
-          <div class="gamer-name verified-name">${escapeHTML(g.username || 'Membre')}${verifiedBadgeHTML()}</div>
-          <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};margin-top:4px">${escapeHTML(role)}</span>
+          <div class="gamer-name-row">
+            <span class="gamer-name verified-name">${escapeHTML(g.username || 'Membre')}${verifiedBadgeHTML()}</span>
+            <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
+          </div>
         </div>
         ${g.bio ? `<p class="gamer-desc">${escapeHTML(g.bio)}</p>` : ''}
       </div>
