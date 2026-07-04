@@ -90,13 +90,17 @@ nav {
   background: var(--glass-highlight), var(--glass-bg); border-color: var(--glass-border);
   backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
   box-shadow: var(--glass-shadow); border-radius: 50%;
-  transition: border-color 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.25s cubic-bezier(.4,0,.2,1), border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .btn-signin.logged-in .nav-user-avatar-wrap { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; }
 .btn-signin.logged-in .nav-user-label { display: none; }
 .btn-signin.logged-in:hover, .btn-signin.logged-in:focus-visible {
-  background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5);
+  background: var(--glass-highlight), var(--glass-bg-strong);
+  border-color: var(--lime-soft);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: var(--glass-shadow), 0 6px 16px rgba(var(--lime-rgb),0.35);
 }
+.btn-signin.logged-in:active { transform: translateY(0) scale(0.97); }
 .btn-admin {
   background: var(--glass-highlight), var(--glass-bg); color: var(--white); border: 1px solid var(--glass-border); padding: 8px 18px;
   backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%); border-radius: 999px;
@@ -730,28 +734,65 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 /* Gamers ranking */
 .gamers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
 .gamer-card {
-  background: var(--card-bg); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px;
-  overflow: hidden; transition: border-color 0.25s, transform 0.25s;
+  position: relative;
+  background: linear-gradient(-45deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 45%, rgba(255,255,255,0.06) 100%), var(--card-bg);
+  backdrop-filter: blur(5px) saturate(150%);
+  -webkit-backdrop-filter: blur(5px) saturate(150%);
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 16px;
+  box-shadow:
+    0 16px 40px -14px rgba(0,0,0,0.6),
+    inset 0 1px 0 rgba(255,255,255,0.16),
+    inset -1px -1px 0 rgba(80,170,255,0.05),
+    inset 1px 1px 0 rgba(255,90,160,0.04);
+  overflow: hidden;
+  transition: border-color 0.25s, transform 0.25s, box-shadow 0.25s;
 }
-.gamer-card:hover { border-color: rgba(var(--lime-rgb),0.3); transform: translateY(-3px); }
+.gamer-card:hover {
+  border-color: rgba(var(--lime-rgb),0.35);
+  transform: translateY(-3px);
+  box-shadow:
+    0 20px 46px -14px rgba(0,0,0,0.65),
+    inset 0 1px 0 rgba(255,255,255,0.2),
+    0 0 0 1px rgba(var(--lime-rgb),0.08);
+}
 .gamer-banner { height: 130px; position: relative; overflow: hidden; background: var(--gradient-accent); }
+.gamer-banner::after { content:''; position:absolute; inset:0; background: linear-gradient(to bottom, rgba(0,0,0,0) 40%, rgba(0,0,0,0.35) 100%); pointer-events:none; }
 .gamer-banner img, .gamer-banner video { width: 100%; height: 100%; object-fit: cover; }
 .gamer-banner-icons { position: absolute; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 2; }
 .gamer-banner-icon { width: 28px; height: 28px; border-radius: 50%; background: var(--glass-highlight), rgba(255,255,255,0.16); border: 1px solid rgba(255,255,255,0.35); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); display: flex; align-items: center; justify-content: center; color: #fff; text-decoration: none; transition: background 0.2s, transform 0.2s; }
 .gamer-banner-icon:hover { background: rgba(255,255,255,0.3); transform: translateY(-1px); }
 .gamer-banner-icon svg { width: 13px; height: 13px; }
-.gamer-avatar { width: 88px; height: 88px; border-radius: 50%; overflow: hidden; flex-shrink: 0; background: var(--dark3); display: flex; align-items: center; justify-content: center; border: 4px solid var(--card-bg); position: relative; margin: -44px 0 0 20px; z-index: 2; box-shadow: 0 4px 14px rgba(0,0,0,0.4); }
+.gamer-avatar {
+  width: 88px; height: 88px; border-radius: 50%; overflow: hidden; flex-shrink: 0;
+  background: var(--glass-highlight), rgba(255,255,255,0.08);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  display: flex; align-items: center; justify-content: center;
+  border: 4px solid var(--dark2);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12);
+  position: relative; margin: -44px 0 0 20px; z-index: 2;
+}
 .gamer-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .gamer-avatar svg { color: rgba(255,255,255,0.5); }
 .gamer-info { padding: 14px 20px 0; }
 .gamer-name { font-weight: 800; font-size: 16px; margin-bottom: 2px; }
 .gamer-meta { font-size: 12px; color: var(--gray); margin-bottom: 12px; }
 .gamer-desc { font-size: 12.5px; color: rgba(255,255,255,0.55); line-height: 1.65; padding: 0 20px; margin-bottom: 16px; }
-.gamer-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 16px; padding: 0 20px 18px; }
-.gamer-stat { display: flex; align-items: baseline; gap: 5px; }
+.gamer-stats { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin: 0 20px; padding: 14px 0 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+.gamer-stat {
+  display: flex; align-items: baseline; gap: 5px;
+  background: var(--glass-highlight), rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%);
+  border-radius: 999px; padding: 5px 12px;
+}
 .gamer-stat-value { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 14px; color: var(--white); }
-.gamer-stat-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.8px; }
-.gamer-stat-game { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.75); }
+.gamer-stat-label { font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.8px; }
+.gamer-stat-game {
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 0.6px; color: var(--lime);
+  background: rgba(var(--lime-rgb),0.1); border: 1px solid rgba(var(--lime-rgb),0.25);
+  border-radius: 999px; padding: 5px 12px;
+}
 
 /* Games page */
 .games-page-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
