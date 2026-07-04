@@ -114,6 +114,15 @@ nav {
 }
 .btn-admin:active { transform: translateY(0) scale(0.97); }
 
+/* ===== VERIFIED BADGE (staff / official) ===== */
+.verified-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 14px; height: 14px; flex-shrink: 0;
+  margin-left: 5px; color: #3b9dff;
+}
+.verified-badge svg { width: 100%; height: 100%; display: block; }
+.verified-name { display: inline-flex; align-items: center; gap: 0; }
+
 /* ===== PAGES ===== */
 .page { display: none; }
 .page.active { display: block; }
@@ -1819,7 +1828,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <li><a onclick="showPage('about')" id="nav-about"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.5 2.25a.75.75 0 0 0 0 1.5v16.5h-.75a.75.75 0 0 0 0 1.5h16.5a.75.75 0 0 0 0-1.5h-.75V3.75a.75.75 0 0 0 0-1.5h-15ZM9 6a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm-.75 3.75A.75.75 0 0 1 9 9h1.5a.75.75 0 0 1 0 1.5H9a.75.75 0 0 1-.75-.75ZM9 12a.75.75 0 0 0 0 1.5h1.5a.75.75 0 0 0 0-1.5H9Zm3.75-5.25A.75.75 0 0 1 13.5 6H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM13.5 9a.75.75 0 0 0 0 1.5H15A.75.75 0 0 0 15 9h-1.5Zm-.75 3.75a.75.75 0 0 1 .75-.75H15a.75.75 0 0 1 0 1.5h-1.5a.75.75 0 0 1-.75-.75ZM9 19.5v-2.25a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 .75.75v2.25a.75.75 0 0 1-.75.75h-4.5A.75.75 0 0 1 9 19.5Z" clip-rule="evenodd" /></svg><span>Studio</span></a></li>
     <li><a onclick="showPage('top-gamers')" id="nav-top-gamers"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 6.375a4.125 4.125 0 1 1 8.25 0 4.125 4.125 0 0 1-8.25 0ZM14.25 8.625a3.375 3.375 0 1 1 6.75 0 3.375 3.375 0 0 1-6.75 0ZM1.5 19.125a7.125 7.125 0 0 1 14.25 0v.003l-.001.119a.75.75 0 0 1-.363.63 13.067 13.067 0 0 1-6.761 1.873c-2.472 0-4.786-.684-6.76-1.873a.75.75 0 0 1-.364-.63l-.001-.122ZM17.25 19.128l-.001.144a2.25 2.25 0 0 1-.233.96 10.088 10.088 0 0 0 5.06-1.01.75.75 0 0 0 .42-.643 4.875 4.875 0 0 0-6.957-4.611 8.586 8.586 0 0 1 1.71 5.157v.003Z" /></svg><span>Equipe</span></a></li>
     <li><a onclick="showPage('recruit')" id="nav-recruit"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z" clip-rule="evenodd" /></svg><span>On recrute</span></a></li>
-    <li><a onclick="showPage('my-list')" id="nav-my-list"><span class="gs-bookmark-icon"><svg class="gs-bm-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg><svg class="gs-bm-solid" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" /></svg></span><span>My List</span></a></li>
+    <li><a onclick="showPage('my-list')" id="nav-my-list"><span class="gs-bookmark-icon"><svg class="gs-bm-outline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 6.2C5 5.07989 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.07989 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.07989 19 6.2V21L12 16L5 21V6.2Z"/></svg><svg class="gs-bm-solid" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M5 6.2C5 5.07989 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.07989 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.07989 19 6.2V21L12 16L5 21V6.2Z"/></svg></span><span>My List</span></a></li>
   </ul>
     <div class="nav-right">
     <div class="nav-search" onclick="toggleMobileSearch(event)">
@@ -1901,7 +1910,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <div class="stream-section-header">
       <div class="stream-section-title-wrap">
         <div class="stream-section-title-row">
-          <span class="stream-section-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></span>
+          <span class="stream-section-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-clock-hour-5"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M17 3.34a10 10 0 1 1 -15 8.66l.005 -.324a10 10 0 0 1 14.995 -8.336m-6 3.66v5.022l.003 .054l.02 .135l.005 .025a1 1 0 0 0 .056 .165l.04 .082l.04 .065l2.004 3.007a1 1 0 1 0 1.664 -1.11l-1.832 -2.748v-4.697a1 1 0 0 0 -.883 -.993l-.117 -.007a1 1 0 0 0 -1 1"/></svg></span>
           <h2 class="stream-section-title">Jeux recents</h2>
         </div>
         <span class="stream-section-bar"></span>
@@ -1914,7 +1923,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <div class="stream-section-header">
       <div class="stream-section-title-wrap">
         <div class="stream-section-title-row">
-          <span class="stream-section-icon"><i data-lucide="flame"></i></span>
+          <span class="stream-section-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" class="icon icon-tabler icons-tabler-filled icon-tabler-flame"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M10 2c0 -.88 1.056 -1.331 1.692 -.722c1.958 1.876 3.096 5.995 1.75 9.12l-.08 .174l.012 .003c.625 .133 1.203 -.43 2.303 -2.173l.14 -.224a1 1 0 0 1 1.582 -.153c1.334 1.435 2.601 4.377 2.601 6.27c0 4.265 -3.591 7.705 -8 7.705s-8 -3.44 -8 -7.706c0 -2.252 1.022 -4.716 2.632 -6.301l.605 -.589c.241 -.236 .434 -.43 .618 -.624c1.43 -1.512 2.145 -2.924 2.145 -4.78"/></svg></span>
           <h2 class="stream-section-title">Jeux populaires</h2>
         </div>
         <span class="stream-section-bar"></span>
@@ -1927,7 +1936,7 @@ window.fbSignOut      = async () => await signOut(auth);
     <div class="stream-section-header">
       <div class="stream-section-title-wrap">
         <div class="stream-section-title-row">
-          <span class="stream-section-icon"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M15.22 6.268a.75.75 0 0 1 .968-.431l5.942 2.28a.75.75 0 0 1 .431.97l-2.28 5.94a.75.75 0 1 1-1.4-.537l1.63-4.251-1.086.484a11.2 11.2 0 0 0-5.45 5.173.75.75 0 0 1-1.199.19L9 12.312l-6.22 6.22a.75.75 0 0 1-1.06-1.061l6.75-6.75a.75.75 0 0 1 1.06 0l3.606 3.606a12.695 12.695 0 0 1 5.68-4.974l1.086-.483-4.251-1.632a.75.75 0 0 1-.432-.97Z" clip-rule="evenodd" /></svg></span>
+          <span class="stream-section-icon"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trending-up"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 17l6 -6l4 4l8 -8"/><path d="M14 7l7 0l0 7"/></svg></span>
           <h2 class="stream-section-title">Trending now</h2>
         </div>
         <span class="stream-section-bar"></span>
@@ -2122,7 +2131,7 @@ window.fbSignOut      = async () => await signOut(auth);
       <span style="width:6px;height:6px;background:var(--lime);border-radius:50%;animation:gemPulse 2s ease-in-out infinite"></span>
       <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">On recrute</span>
     </div>
-    <h1>Rejoins <span>Garden Studio</span></h1>
+    <h1>Rejoins <span class="verified-name">Garden Studio<span class="verified-badge" title="Officiel"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.6563 5.24291C15.4743 5.88358 16 6.8804 16 8C16 9.11964 15.4743 10.1165 14.6562 10.7572C14.7816 11.7886 14.4485 12.8652 13.6568 13.6569C12.8651 14.4486 11.7885 14.7817 10.7571 14.6563C10.1164 15.4743 9.1196 16 8 16C6.88038 16 5.88354 15.4743 5.24288 14.6562C4.21141 14.7817 3.13481 14.4485 2.34312 13.6568C1.55143 12.8652 1.2183 11.7886 1.34372 10.7571C0.525698 10.1164 0 9.1196 0 8C0 6.88038 0.525715 5.88354 1.34376 5.24288C1.21834 4.21141 1.55147 3.13481 2.34316 2.34312C3.13485 1.55143 4.21145 1.2183 5.24291 1.34372C5.88358 0.525698 6.8804 0 8 0C9.11964 0 10.1165 0.525732 10.7572 1.3438C11.7886 1.21838 12.8652 1.55152 13.6569 2.3432C14.4486 3.13488 14.7817 4.21146 14.6563 5.24291ZM12.2071 6.20711L10.7929 4.79289L7 8.58579L5.20711 6.79289L3.79289 8.20711L7 11.4142L12.2071 6.20711Z" fill="currentColor"></path></svg></span></span></h1>
     <p>Tu es passionné par les jeux vidéo et tu veux créer quelque chose de vrai ? On cherche des gens comme toi.</p>
     <div class="page-hero-sub">
       <span class="badge">Postes ouverts</span>
@@ -4255,7 +4264,7 @@ function renderAnnouncementsFeed() {
     const isGameCard = !!n.gameName && !!n.img;
     const isClickable = !n.targetUserId && !!n.gameName;
     const clickAttr = isClickable ? ` onclick="openNotificationGame('${escapeHTML(n.gameName)}')"` : '';
-    const head = `<div class="ann-card-head"><img class="ann-avatar" src="${GS_LOGO}" alt=""><div class="ann-who"><div class="ann-name">GARDEN STUDIO</div><div class="ann-handle">@GARDEN STUDIO</div></div><div class="ann-time">${formatNotifTime(n.date)}</div></div>`;
+    const head = `<div class="ann-card-head"><img class="ann-avatar" src="${GS_LOGO}" alt=""><div class="ann-who"><div class="ann-name verified-name">GARDEN STUDIO${verifiedBadgeHTML()}</div><div class="ann-handle">@GARDEN STUDIO</div></div><div class="ann-time">${formatNotifTime(n.date)}</div></div>`;
     if (isGameCard) {
       return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt=""></div>`;
     }
@@ -4396,10 +4405,16 @@ function setUserRating(index, value, ev) {
   saveData().catch(e => console.error('Erreur sauvegarde note:', e));
   showToast(removed ? 'Note retirée.' : 'Note enregistrée : ' + value + '/5.');
 }
+function likeIconHTML() {
+  return `<svg viewBox="0 -0.5 21 21" xmlns="http://www.w3.org/2000/svg" fill="currentColor" style="width:1em;height:1em;display:inline-block;vertical-align:middle"><path d="M0,20 L4.200006,20 L4.200006,8 L0,8 L0,20 Z M20.924431,11.355 L19.100579,17.89 C18.799228,19.131 17.638976,20 16.302324,20 L6.300009,20 L6.300009,8.021 L8.104962,1.825 C8.274012,0.775 9.223214,0 10.339366,0 C11.587817,0 12.600019,0.964 12.600019,2.153 L12.600019,8 L18.126177,8 C19.97313,8 21.340232,9.641 20.924431,11.355 Z"></path></svg>`;
+}
+function verifiedBadgeHTML() {
+  return `<span class="verified-badge" title="Officiel"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.6563 5.24291C15.4743 5.88358 16 6.8804 16 8C16 9.11964 15.4743 10.1165 14.6562 10.7572C14.7816 11.7886 14.4485 12.8652 13.6568 13.6569C12.8651 14.4486 11.7885 14.7817 10.7571 14.6563C10.1164 15.4743 9.1196 16 8 16C6.88038 16 5.88354 15.4743 5.24288 14.6562C4.21141 14.7817 3.13481 14.4485 2.34312 13.6568C1.55143 12.8652 1.2183 11.7886 1.34372 10.7571C0.525698 10.1164 0 9.1196 0 8C0 6.88038 0.525715 5.88354 1.34376 5.24288C1.21834 4.21141 1.55147 3.13481 2.34316 2.34312C3.13485 1.55143 4.21145 1.2183 5.24291 1.34372C5.88358 0.525698 6.8804 0 8 0C9.11964 0 10.1165 0.525732 10.7572 1.3438C11.7886 1.21838 12.8652 1.55152 13.6569 2.3432C14.4486 3.13488 14.7817 4.21146 14.6563 5.24291ZM12.2071 6.20711L10.7929 4.79289L7 8.58579L5.20711 6.79289L3.79289 8.20711L7 11.4142L12.2071 6.20711Z" fill="currentColor"></path></svg></span>`;
+}
 function bookmarkIconHTML() {
   return `<span class="gs-bookmark-icon">
-    <svg class="gs-bm-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" /></svg>
-    <svg class="gs-bm-solid" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z" clip-rule="evenodd" /></svg>
+    <svg class="gs-bm-outline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M5 6.2C5 5.07989 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.07989 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.07989 19 6.2V21L12 16L5 21V6.2Z"/></svg>
+    <svg class="gs-bm-solid" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M5 6.2C5 5.07989 5 4.51984 5.21799 4.09202C5.40973 3.71569 5.71569 3.40973 6.09202 3.21799C6.51984 3 7.07989 3 8.2 3H15.8C16.9201 3 17.4802 3 17.908 3.21799C18.2843 3.40973 18.5903 3.71569 18.782 4.09202C19 4.51984 19 5.07989 19 6.2V21L12 16L5 21V6.2Z"/></svg>
   </span>`;
 }
 function ratingPickerHTML(g, index, size) {
@@ -4489,7 +4504,7 @@ function renderGamersPage() {
       </div>
       <div class="gamer-avatar">${g.img ? `<img src="${g.img}" alt="${escapeHTML(g.name)}">` : avatarIcon}</div>
       <div class="gamer-info">
-        <div class="gamer-name">${escapeHTML(g.name)}</div>
+        <div class="gamer-name verified-name">${escapeHTML(g.name)}${verifiedBadgeHTML()}</div>
         <div class="gamer-meta">${g.username ? '@' + escapeHTML(g.username) : ''}</div>
       </div>
       ${g.desc ? `<p class="gamer-desc">${escapeHTML(g.desc)}</p>` : ''}
@@ -4533,7 +4548,7 @@ function renderCommunityPage() {
               <div style="width:${p.rank===1?'80px':'64px'};height:${p.rank===1?'80px':'64px'};border-radius:50%;overflow:hidden;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;border:3px solid ${p.color};box-shadow:0 0 20px ${p.color}44;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">
                 ${p.gamer.img ? `<img src="${p.gamer.img}" style="width:100%;height:100%;object-fit:cover" alt="">` : avatarIcon(p.rank===1?32:24)}
               </div>
-              <div style="margin-top:10px;font-weight:700;font-size:${p.rank===1?'15px':'13px'};text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${p.gamer.name}</div>
+              <div class="verified-name" style="margin-top:10px;font-weight:700;font-size:${p.rank===1?'15px':'13px'};text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${p.gamer.name}${verifiedBadgeHTML()}</div>
               <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:${p.rank===1?'20px':'16px'};color:${p.color};margin-top:2px">${p.gamer.score}</div>
               <div style="font-size:10px;color:#555;margin-top:2px">${p.gamer.game}</div>
             </div>
@@ -4572,7 +4587,7 @@ function renderCommunityPage() {
       </div>
       <!-- Info -->
       <div style="flex:1;min-width:0">
-        <div style="font-weight:700;font-size:14px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}</div>
+        <div class="verified-name" style="font-weight:700;font-size:14px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}${verifiedBadgeHTML()}</div>
         <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#444">
           <span style="display:flex;align-items:center;gap:4px;color:#555">${gameIcon} ${g.game}</span>
           <span style="display:flex;align-items:center;gap:4px;color:#555">${globeIcon} ${g.country}</span>
@@ -4635,7 +4650,7 @@ function openGameModalDirect(i) {
   const userActions = document.getElementById('modal-user-actions');
   if (userActions) userActions.innerHTML = `
     <button class="btn-ghost icon-only ${(currentUser && (hasGameInList('list', i) || isFavorited(i))) ? 'active' : ''}" onclick="openLibraryPicker(${i},event)" title="Ajouter">${bookmarkIconHTML()}</button>
-    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)"><i data-lucide="thumbs-up"></i> ${(g.likes || []).length}</button>`;
+    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)">${likeIconHTML()} ${(g.likes || []).length}</button>`;
   document.getElementById('game-modal').dataset.index = i;
   document.getElementById('game-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -6952,7 +6967,7 @@ function openGamerModal(i) {
   const avatarIcon = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
   document.getElementById('gm-avatar').innerHTML = g.img ? `<img src="${g.img}" style="width:100%;height:100%;object-fit:cover" alt="">` : avatarIcon;
   document.getElementById('gm-rank-badge').innerHTML = `${g.role || ('Rang #' + (i+1))}`;
-  document.getElementById('gm-name').textContent = g.name;
+  document.getElementById('gm-name').innerHTML = `<span class="verified-name">${escapeHTML(g.name)}${verifiedBadgeHTML()}</span>`;
   document.getElementById('gm-country').textContent = (g.country || '') + (g.skills ? '  ·  ' + g.skills : '');
   document.getElementById('gm-score').textContent = g.score;
   document.getElementById('gm-game').textContent = g.game;
