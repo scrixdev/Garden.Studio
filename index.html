@@ -139,6 +139,10 @@ nav {
 .settings-role-note { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 6px; margin-top: 14px; }
 .settings-role-note i { width: 14px; height: 14px; flex: none; }
 .settings-locked { text-align: center; padding: 80px 24px; color: var(--gray); }
+.settings-section.danger-zone { border-color: rgba(255,59,48,0.35); background: rgba(255,59,48,0.04); }
+.settings-section.danger-zone .settings-section-head i { color: #ff3b30; }
+.settings-inline-note { font-size: 12px; color: var(--gray); margin-top: -6px; margin-bottom: 16px; display: flex; align-items: center; gap: 6px; }
+.settings-inline-note i { width: 13px; height: 13px; flex: none; }
 .account-dropdown-item {
   display: flex; align-items: center; gap: 11px; padding: 10px 10px; border-radius: 10px; cursor: pointer;
   font-size: 13.5px; font-weight: 700; color: var(--white); background: transparent; border: none; width: 100%; text-align: left;
@@ -1428,7 +1432,7 @@ footer {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
 const firebaseConfig = {
@@ -1451,7 +1455,8 @@ const googleProvider = new GoogleAuthProvider();
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const username = user.displayName || user.email.split('@')[0];
-    if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid, photoURL: user.photoURL || '' });
+    const provider = (user.providerData && user.providerData[0] && user.providerData[0].providerId) || 'password';
+    if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid, photoURL: user.photoURL || '', provider });
     if (typeof window.updateNavAfterLogin === 'function') window.updateNavAfterLogin(username, user.photoURL || '');
     try {
       const profile = await window.fbEnsureUserProfile(user.uid, { username, email: user.email, avatarURL: user.photoURL || '' });
@@ -1486,6 +1491,7 @@ window.fbEnsureUserProfile = async function(uid, defaults) {
     avatarURL: defaults.avatarURL || '',
     bannerURL: '',
     role: 'Member',
+    notifPrefs: { announcements: true, games: true },
     createdAt: new Date().toISOString()
   };
   await fsSet('users/' + uid, profile);
@@ -1500,6 +1506,39 @@ window.fbGetAllUsers = async function() {
   return arr;
 };
 window.fbUpdateUserRole = async function(uid, role) { await fsMergeSet('users/' + uid, { role }); };
+
+// ===== SÉCURITÉ DU COMPTE : mot de passe / email / suppression =====
+async function reauthCurrentUser(currentPassword) {
+  const user = auth.currentUser;
+  if (!user) throw new Error('no-user');
+  const providerId = (user.providerData && user.providerData[0] && user.providerData[0].providerId) || 'password';
+  if (providerId === 'google.com') {
+    await reauthenticateWithPopup(user, googleProvider);
+  } else {
+    if (!currentPassword) throw { code: 'auth/missing-password' };
+    const credential = EmailAuthProvider.credential(user.email, currentPassword);
+    await reauthenticateWithCredential(user, credential);
+  }
+}
+window.fbGetAuthProvider = function() {
+  const user = auth.currentUser;
+  if (!user) return 'password';
+  return (user.providerData && user.providerData[0] && user.providerData[0].providerId) || 'password';
+};
+window.fbChangePassword = async function(currentPassword, newPassword) {
+  await reauthCurrentUser(currentPassword);
+  await updatePassword(auth.currentUser, newPassword);
+};
+window.fbChangeEmail = async function(currentPassword, newEmail) {
+  await reauthCurrentUser(currentPassword);
+  await verifyBeforeUpdateEmail(auth.currentUser, newEmail);
+};
+window.fbDeleteAccount = async function(currentPassword) {
+  const user = auth.currentUser;
+  await reauthCurrentUser(currentPassword);
+  try { await deleteDoc(doc(db, 'users', user.uid)); } catch (e) { console.warn('Suppression profil Firestore échouée:', e); }
+  await deleteUser(user);
+};
 
 // ===== STORAGE : upload image → URL publique =====
 window.fbUploadImage = async function(file, path) {
@@ -4296,6 +4335,12 @@ function formatNotifTime(value) {
   return d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 async function saveNotifications() { if (window.fbSaveNotifications) await window.fbSaveNotifications(notifications.slice(0, 60)); }
+function notifAllowed(n) {
+  if (!currentUser || !currentUserProfile) return true;
+  const prefs = currentUserProfile.notifPrefs || {};
+  if (n.type === 'announcement') return prefs.announcements !== false;
+  return prefs.games !== false;
+}
 async function publishNotification(type, title, detail, gameName, targetUserId, extra) {
   const linkedGame = (gameName && typeof games !== 'undefined') ? games.find(g => g.name === gameName) : null;
   const item = Object.assign(
@@ -4434,13 +4479,13 @@ function renderNotifications() {
   // Met juste à jour le petit point "non lu" sur la cloche. Le contenu s'affiche sur la page Annonces.
   const dot = document.getElementById('notif-dot');
   if (!dot) return;
-  const visible = notifications.filter(n => !n.targetUserId || (currentUser && n.targetUserId === currentUser.email));
+  const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n));
   const read = getReadNotificationIds();
   const unread = visible.filter(n => !read.includes(n.id)).length;
   dot.style.display = unread ? '' : 'none';
   renderAnnouncementsFeed();
 }
-function markNotificationsRead() { const visible = notifications.filter(n => !n.targetUserId || (currentUser && n.targetUserId === currentUser.email)); setReadNotificationIds(visible.map(n => n.id)); renderNotifications(); }
+function markNotificationsRead() { const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n)); setReadNotificationIds(visible.map(n => n.id)); renderNotifications(); }
 function openAnnouncementsPage(ev) {
   if (ev) ev.stopPropagation();
   document.getElementById('search-results')?.classList.remove('open');
@@ -4514,7 +4559,7 @@ function renderAnnGalleryHTML(n) {
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
   if (!feed) return;
-  const visible = notifications.filter(n => !n.targetUserId || (currentUser && n.targetUserId === currentUser.email));
+  const visible = notifications.filter(n => (!n.targetUserId || (currentUser && n.targetUserId === currentUser.email)) && notifAllowed(n));
   if (!visible.length) {
     feed.innerHTML = `<div class="ann-empty">Aucune annonce pour l'instant.</div>`;
     return;
@@ -7406,6 +7451,8 @@ function renderSettingsPage() {
   const avatarURL = settingsTempAvatar || p.avatarURL || currentUser.photoURL || '';
   const bannerURL = settingsTempBanner || p.bannerURL || '';
   const username = p.username || currentUser.username || '';
+  const notifPrefs = p.notifPrefs || { announcements: true, games: true };
+  const isGoogleAuth = currentUser.provider === 'google.com';
   wrap.innerHTML = `
     <!-- ===== PROFIL ===== -->
     <div class="glass-card settings-section">
@@ -7468,6 +7515,62 @@ function renderSettingsPage() {
       </div>
       <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
     </div>
+
+    <!-- ===== NOTIFICATIONS ===== -->
+    <div class="glass-card settings-section">
+      <div class="settings-section-head">
+        <i data-lucide="bell"></i>
+        <div>
+          <div class="settings-section-title">Notifications</div>
+          <div class="settings-section-sub">Choisis les annonces que tu veux voir dans ton fil.</div>
+        </div>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Annonces du studio</span>
+        <button type="button" class="toggle ${notifPrefs.announcements !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('announcements',this)"></button>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Nouveaux jeux &amp; mises à jour</span>
+        <button type="button" class="toggle ${notifPrefs.games !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('games',this)"></button>
+      </div>
+    </div>
+
+    <!-- ===== SÉCURITÉ ===== -->
+    <div class="glass-card settings-section">
+      <div class="settings-section-head">
+        <i data-lucide="lock-keyhole"></i>
+        <div>
+          <div class="settings-section-title">Sécurité</div>
+          <div class="settings-section-sub">Change ton mot de passe ou ton email de connexion.</div>
+        </div>
+      </div>
+      ${isGoogleAuth ? `<div class="settings-inline-note"><i data-lucide="info"></i> Ton compte est connecté avec Google — une fenêtre Google s'ouvrira pour confirmer chaque action.</div>` : ''}
+      <div class="form-group"><label class="form-label">Nouveau mot de passe</label><input type="password" class="form-input" id="sec-new-pwd" placeholder="Min. 6 caractères" autocomplete="new-password"></div>
+      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+      <div class="account-actions" style="margin-top:6px;margin-bottom:26px">
+        <button class="btn-primary" onclick="changeAccountPassword()"><i data-lucide="key-round"></i> Changer le mot de passe</button>
+      </div>
+      <div class="form-group"><label class="form-label">Nouvel email</label><input type="email" class="form-input" id="sec-new-email" placeholder="nouveau@email.com"></div>
+      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-email" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+      <div class="account-actions" style="margin-top:6px">
+        <button class="btn-primary" onclick="changeAccountEmail()"><i data-lucide="mail"></i> Changer l'email</button>
+      </div>
+    </div>
+
+    <!-- ===== ZONE DE DANGER ===== -->
+    <div class="glass-card settings-section danger-zone">
+      <div class="settings-section-head">
+        <i data-lucide="triangle-alert"></i>
+        <div>
+          <div class="settings-section-title">Zone de danger</div>
+          <div class="settings-section-sub">La suppression de ton compte est définitive et irréversible.</div>
+        </div>
+      </div>
+      ${isGoogleAuth ? '' : `<div class="form-group"><label class="form-label">Mot de passe actuel</label><input type="password" class="form-input" id="sec-cur-pwd-delete" placeholder="Pour confirmer" autocomplete="current-password"></div>`}
+      <div class="account-actions" style="margin-top:6px">
+        <button class="btn-delete" style="padding:12px 20px" onclick="confirmDeleteAccountFlow()"><i data-lucide="trash-2"></i> Supprimer mon compte</button>
+      </div>
+    </div>
   `;
   if (window.lucide) lucide.createIcons({ nodes: [wrap] });
 }
@@ -7503,6 +7606,91 @@ async function saveSettingsProfile() {
   } catch (e) {
     console.error(e);
     showToast('❌ Erreur lors de la sauvegarde du profil');
+  }
+}
+async function toggleSettingsNotifPref(key, btn) {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  const current = (currentUserProfile && currentUserProfile.notifPrefs) || { announcements: true, games: true };
+  const nextVal = !(current[key] !== false);
+  const notifPrefs = { ...current, [key]: nextVal };
+  btn.classList.toggle('on', nextVal);
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, { notifPrefs });
+    currentUserProfile = { ...(currentUserProfile || {}), notifPrefs };
+    renderNotifications();
+    showToast(nextVal ? '🔔 Notifications activées' : '🔕 Notifications désactivées');
+  } catch (e) {
+    console.error(e);
+    btn.classList.toggle('on', !nextVal);
+    showToast('❌ Erreur lors de la mise à jour des préférences');
+  }
+}
+function authErrorMessage(e) {
+  const msgs = {
+    'auth/wrong-password': 'Mot de passe actuel incorrect.',
+    'auth/invalid-credential': 'Mot de passe actuel incorrect.',
+    'auth/missing-password': 'Entre ton mot de passe actuel pour confirmer.',
+    'auth/weak-password': 'Mot de passe trop faible (min. 6 caractères).',
+    'auth/email-already-in-use': 'Cet email est déjà utilisé par un autre compte.',
+    'auth/invalid-email': 'Email invalide.',
+    'auth/requires-recent-login': 'Reconnecte-toi puis réessaie, cette action nécessite une confirmation récente.',
+    'auth/popup-closed-by-user': 'Fenêtre Google fermée avant confirmation.',
+    'auth/too-many-requests': 'Trop de tentatives. Réessaie plus tard.'
+  };
+  return msgs[e?.code] || 'Une erreur est survenue : ' + (e?.message || e?.code || 'inconnue');
+}
+async function changeAccountPassword() {
+  if (!currentUser || !window.fbChangePassword) return;
+  const newPwd = document.getElementById('sec-new-pwd').value;
+  const curPwd = document.getElementById('sec-cur-pwd')?.value || '';
+  if (!newPwd || newPwd.length < 6) { showToast('❌ Mot de passe trop court (min. 6 caractères).'); return; }
+  try {
+    showToast('Vérification en cours...');
+    await window.fbChangePassword(curPwd, newPwd);
+    document.getElementById('sec-new-pwd').value = '';
+    if (document.getElementById('sec-cur-pwd')) document.getElementById('sec-cur-pwd').value = '';
+    showToast('✅ Mot de passe modifié');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ ' + authErrorMessage(e));
+  }
+}
+async function changeAccountEmail() {
+  if (!currentUser || !window.fbChangeEmail) return;
+  const newEmail = document.getElementById('sec-new-email').value.trim();
+  const curPwd = document.getElementById('sec-cur-pwd-email')?.value || '';
+  if (!newEmail || !newEmail.includes('@')) { showToast('❌ Email invalide.'); return; }
+  try {
+    showToast('Vérification en cours...');
+    await window.fbChangeEmail(curPwd, newEmail);
+    document.getElementById('sec-new-email').value = '';
+    if (document.getElementById('sec-cur-pwd-email')) document.getElementById('sec-cur-pwd-email').value = '';
+    showToast('✅ Email de confirmation envoyé à ' + newEmail + ' — clique sur le lien pour finaliser.');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ ' + authErrorMessage(e));
+  }
+}
+function confirmDeleteAccountFlow() {
+  showConfirm(
+    'Supprimer ton compte ?',
+    'Cette action est définitive : ton profil, tes listes et tes préférences seront supprimés pour toujours.',
+    deleteAccountNow,
+    'Supprimer définitivement',
+    true
+  );
+}
+async function deleteAccountNow() {
+  if (!currentUser || !window.fbDeleteAccount) return;
+  const curPwd = document.getElementById('sec-cur-pwd-delete')?.value || '';
+  try {
+    showToast('Suppression en cours...');
+    await window.fbDeleteAccount(curPwd);
+    showToast('Compte supprimé. À bientôt sur Garden Studio.');
+    showPage('home');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ ' + authErrorMessage(e));
   }
 }
 function updateNavAfterLogin(username, photoURL) {
