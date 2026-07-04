@@ -120,6 +120,25 @@ nav {
 .account-dropdown-name { font-weight: 800; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .account-dropdown-email { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .account-role-badge { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+/* ===== SETTINGS PAGE ===== */
+.settings-wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px; }
+.settings-section { border-radius: 18px; padding: 28px; }
+.settings-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; }
+.settings-section-head i { width: 18px; height: 18px; color: var(--lime); flex: none; }
+.settings-section-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 18px; text-transform: uppercase; letter-spacing: 0.5px; }
+.settings-section-sub { font-size: 12px; color: var(--gray); margin-top: 2px; }
+.settings-avatar-row { display: flex; align-items: center; gap: 16px; margin-bottom: 22px; }
+.settings-avatar-preview { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex: none; border: 3px solid rgba(255,255,255,0.08); }
+.settings-avatar-fallback { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; flex: none; border: 3px solid rgba(255,255,255,0.08); }
+.settings-banner-preview { width: 100%; height: 110px; border-radius: 14px; object-fit: cover; margin-bottom: 14px; background: rgba(255,255,255,0.04); }
+.settings-info-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.settings-info-row:last-child { border-bottom: none; }
+.settings-info-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.45); flex: none; }
+.settings-info-value { font-size: 13.5px; color: rgba(255,255,255,0.85); text-align: right; word-break: break-all; }
+.settings-role-box { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.settings-role-note { font-size: 12px; color: var(--gray); display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.settings-role-note i { width: 14px; height: 14px; flex: none; }
+.settings-locked { text-align: center; padding: 80px 24px; color: var(--gray); }
 .account-dropdown-item {
   display: flex; align-items: center; gap: 11px; padding: 10px 10px; border-radius: 10px; cursor: pointer;
   font-size: 13.5px; font-weight: 700; color: var(--white); background: transparent; border: none; width: 100%; text-align: left;
@@ -2145,6 +2164,20 @@ window.fbSignOut      = async () => await signOut(auth);
   <div class="account-page-wrap" id="account-page-wrap"></div>
 </div>
 
+<!-- ===== PAGE: SETTINGS ===== -->
+<div class="page" id="page-settings">
+  <div class="page-hero" style="padding-bottom:0">
+    <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(var(--lime-rgb),0.1);border:1px solid rgba(var(--lime-rgb),0.25);padding:5px 14px;margin-bottom:20px">
+      <span style="font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--lime)">Ton compte</span>
+    </div>
+    <h1>Paramètres <span>Utilisateur</span></h1>
+    <p>Gère ton profil public, consulte les infos de ton compte et ton rôle sur Garden Studio.</p>
+  </div>
+  <div class="page-content">
+    <div class="settings-wrap" id="settings-page-wrap"></div>
+  </div>
+</div>
+
 <!-- ===== PAGE: TOP GAMERS ===== -->
 <div class="page" id="page-top-gamers">
   <div class="page-hero">
@@ -3741,6 +3774,7 @@ window._gsSetUserProfile  = (profile) => {
   currentUserProfile = profile;
   updateNavAfterLogin(currentUser?.username || profile?.username || '', currentUser?.photoURL || profile?.avatarURL || '');
   if (document.getElementById('page-account')?.classList.contains('active')) renderAccountPage();
+  if (document.getElementById('page-settings')?.classList.contains('active')) renderSettingsPage();
   if (document.getElementById('admin-panel')?.classList.contains('open')) updateAdminMembersVisibility();
 };
 window._gsRender = () => {
@@ -4557,6 +4591,7 @@ function showPage(pageId) {
   if (pageId === 'my-list') renderMyListPage();
   if (pageId === 'announcements') renderAnnouncementsFeed();
   if (pageId === 'account') renderAccountPage();
+  if (pageId === 'settings') renderSettingsPage();
   document.getElementById('search-results')?.classList.remove('open');
   if (window.lucide) lucide.createIcons();
 }
@@ -7348,6 +7383,128 @@ async function saveAccountProfile() {
     showToast('❌ Erreur lors de la sauvegarde du profil');
   }
 }
+// ===== PAGE: SETTINGS =====
+let settingsTempAvatar = null;
+let settingsTempBanner = null;
+function formatAccountDate(iso) {
+  const d = iso ? new Date(iso) : null;
+  if (!d || isNaN(d.getTime())) return '—';
+  return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+function renderSettingsPage() {
+  const wrap = document.getElementById('settings-page-wrap');
+  if (!wrap) return;
+  // Accès uniquement aux utilisateurs connectés
+  if (!currentUser) {
+    showPage('home');
+    openSignIn();
+    return;
+  }
+  const p = currentUserProfile || {};
+  const role = getEffectiveRole(currentUser.email, p.role);
+  const rs = roleBadgeStyle(role);
+  const avatarURL = settingsTempAvatar || p.avatarURL || currentUser.photoURL || '';
+  const bannerURL = settingsTempBanner || p.bannerURL || '';
+  const username = p.username || currentUser.username || '';
+  wrap.innerHTML = `
+    <!-- ===== PROFIL ===== -->
+    <div class="glass-card settings-section">
+      <div class="settings-section-head">
+        <i data-lucide="user-round"></i>
+        <div>
+          <div class="settings-section-title">Profil</div>
+          <div class="settings-section-sub">Modifie ton username, ta bio, ton avatar et ta bannière.</div>
+        </div>
+      </div>
+      ${bannerURL ? `<img class="settings-banner-preview" src="${bannerURL}" alt="">` : `<div class="settings-banner-preview"></div>`}
+      <div class="settings-avatar-row">
+        ${avatarURL ? `<img class="settings-avatar-preview" src="${avatarURL}" alt="">` : `<div class="settings-avatar-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
+        <div style="min-width:0">
+          <div class="account-username" style="font-size:18px">${escapeHTML(username || 'Sans nom')}</div>
+          <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
+      <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
+      <div class="form-group">
+        <label class="form-label">Avatar</label>
+        <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'avatar')"></div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bannière</label>
+        <div class="account-upload-row"><input type="file" accept="image/*" class="form-input" onchange="handleSettingsImageUpload(this,'banner')"></div>
+      </div>
+      <div class="account-actions" style="margin-top:6px">
+        <button class="btn-primary" onclick="saveSettingsProfile()"><i data-lucide="check"></i> Save</button>
+      </div>
+    </div>
+
+    <!-- ===== COMPTE (lecture seule) ===== -->
+    <div class="glass-card settings-section">
+      <div class="settings-section-head">
+        <i data-lucide="shield"></i>
+        <div>
+          <div class="settings-section-title">Compte</div>
+          <div class="settings-section-sub">Informations liées à ton compte, non modifiables ici.</div>
+        </div>
+      </div>
+      <div class="settings-info-row"><span class="settings-info-label">User ID</span><span class="settings-info-value">${escapeHTML(currentUser.uid || '')}</span></div>
+      <div class="settings-info-row"><span class="settings-info-label">Email</span><span class="settings-info-value">${escapeHTML(currentUser.email || '')}</span></div>
+      <div class="settings-info-row"><span class="settings-info-label">Créé le</span><span class="settings-info-value">${formatAccountDate(p.createdAt)}</span></div>
+      <div class="settings-info-row"><span class="settings-info-label">Rôle actuel</span><span class="settings-info-value">${escapeHTML(role)}</span></div>
+    </div>
+
+    <!-- ===== RÔLE (lecture seule) ===== -->
+    <div class="glass-card settings-section">
+      <div class="settings-section-head">
+        <i data-lucide="badge-check"></i>
+        <div>
+          <div class="settings-section-title">Rôle</div>
+          <div class="settings-section-sub">Ton rôle est attribué par l'équipe Garden Studio.</div>
+        </div>
+      </div>
+      <div class="settings-role-box">
+        <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};font-size:12px;padding:6px 14px">${escapeHTML(role)}</span>
+      </div>
+      <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
+    </div>
+  `;
+  if (window.lucide) lucide.createIcons({ nodes: [wrap] });
+}
+async function handleSettingsImageUpload(input, kind) {
+  const file = input.files && input.files[0];
+  if (!file || !window.fbUploadImage) return;
+  try {
+    showToast('Upload en cours...');
+    const url = await window.fbUploadImage(file, 'user-' + kind);
+    if (kind === 'avatar') settingsTempAvatar = url; else settingsTempBanner = url;
+    renderSettingsPage();
+    showToast('✅ Image ajoutée — n\'oublie pas d\'enregistrer');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur upload image');
+  }
+}
+async function saveSettingsProfile() {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  const username = document.getElementById('set-username').value.trim();
+  const bio = document.getElementById('set-bio').value.trim();
+  if (!username) { showToast('❌ Le username ne peut pas être vide'); return; }
+  const data = { username, bio };
+  if (settingsTempAvatar) data.avatarURL = settingsTempAvatar;
+  if (settingsTempBanner) data.bannerURL = settingsTempBanner;
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, data);
+    currentUserProfile = { ...(currentUserProfile || {}), ...data };
+    settingsTempAvatar = null; settingsTempBanner = null;
+    renderSettingsPage();
+    renderAccountDropdownContent(currentUserProfile.username, currentUserProfile.avatarURL || currentUser.photoURL || '');
+    showToast('✅ Profil mis à jour');
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur lors de la sauvegarde du profil');
+  }
+}
 function updateNavAfterLogin(username, photoURL) {
   // Bouton connexion → devient une bulle avatar qui ouvre un menu déroulant
   const btn = document.querySelector('.btn-signin');
@@ -7391,7 +7548,7 @@ function renderAccountDropdownContent(username, photoURL) {
       </div>
     </div>
     <button type="button" class="account-dropdown-item" onclick="closeAccountDropdown();showPage('account')"><i data-lucide="user"></i> Go to Profile</button>
-    <button type="button" class="account-dropdown-item" onclick="closeAccountDropdown();showPage('account');setTimeout(()=>toggleAccountEdit(true),80)"><i data-lucide="settings"></i> Account Settings</button>
+    <button type="button" class="account-dropdown-item" onclick="closeAccountDropdown();showPage('settings')"><i data-lucide="settings"></i> Account Settings</button>
     <div class="account-dropdown-sep"></div>
     <button type="button" class="account-dropdown-item danger" onclick="closeAccountDropdown();showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false)"><i data-lucide="log-out"></i> Logout</button>
   `;
