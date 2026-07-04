@@ -97,13 +97,6 @@ nav {
 .account-page-wrap { width: 100%; padding: 40px 60px 80px; display: flex; flex-direction: column; gap: 24px; }
 .account-hero-card { border-radius: 20px; overflow: hidden; padding: 0 !important; }
 .account-hero-body { padding: 0 24px 24px; }
-.account-banner-badge {
-  position: absolute; top: 16px; right: 16px; z-index: 3; display: flex; align-items: center; gap: 6px;
-  padding: 7px 13px; border-radius: 999px; text-transform: uppercase; letter-spacing: 1px; font-size: 11px; font-weight: 800; color: rgba(255,255,255,0.85);
-  background: var(--glass-highlight), rgba(20,20,24,0.5); backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
-  border: 1px solid var(--glass-border);
-}
-.account-banner-badge i { width: 13px; height: 13px; }
 .profile-info-row { display: flex; align-items: flex-start; gap: 12px; }
 .profile-info-row + .profile-info-row { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
 .profile-info-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex: none; }
@@ -7422,7 +7415,6 @@ function renderAccountPage() {
     <div class="glass-card account-hero-card">
       <div class="account-banner" style="border-radius:0">
         ${bannerURL ? `<img class="account-banner-fg" src="${bannerURL}" alt="">` : ''}
-        <div class="account-banner-badge"><i data-lucide="grid-3x3"></i> ID</div>
       </div>
       <div class="account-hero-body">
         <div class="account-head">
@@ -7432,7 +7424,8 @@ function renderAccountPage() {
               <div class="account-username">${escapeHTML(displayName)}</div>
               <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
             </div>
-            ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : `<div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>`}
+            <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
+            ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : ''}
           </div>
         </div>
         <div class="account-actions">
@@ -7593,7 +7586,6 @@ function renderSettingsPage() {
     <div class="settings-layout">
       <aside class="settings-sidebar">
         <div class="settings-sidebar-item ${settingsActiveTab === 'compte' ? 'active' : ''}" data-settings-tab="compte" onclick="showSettingsTab('compte',this)"><i data-lucide="user-round"></i> Compte</div>
-        <div class="settings-sidebar-item ${settingsActiveTab === 'profil' ? 'active' : ''}" data-settings-tab="profil" onclick="showSettingsTab('profil',this)"><i data-lucide="badge-check"></i> Profil public</div>
         <div class="settings-sidebar-item ${settingsActiveTab === 'notifications' ? 'active' : ''}" data-settings-tab="notifications" onclick="showSettingsTab('notifications',this)"><i data-lucide="bell"></i> Notifications</div>
         <div class="settings-sidebar-item ${settingsActiveTab === 'confidentialite' ? 'active' : ''}" data-settings-tab="confidentialite" onclick="showSettingsTab('confidentialite',this)"><i data-lucide="lock-keyhole"></i> Confidentialité</div>
       </aside>
@@ -7667,10 +7659,7 @@ function renderSettingsPage() {
             </div>
             <div class="settings-role-note"><i data-lucide="lock"></i> Tu ne peux pas modifier ton rôle toi-même.</div>
           </div>
-        </div>
 
-        <!-- ===== TAB: PROFIL PUBLIC ===== -->
-        <div class="settings-tab-panel ${settingsActiveTab === 'profil' ? 'active' : ''}" id="settings-tab-profil">
           <div class="glass-card settings-section">
             <div class="settings-section-head">
               <i data-lucide="briefcase"></i>
