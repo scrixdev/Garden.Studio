@@ -155,6 +155,7 @@ nav {
 .settings-sidebar-item:hover { background: rgba(255,255,255,0.06); color: var(--white); }
 .settings-sidebar-item.active { background: rgba(var(--lime-rgb),0.12); color: var(--lime); }
 .settings-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 24px; }
+.settings-section-label { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 15px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--white); margin-bottom: -8px; }
 .settings-tab-panel { display: none; flex-direction: column; gap: 24px; }
 .settings-tab-panel.active { display: flex; }
 @media (max-width: 860px) {
@@ -7380,6 +7381,7 @@ function renderAccountPage() {
   const avatarURL = p.avatarURL || currentUser.photoURL || '';
   const bannerURL = p.bannerURL || '';
   const username = p.username || currentUser.username || '';
+  const displayName = p.displayName || username || '';
   const skills = Array.isArray(p.skills) ? p.skills : [];
   const softSkills = Array.isArray(p.softSkills) ? p.softSkills : [];
   const languages = Array.isArray(p.languages) ? p.languages : [];
@@ -7387,13 +7389,14 @@ function renderAccountPage() {
   wrap.innerHTML = `
     <div class="account-banner">${bannerURL ? `<img src="${bannerURL}" alt="">` : ''}</div>
     <div class="account-head">
-      ${avatarURL ? `<img class="account-avatar-lg" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
+      ${avatarURL ? `<img class="account-avatar-lg" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
       <div class="account-head-info">
         <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-          <div class="account-username">${escapeHTML(username)}</div>
+          <div class="account-username">${escapeHTML(displayName)}</div>
           <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
         </div>
-        ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : `<div class="account-email">${escapeHTML(currentUser.email || '')}</div>`}
+        <div class="account-email" style="margin-top:1px">@${escapeHTML(username || '—')}</div>
+        ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : ''}
       </div>
     </div>
     <div class="account-actions">
@@ -7528,6 +7531,7 @@ function renderSettingsPage() {
   const avatarURL = settingsTempAvatar || p.avatarURL || currentUser.photoURL || '';
   const bannerURL = settingsTempBanner || p.bannerURL || '';
   const username = p.username || currentUser.username || '';
+  const displayName = p.displayName || username || '';
   const notifPrefs = p.notifPrefs || { announcements: true, games: true };
   const isGoogleAuth = currentUser.provider === 'google.com';
   const isOwner = isOwnerEmail(currentUser.email);
@@ -7545,23 +7549,19 @@ function renderSettingsPage() {
 
         <!-- ===== TAB: COMPTE ===== -->
         <div class="settings-tab-panel ${settingsActiveTab === 'compte' ? 'active' : ''}" id="settings-tab-compte">
-          <div class="glass-card settings-section">
-            <div class="settings-section-head">
-              <i data-lucide="user-round"></i>
-              <div>
-                <div class="settings-section-title">Profil</div>
-                <div class="settings-section-sub">Modifie ton nom d'affichage, ta bio, ton avatar et ta bannière.</div>
-              </div>
-            </div>
-            ${bannerURL ? `<img class="settings-banner-preview" src="${bannerURL}" alt="">` : `<div class="settings-banner-preview"></div>`}
-            <div class="settings-avatar-row">
-              ${avatarURL ? `<img class="settings-avatar-preview" src="${avatarURL}" alt="">` : `<div class="settings-avatar-fallback" style="background:${rs.color}">${escapeHTML((username || '?').charAt(0).toUpperCase())}</div>`}
-              <div style="min-width:0">
-                <div class="account-username" style="font-size:18px">${escapeHTML(username || 'Sans nom')}</div>
+          <div class="settings-section-label">Compte</div>
+          <div class="glass-card settings-section settings-profile-card">
+            <div class="account-banner" style="height:130px">${bannerURL ? `<img src="${bannerURL}" alt="">` : ''}</div>
+            <div class="account-head" style="margin-top:-38px">
+              ${avatarURL ? `<img class="account-avatar-lg" style="width:64px;height:64px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="width:64px;height:64px;font-size:24px;background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
+              <div class="account-head-info" style="padding-bottom:2px">
+                <div class="account-username" style="font-size:16px;text-transform:none">${escapeHTML(displayName || 'Sans nom')}</div>
+                <div class="account-email" style="margin-top:1px">@${escapeHTML(username || '—')}</div>
                 <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
               </div>
             </div>
-            <div class="form-group"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
+            <div class="form-group" style="margin-top:24px"><label class="form-label">Nom d'affichage</label><input type="text" class="form-input" id="set-displayname" value="${escapeHTML(displayName)}" maxlength="30"></div>
+            <div class="form-group"><label class="form-label">Nom d'utilisateur</label><input type="text" class="form-input" id="set-username" value="${escapeHTML(username)}" maxlength="30"></div>
             <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
             <div class="form-group">
               <label class="form-label">Avatar</label>
@@ -7751,10 +7751,12 @@ async function handleSettingsImageUpload(input, kind) {
 }
 async function saveSettingsProfile() {
   if (!currentUser || !window.fbSaveUserProfile) return;
+  const displayName = document.getElementById('set-displayname').value.trim();
   const username = document.getElementById('set-username').value.trim();
   const bio = document.getElementById('set-bio').value.trim();
-  if (!username) { showToast('❌ Le username ne peut pas être vide'); return; }
-  const data = { username, bio };
+  if (!displayName) { showToast("❌ Le nom d'affichage ne peut pas être vide"); return; }
+  if (!username) { showToast("❌ Le nom d'utilisateur ne peut pas être vide"); return; }
+  const data = { displayName, username, bio };
   if (settingsTempAvatar) data.avatarURL = settingsTempAvatar;
   if (settingsTempBanner) data.bannerURL = settingsTempBanner;
   try {
@@ -7762,7 +7764,7 @@ async function saveSettingsProfile() {
     currentUserProfile = { ...(currentUserProfile || {}), ...data };
     settingsTempAvatar = null; settingsTempBanner = null;
     renderSettingsPage();
-    renderAccountDropdownContent(currentUserProfile.username, currentUserProfile.avatarURL || currentUser.photoURL || '');
+    renderAccountDropdownContent(currentUserProfile.displayName || currentUserProfile.username, currentUserProfile.avatarURL || currentUser.photoURL || '');
     showToast('✅ Profil mis à jour');
   } catch (e) {
     console.error(e);
