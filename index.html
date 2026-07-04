@@ -5466,6 +5466,9 @@ const ADMIN_EMAILS = [
 // Email du créateur : voit toujours le badge "Owner", fixe et non modifiable via le panel admin.
 const OWNER_EMAIL = 'suco.the.shadows@gmail.com';
 function isOwnerEmail(email) { return (email || '').trim().toLowerCase() === OWNER_EMAIL; }
+// Un compte a le badge certifié (check bleu) dès qu'il a n'importe quel rôle autre que "Member".
+// Comparaison insensible à la casse/espaces pour éviter les soucis si le rôle vient de Firestore avec une casse différente.
+function hasVerifiedBadge(role) { return (role || 'Member').trim().toLowerCase() !== 'member'; }
 // Renvoie le rôle "effectif" à afficher : Owner est forcé pour l'email du créateur, sinon le rôle Firestore normal.
 function getEffectiveRole(email, storedRole) { return isOwnerEmail(email) ? 'Owner' : (storedRole || 'Member'); }
 const ALL_ROLES = ['Member', 'Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner'];
@@ -5534,7 +5537,7 @@ async function renderMembersSection() {
     return `<div class="member-item">
       ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
       <div class="member-info">
-        <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
+        <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
         <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
       </div>
       <div class="member-role-slot">
@@ -7544,7 +7547,7 @@ function renderAccountPage() {
           ${avatarURL ? `<img class="account-avatar-lg" style="margin-top:-40px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="background:${rs.color};margin-top:-40px">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
           <div class="account-head-info" style="padding-top:10px">
             <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-              <div class="account-username"><span class="verified-name">${escapeHTML(displayName)}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
+              <div class="account-username"><span class="verified-name">${escapeHTML(displayName)}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
               <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
             </div>
             <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
@@ -8163,7 +8166,7 @@ function renderAccountDropdownContent(username, photoURL) {
     <div class="account-dropdown-head">
       ${navAvatarHTML(photoURL, username, 44)}
       <div style="min-width:0">
-        <div class="account-dropdown-name"><span class="verified-name">${escapeHTML(username || '')}${role !== 'Member' ? verifiedBadgeHTML() : ''}</span></div>
+        <div class="account-dropdown-name"><span class="verified-name">${escapeHTML(username || '')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
         <div class="account-dropdown-email">${escapeHTML(currentUser?.email || '')}</div>
         <span class="account-role-badge" style="background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
       </div>
