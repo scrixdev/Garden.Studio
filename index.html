@@ -96,7 +96,7 @@ nav {
 .btn-signin.logged-in .nav-user-label { display: none; }
 .account-page-wrap { width: 100%; padding: 40px 60px 80px; display: flex; flex-direction: column; gap: 24px; }
 .account-hero-card { border-radius: 20px; overflow: hidden; padding: 0 !important; }
-.account-hero-body { padding: 0 24px 24px; }
+.account-hero-body { padding: 0 24px 24px; position: relative; }
 .profile-info-row { display: flex; align-items: flex-start; gap: 12px; }
 .profile-info-row + .profile-info-row { margin-top: 16px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,0.06); }
 .profile-info-icon { width: 34px; height: 34px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; flex: none; }
@@ -7571,9 +7571,9 @@ function renderAccountPage() {
             </div>
             <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
             ${metaParts.length ? `<div class="profile-meta-line">${metaParts.join('<span class="profile-meta-dot"></span>')}</div>` : ''}
-            ${socialLinks.length ? `<div class="social-links" style="margin-top:10px">${socialLinks.map(l => { const meta = SOCIAL_LINK_TYPES[l.type] || SOCIAL_LINK_TYPES.website; return `<a href="${escapeHTML(l.url)}" target="_blank" rel="noopener" title="${escapeHTML(meta.label)}">${meta.svg}</a>`; }).join('')}</div>` : ''}
           </div>
         </div>
+        ${socialLinks.length ? `<div class="social-links" style="position:absolute;bottom:24px;right:24px">${socialLinks.map(l => { const meta = SOCIAL_LINK_TYPES[l.type] || SOCIAL_LINK_TYPES.website; return `<a href="${escapeHTML(l.url)}" target="_blank" rel="noopener" title="${escapeHTML(meta.label)}">${meta.svg}</a>`; }).join('')}</div>` : ''}
         <div class="account-actions">
           <button class="btn-primary" onclick="goEditProfile()"><i data-lucide="pencil"></i> Edit Profile</button>
           <button class="btn-ghost" onclick="showConfirm('Se déconnecter ?', 'Tu vas quitter ton compte Garden Studio.', doSignOut, 'Se déconnecter', false)"><i data-lucide="log-out"></i> Logout</button>
