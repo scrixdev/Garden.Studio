@@ -93,6 +93,7 @@ nav {
   transition: transform 0.25s cubic-bezier(.4,0,.2,1), border-color 0.25s ease, background 0.25s ease, box-shadow 0.25s ease;
 }
 .btn-signin.logged-in .nav-user-avatar-wrap { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; flex: none; }
+.btn-signin.logged-in .nav-user-label { display: none; }
 .account-page-wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
 .account-banner { position: relative; height: 200px; border-radius: 18px; background: linear-gradient(135deg, rgba(var(--lime-rgb),0.25), rgba(124,92,255,0.25)); background-size: cover; background-position: center; overflow: hidden; }
 .account-banner img { width: 100%; height: 100%; object-fit: cover; }
@@ -103,7 +104,7 @@ nav {
 .account-username { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 26px; color: var(--white); text-transform: uppercase; letter-spacing: 0.5px; }
 .account-email { font-size: 12.5px; color: var(--gray); margin-top: 2px; }
 .account-actions { display: flex; gap: 10px; margin-top: 24px; }
-.account-bio { margin-top: 24px; font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.75); white-space: pre-wrap; }
+.account-bio { margin-top: 24px; font-size: 14px; line-height: 1.8; color: rgba(255,255,255,0.75); white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
 .account-edit-form { margin-top: 24px; display: flex; flex-direction: column; gap: 18px; }
 .account-upload-row { display: flex; align-items: center; gap: 14px; }
 .account-upload-row .form-input[type="file"] { padding: 8px; font-size: 12px; }
@@ -1100,6 +1101,7 @@ footer {
 .member-name { font-weight: 700; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-meta { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-role-select { flex-shrink: 0; width: 150px; }
+.game-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .game-list-item:last-child { border-bottom: none; }
 .game-list-thumb {
   width: 60px; height: 50px; display: flex; align-items: center; justify-content: center;
@@ -1405,7 +1407,7 @@ footer {
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1515,9 +1517,9 @@ const SITE_LOADER_MIN_MS = 1200; // durée minimale d'affichage du loader, même
     } catch(e) {}
 
     console.log('🔄 Chargement depuis Firestore...');
-    const [p, g, gm, c, f, h, s, n] = await Promise.all([
+    const [p, g, gm, f, h, s, n] = await Promise.all([
       fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
-      fsGet('site/candidatures'), fsGet('site/footer'), fsGet('site/heroes'), fsGet('site/settings'), fsGet('site/notifications')
+      fsGet('site/footer'), fsGet('site/heroes'), fsGet('site/settings'), fsGet('site/notifications')
     ]);
 
     console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
@@ -1527,7 +1529,6 @@ const SITE_LOADER_MIN_MS = 1200; // durée minimale d'affichage du loader, même
     if (p?.list)  { if (typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list); }
     if (g?.list)  { if (typeof window._gsSetGames        === 'function') window._gsSetGames(g.list); }
     if (gm?.list) { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list); }
-    if (c?.list)  { if (typeof window._gsSetCandidatures === 'function') window._gsSetCandidatures(c.list); }
     if (f)        { if (typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f); }
     if (h?.list)  { if (typeof window._gsSetHeroSlides    === 'function') window._gsSetHeroSlides(h.list); }
     if (s)        { if (typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s); }
@@ -1567,7 +1568,27 @@ window.fbSaveData = async (products, games, gamers) => {
   ]);
   console.log('✅ fbSaveData OK');
 };
-window.fbSaveCandidatures = async (c) => await fsSet('site/candidatures', { list: c });
+// Candidatures = sous-collection Firestore (1 document par candidature), plus sûr qu'un seul
+// document réécrit en entier à chaque envoi (qui permettait à n'importe qui d'effacer les autres).
+window.fbSubmitCandidature = async (data) => {
+  const ref = await addDoc(collection(db, 'candidatures'), { ...data, createdAt: serverTimestamp() });
+  return ref.id;
+};
+window.fbGetCandidatures = async () => {
+  const snap = await getDocs(collection(db, 'candidatures'));
+  const arr = [];
+  snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+  return arr;
+};
+window.fbGetMyCandidatures = async (email) => {
+  if (!email) return [];
+  const snap = await getDocs(query(collection(db, 'candidatures'), where('userId', '==', email)));
+  const arr = [];
+  snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+  return arr;
+};
+window.fbUpdateCandidature = async (id, data) => await updateDoc(doc(db, 'candidatures', id), data);
+window.fbDeleteCandidature = async (id) => await deleteDoc(doc(db, 'candidatures', id));
 window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
 window.fbSaveHeroes       = async (d) => await fsSet('site/heroes', { list: d });
 window.fbSaveSettings     = async (d) => await fsSet('site/settings', d);
@@ -2571,7 +2592,7 @@ window.fbSignOut      = async () => await signOut(auth);
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="17" width="18" height="4" rx="1"/><path d="M3 3h18M3 8h18M3 13h12"/></svg>
         Footer & Réseaux
       </div>
-      <div class="sidebar-item" onclick="showSection('candidatures',this);renderCandidatures()">
+      <div class="sidebar-item" onclick="showSection('candidatures',this);loadCandidaturesAdmin()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Candidatures <span id="cand-badge" style="background:var(--lime);color:var(--dark);font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
       </div>
@@ -3309,24 +3330,33 @@ async function saveData() {
 }
 
 // ===== CANDIDATURES =====
-function loadCandidatures() {
-  return []; /* Firebase est la seule source de vérité */
-}
-async function saveCandidatures() {
-  try {
-    if (!window.fbSaveCandidatures) { console.error('❌ fbSaveCandidatures non disponible'); return; }
-    console.log('💾 saveCandidatures → Firestore', candidatures.length, 'candidatures');
-    await window.fbSaveCandidatures(candidatures);
-    console.log('✅ saveCandidatures OK');
-    try { localStorage.removeItem('gs_candidatures'); } catch(e) {}
-  } catch(e) { console.error('saveCandidatures error:', e); }
-}
-
-let candidatures = loadCandidatures();
+// Les candidatures vivent désormais dans la sous-collection Firestore "candidatures" (1 doc par candidature).
+// Seuls les admins peuvent lister l'ensemble des candidatures (voir règles Firestore) : on les charge
+// à la demande quand le panel admin ouvre la section, au lieu de tout précharger pour chaque visiteur.
+let candidatures = [];
+let candidaturesLoaded = false;
 let currentCandIndex = -1;
 let currentCandFilter = 'all';
 
-function submitApplication() {
+async function loadCandidaturesAdmin(force) {
+  if (candidaturesLoaded && !force) return;
+  const list = document.getElementById('candidatures-list');
+  if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray)">Chargement...</div>';
+  try {
+    candidatures = window.fbGetCandidatures ? await window.fbGetCandidatures() : [];
+    candidatures.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    candidaturesLoaded = true;
+  } catch (e) {
+    console.error('❌ Erreur chargement candidatures:', e);
+    candidatures = [];
+    if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray)">Erreur de chargement des candidatures.</div>';
+    return;
+  }
+  updateCandBadge();
+  renderCandidatures();
+}
+
+async function submitApplication() {
   const roblox   = document.getElementById('app-roblox').value.trim();
   const discord  = document.getElementById('app-discord').value.trim();
   const email    = document.getElementById('app-email').value.trim();
@@ -3354,14 +3384,18 @@ function submitApplication() {
   }
 
   const cand = {
-    id: Date.now(),
     roblox, discord, email, poste, xp, heures, why, apport, portfolio,
     date: new Date().toLocaleDateString('fr-FR'),
     status: 'pending'
   };
-  candidatures.unshift(cand);
-  saveCandidatures();
-  updateCandBadge();
+  try {
+    if (window.fbSubmitCandidature) await window.fbSubmitCandidature(cand);
+  } catch (e) {
+    console.error('❌ Erreur envoi candidature:', e);
+    errEl.innerHTML = '<i data-lucide="alert-triangle"></i> Erreur lors de l\'envoi, réessaie.'; if (window.lucide) lucide.createIcons({ nodes: [errEl] });
+    errEl.style.display = 'block';
+    return;
+  }
 
   // Reset form
   ['app-roblox','app-discord','app-email','app-portfolio','app-why','app-apport'].forEach(id => document.getElementById(id).value = '');
@@ -3439,11 +3473,17 @@ function closeCandDetail(e) {
   document.getElementById('cand-detail').classList.remove('open');
 }
 
-function setCandStatus(status) {
+async function setCandStatus(status) {
   if (currentCandIndex < 0) return;
   const c = candidatures[currentCandIndex];
   c.status = status;
-  saveCandidatures();
+  try {
+    if (window.fbUpdateCandidature) await window.fbUpdateCandidature(c.id, { status });
+  } catch (e) {
+    console.error('❌ Erreur mise à jour candidature:', e);
+    showToast('❌ Erreur lors de la mise à jour');
+    return;
+  }
   renderCandidatures();
   openCandDetail(currentCandIndex);
   if (c.userId) {
@@ -3470,9 +3510,16 @@ function setCandStatus(status) {
 
 function deleteCandidature() {
   if (currentCandIndex < 0) return;
-  showConfirm('Supprimer cette candidature ?', 'Cette action est irréversible.', () => {
+  showConfirm('Supprimer cette candidature ?', 'Cette action est irréversible.', async () => {
+    const c = candidatures[currentCandIndex];
+    try {
+      if (window.fbDeleteCandidature) await window.fbDeleteCandidature(c.id);
+    } catch (e) {
+      console.error('❌ Erreur suppression candidature:', e);
+      showToast('❌ Erreur lors de la suppression');
+      return;
+    }
     candidatures.splice(currentCandIndex, 1);
-    saveCandidatures();
     updateCandBadge();
     document.getElementById('cand-detail').classList.remove('open');
     currentCandIndex = -1;
@@ -3512,7 +3559,7 @@ function selectRole(role) {
   });
 }
 
-function openApplyModal(poste, skills) {
+async function openApplyModal(poste, skills) {
   _applyPoste = poste;
   _applySkills = skills;
   _applyRole = '';
@@ -3537,9 +3584,8 @@ function openApplyModal(poste, skills) {
     const robloxInput = document.getElementById('apm-roblox');
     if (robloxInput && currentUser.roblox) robloxInput.value = currentUser.roblox;
 
-    const alreadyApplied = candidatures.some(c =>
-      c.poste === poste && c.userId === currentUser.email
-    );
+    const myCands = window.fbGetMyCandidatures ? await window.fbGetMyCandidatures(currentUser.email) : [];
+    const alreadyApplied = myCands.some(c => c.poste === poste);
 
     if (alreadyApplied) {
       already.style.display = 'block';
@@ -3573,7 +3619,7 @@ function closeApplyModal() {
   document.body.style.overflow = '';
 }
 
-function submitApplyModal() {
+async function submitApplyModal() {
   if (!currentUser) return;
   const roblox  = document.getElementById('apm-roblox').value.trim();
   const discord = document.getElementById('apm-discord').value.trim();
@@ -3608,9 +3654,8 @@ function submitApplyModal() {
     }
   }
 
-  const alreadyApplied = candidatures.some(c =>
-    c.poste === _applyPoste && c.userId === currentUser.email
-  );
+  const myCands = window.fbGetMyCandidatures ? await window.fbGetMyCandidatures(currentUser.email) : [];
+  const alreadyApplied = myCands.some(c => c.poste === _applyPoste);
   if (alreadyApplied) {
     document.getElementById('apply-already').style.display = 'block';
     document.getElementById('apply-form-fields').style.display = 'none';
@@ -3618,7 +3663,6 @@ function submitApplyModal() {
   }
 
   const cand = {
-    id: Date.now(),
     userId: currentUser.email,
     roblox, discord,
     email: currentUser.email,
@@ -3633,9 +3677,14 @@ function submitApplyModal() {
     date: new Date().toLocaleDateString('fr-FR'),
     status: 'pending'
   };
-  candidatures.unshift(cand);
-  saveCandidatures();
-  updateCandBadge();
+  try {
+    if (window.fbSubmitCandidature) await window.fbSubmitCandidature(cand);
+  } catch (e) {
+    console.error('❌ Erreur envoi candidature:', e);
+    errEl.innerHTML = '<i data-lucide="alert-triangle"></i> Erreur lors de l\'envoi, réessaie.'; if (window.lucide) lucide.createIcons({ nodes: [errEl] });
+    errEl.style.display = 'block';
+    return;
+  }
 
   closeApplyModal();
   showToast('Candidature envoyée', 'Merci pour ton intérêt envers Garden Studio.');
@@ -3676,11 +3725,6 @@ window._gsSetHeroSlides = (data) => {
   heroSlides.length = 0;
   data.forEach(x => heroSlides.push(x));
   console.log('📥 hero slides chargés:', heroSlides.length);
-};
-window._gsSetCandidatures = (data) => {
-  candidatures.length = 0;
-  data.forEach(x => candidatures.push(x));
-  console.log('📥 candidatures chargées:', candidatures.length);
 };
 window._gsSetNotifications = (data) => {
   notifications.length = 0;
@@ -4674,17 +4718,18 @@ function renderGamersPage() {
   const avatarIcon = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
   if (!window.fbGetAllUsers) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Équipe indisponible pour le moment.</div>'; return; }
   window.fbGetAllUsers().then(users => {
-    const staff = users.filter(u => STAFF_ROLES.includes(u.role));
-    // Co-Owner puis Admin puis les autres rôles staff, alphabétique par username ensuite
-    const order = { 'Co-Owner': 0, 'Admin': 1, 'Scripter': 2, 'Graphiste': 2, 'Helper': 2 };
-    staff.sort((a, b) => (order[a.role] ?? 3) - (order[b.role] ?? 3) || (a.username || '').localeCompare(b.username || ''));
+    const staff = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role)));
+    // Owner puis Co-Owner puis Admin puis les autres rôles staff, alphabétique par username ensuite
+    const order = { 'Owner': -1, 'Co-Owner': 0, 'Admin': 1, 'Scripter': 2, 'Graphiste': 2, 'Helper': 2 };
+    staff.sort((a, b) => (order[getEffectiveRole(a.email, a.role)] ?? 3) - (order[getEffectiveRole(b.email, b.role)] ?? 3) || (a.username || '').localeCompare(b.username || ''));
     if (countBadge) countBadge.textContent = `— ${staff.length} membre${staff.length > 1 ? 's' : ''}`;
     if (!staff.length) {
       grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Aucun membre du staff pour l\'instant.</div>';
       return;
     }
     grid.innerHTML = staff.map(g => {
-      const rs = roleBadgeStyle(g.role || 'Member');
+      const role = getEffectiveRole(g.email, g.role);
+      const rs = roleBadgeStyle(role);
       const letter = (g.username || '?').trim().charAt(0).toUpperCase();
       return `
       <div class="gamer-card">
@@ -4694,7 +4739,7 @@ function renderGamersPage() {
         <div class="gamer-avatar">${g.avatarURL ? `<img src="${g.avatarURL}" alt="${escapeHTML(g.username || '')}">` : avatarIcon}</div>
         <div class="gamer-info">
           <div class="gamer-name verified-name">${escapeHTML(g.username || 'Membre')}${verifiedBadgeHTML()}</div>
-          <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};margin-top:4px">${escapeHTML(g.role || 'Member')}</span>
+          <span class="account-role-badge" style="background:${rs.bg};color:${rs.color};margin-top:4px">${escapeHTML(role)}</span>
         </div>
         ${g.bio ? `<p class="gamer-desc">${escapeHTML(g.bio)}</p>` : ''}
       </div>
@@ -5149,9 +5194,14 @@ const ADMIN_EMAILS = [
   // Ajoute d'autres emails ici si besoin :
   // 'autre@email.com',
 ];
+// Email du créateur : voit toujours le badge "Owner", fixe et non modifiable via le panel admin.
+const OWNER_EMAIL = 'suco.the.shadows@gmail.com';
+function isOwnerEmail(email) { return (email || '').trim().toLowerCase() === OWNER_EMAIL; }
+// Renvoie le rôle "effectif" à afficher : Owner est forcé pour l'email du créateur, sinon le rôle Firestore normal.
+function getEffectiveRole(email, storedRole) { return isOwnerEmail(email) ? 'Owner' : (storedRole || 'Member'); }
 const ALL_ROLES = ['Member', 'Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner'];
-const STAFF_ROLES = ['Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner'];
-const ADMIN_ROLES = ['Admin', 'Co-Owner'];
+const STAFF_ROLES = ['Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner', 'Owner'];
+const ADMIN_ROLES = ['Admin', 'Co-Owner', 'Owner'];
 let currentUserProfile = null;
 
 function isAdmin() {
@@ -5177,6 +5227,7 @@ function openAdmin() {
   syncColorInputsFromVars();
   updateAdminMembersVisibility();
   allMembersCache = null;
+  loadCandidaturesAdmin(true);
 }
 
 function closeAdmin() {
@@ -5206,7 +5257,8 @@ async function renderMembersSection() {
     return;
   }
   list.innerHTML = filtered.map(u => {
-    const role = u.role || 'Member';
+    const owner = isOwnerEmail(u.email);
+    const role = getEffectiveRole(u.email, u.role);
     const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—';
     const letter = (u.username || '?').trim().charAt(0).toUpperCase();
     const rs = roleBadgeStyle(role);
@@ -5216,14 +5268,18 @@ async function renderMembersSection() {
         <div class="member-name">${escapeHTML(u.username || '(sans pseudo)')}</div>
         <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
       </div>
-      <select class="form-select member-role-select" onchange="changeMemberRole('${u.id}', this.value)">
-        ${ALL_ROLES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
-      </select>
+      ${owner
+        ? `<span class="account-role-badge" style="background:${rs.bg};color:${rs.color}" title="Rôle fixe, non modifiable">🔒 Owner</span>`
+        : `<select class="form-select member-role-select" onchange="changeMemberRole('${u.id}', this.value)">
+            ${ALL_ROLES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
+          </select>`}
     </div>`;
   }).join('');
 }
 async function changeMemberRole(uid, role) {
   if (!window.fbUpdateUserRole) return;
+  const target = allMembersCache?.find(x => x.id === uid);
+  if (target && isOwnerEmail(target.email)) { showToast('⛔ Le rôle Owner est fixe et ne peut pas être modifié.'); return; }
   try {
     await window.fbUpdateUserRole(uid, role);
     const u = allMembersCache?.find(x => x.id === uid);
@@ -5303,7 +5359,7 @@ function updateStats() {
   if (window.fbGetAllUsers) {
     window.fbGetAllUsers().then(users => {
       const el = document.getElementById('dash-gamers-count');
-      if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(u.role)).length;
+      if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
     }).catch(() => {});
   }
   if (document.getElementById('products-card-title')) document.getElementById('products-card-title').textContent = `Produits (${products.length})`;
@@ -7195,7 +7251,7 @@ function renderAccountPage() {
   if (!wrap) return;
   if (!currentUser) { showPage('home'); openSignIn(); return; }
   const p = currentUserProfile || {};
-  const role = p.role || 'Member';
+  const role = getEffectiveRole(currentUser.email, p.role);
   const rs = roleBadgeStyle(role);
   const avatarURL = accountTempAvatar || p.avatarURL || currentUser.photoURL || '';
   const bannerURL = accountTempBanner || p.bannerURL || '';
@@ -7310,14 +7366,15 @@ function roleBadgeStyle(role) {
     'Scripter':  { bg: 'rgba(124,92,255,0.15)',  color: '#7c5cff' },
     'Graphiste': { bg: 'rgba(255,95,167,0.15)',  color: '#ff5fa2' },
     'Admin':     { bg: 'rgba(255,176,32,0.15)',  color: '#ffb020' },
-    'Co-Owner':  { bg: 'rgba(255,59,48,0.15)',   color: '#ff3b30' }
+    'Co-Owner':  { bg: 'rgba(255,59,48,0.15)',   color: '#ff3b30' },
+    'Owner':     { bg: 'rgba(255,215,0,0.18)',   color: '#ffd700' }
   };
   return map[role] || map['Member'];
 }
 function renderAccountDropdownContent(username, photoURL) {
   const wrap = document.getElementById('account-dropdown');
   if (!wrap) return;
-  const role = currentUserProfile?.role || 'Member';
+  const role = getEffectiveRole(currentUser?.email, currentUserProfile?.role);
   const rs = roleBadgeStyle(role);
   wrap.innerHTML = `
     <div class="account-dropdown-head">
