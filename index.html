@@ -6637,10 +6637,18 @@ function renderMemberItemHTML(u) {
   const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—';
   const letter = (u.username || '?').trim().charAt(0).toUpperCase();
   const rs = roleBadgeStyle(role);
+  const warningCount = u.warningCount || 0;
+  // Badge d'avertissements : visible UNIQUEMENT ici (panel admin > Membres), jamais sur la
+  // page Équipe publique, pour rester une info de modération interne. Couleur qui s'intensifie
+  // avec le nombre d'avertissements (orange à partir de 1, rouge dès le 2e — proche d'une sanction).
+  const warnColor = warningCount >= 2 ? '#ff4040' : '#ffb020';
+  const warningBadge = warningCount > 0
+    ? `<span class="account-role-badge" style="background:${warnColor}22;color:${warnColor};margin-left:8px;cursor:pointer" title="Cliquer pour réinitialiser" onclick="event.stopPropagation();resetMemberWarnings('${u.id}')">⚠️ ${warningCount} avertissement${warningCount > 1 ? 's' : ''}</span>`
+    : '';
   return `<div class="member-item" style="cursor:pointer" onclick="openTeamMemberModal('${u.id}')">
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
-      <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
+      <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>${warningBadge}</div>
       ${u.email ? `<div class="member-email">${escapeHTML(u.email)}</div>` : ''}
       <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
     </div>
@@ -6672,6 +6680,29 @@ async function changeMemberRole(uid, role) {
     console.error(e);
     showToast('❌ Erreur lors du changement de rôle');
   }
+}
+// Réinitialise le compteur d'avertissements d'un membre (ex: après une discussion,
+// une sanction déjà appliquée manuellement, ou une erreur de détection).
+function resetMemberWarnings(uid) {
+  const target = allMembersCache?.find(x => x.id === uid);
+  const name = target?.username || 'ce membre';
+  showConfirm(
+    `Réinitialiser les avertissements de ${name} ?`,
+    'Son compteur repassera à 0. Cette action est réservée à la modération interne.',
+    async () => {
+      if (!window.fbSaveUserProfile) return;
+      try {
+        await window.fbSaveUserProfile(uid, { warningCount: 0 });
+        if (target) target.warningCount = 0;
+        showToast('✅ Avertissements réinitialisés');
+        renderMembersSection();
+        renderCollabSection();
+      } catch (e) {
+        console.error(e);
+        showToast('❌ Erreur lors de la réinitialisation');
+      }
+    }
+  );
 }
 function updateAdminMembersVisibility() {
   const btn = document.getElementById('sidebar-members-btn');
