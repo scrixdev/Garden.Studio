@@ -1783,13 +1783,6 @@ onSnapshot(doc(db, 'site', 'games'), (snap) => {
   _gsMarkFirstSnapshotDone();
 }, (e) => { console.warn('❌ Erreur temps réel (games):', e); _gsMarkFirstSnapshotDone(); });
 
-onSnapshot(doc(db, 'site', 'gamers'), (snap) => {
-  const gm = snap.exists() ? snap.data() : null;
-  if (gm?.list && typeof window._gsSetGamers === 'function') window._gsSetGamers(gm.list);
-  if (typeof window._gsRender === 'function') window._gsRender();
-  _gsMarkFirstSnapshotDone();
-}, (e) => { console.warn('❌ Erreur temps réel (gamers):', e); _gsMarkFirstSnapshotDone(); });
-
 onSnapshot(doc(db, 'site', 'footer'), (snap) => {
   const f = snap.exists() ? snap.data() : null;
   if (f && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
@@ -1833,12 +1826,11 @@ function hideSiteLoader() {
 setTimeout(hideSiteLoader, 10000);
 
 // ===== SAVE =====
-window.fbSaveData = async (products, games, gamers) => {
-  console.log('🔥 fbSaveData → envoi Firestore:', { products: products.length, games: games.length, gamers: gamers.length });
+window.fbSaveData = async (products, games) => {
+  console.log('🔥 fbSaveData → envoi Firestore:', { products: products.length, games: games.length });
   await Promise.all([
     fsSet('site/products', { list: products }),
-    fsSet('site/games',    { list: games }),
-    fsSet('site/gamers',   { list: gamers })
+    fsSet('site/games',    { list: games })
   ]);
   console.log('✅ fbSaveData OK');
 };
@@ -2993,7 +2985,6 @@ window.fbClearLoginHistory = async function(uid) {
           <div style="display:flex;gap:12px;flex-wrap:wrap">
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('hero',null)">Éditer Hero</button>
             <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('games',null)">Gérer Jeux</button>
-            <button class="btn-primary" style="font-size:12px;padding:10px 18px" onclick="showSection('top-gamers-admin',null)">Gérer Gamers</button>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllPlays()"><i data-lucide="trash-2"></i> Réinitialiser compteurs joueurs</button>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllAnnouncements()"><i data-lucide="bell-off"></i> Réinitialiser toutes les annonces</button>
           </div>
@@ -3346,70 +3337,6 @@ window.fbClearLoginHistory = async function(uid) {
       </div>
 
 
-      <!-- TOP GAMERS ADMIN -->
-      <div class="admin-section" id="section-top-gamers-admin">
-        <div class="admin-section-title">Staff / Developers</div>
-        <div class="admin-section-sub">Gère les membres du staff et développeurs affichés sur le site</div>
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title" id="gamers-card-title">Staff (8)</span></div>
-          <div id="gamers-list"></div>
-          <button class="btn-add-new" onclick="addGamer()">+ Ajouter un membre</button>
-        </div>
-        <div class="admin-card" id="gamer-edit-form" style="display:none">
-          <div class="admin-card-header">
-            <span class="admin-card-title">Éditer le gamer</span>
-            <button class="btn-delete" onclick="cancelGamerEdit()"><i data-lucide="x"></i> Annuler</button>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Nom</label><input type="text" class="form-input" id="gme-name"></div>
-            <div class="form-group"><label class="form-label">Username</label><input type="text" class="form-input" id="gme-username" placeholder="ex: Suco_TheShadow"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Score</label><input type="text" class="form-input" id="gme-score" placeholder="ex: 99.5K"></div>
-            <div class="form-group"><label class="form-label">Victoires</label><input type="text" class="form-input" id="gme-victory" placeholder="ex: 9.5K"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Jeu favori</label><input type="text" class="form-input" id="gme-game" placeholder="ex: The Shadow Army"></div>
-            <div class="form-group"><label class="form-label">Pays</label><input type="text" class="form-input" id="gme-country" placeholder="ex: 🇫🇷 France"></div>
-          </div>
-          <div class="form-group"><label class="form-label">Description</label><textarea class="form-input" id="gme-desc" rows="3" placeholder="ex: Owner & Lead Developer at Shadow Army Studios..."></textarea></div>
-          <div class="form-row">
-            <div class="form-group"><label class="form-label">Lien YouTube</label><input type="url" class="form-input" id="gme-youtube" placeholder="https://www.youtube.com/@..."></div>
-            <div class="form-group"><label class="form-label">Lien Discord</label><input type="url" class="form-input" id="gme-discord" placeholder="https://discord.gg/..."></div>
-          </div>
-          <div class="form-group"><label class="form-label">Lien Roblox</label><input type="url" class="form-input" id="gme-roblox" placeholder="https://www.roblox.com/users/..."></div>
-          <div class="form-group">
-            <label class="form-label">Bannière (image ou vidéo)</label>
-            <div class="img-upload-zone">
-              <input type="file" accept="image/*,video/*" onchange="handleImgUpload(this,'gamer-banner')">
-              <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 15l4-4a2 2 0 0 1 2.8 0L14 15M14 13l1.5-1.5a2 2 0 0 1 2.8 0L21 14"/></svg></div>
-              <strong>Uploader bannière</strong><p>PNG, JPG ou MP4 — Format large recommandé</p>
-            </div>
-            <div class="img-preview" id="gamer-banner-img-preview" style="display:none">
-              <img id="gamer-banner-img-preview-img" src="" alt="preview">
-              <video id="gamer-banner-video-preview" muted loop autoplay playsinline style="display:none"></video>
-              <button class="img-preview-remove" onclick="removeImg('gamer-banner')"><i data-lucide="x"></i></button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Photo de profil</label>
-            <div class="img-upload-zone">
-              <input type="file" accept="image/*" onchange="handleImgUpload(this,'gamer')">
-              <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg></div>
-              <strong>Uploader avatar</strong><p>PNG, JPG — Format carré recommandé</p>
-            </div>
-            <div class="img-preview" id="gamer-img-preview" style="display:none">
-              <img id="gamer-img-preview-img" src="" alt="preview">
-              <button class="img-preview-remove" onclick="removeImg('gamer')"><i data-lucide="x"></i></button>
-            </div>
-          </div>
-          <input type="hidden" id="gme-index">
-          <button class="btn-primary" style="font-size:12px" onclick="saveGamerEdit()">Sauvegarder</button>
-        </div>
-      </div>
-
-
-
       <!-- NEWSLETTER -->
 
 
@@ -3628,16 +3555,6 @@ const DEFAULT_GAMES = [
   { name: 'Star Patrol', color: 'linear-gradient(135deg, #192a56, #273c75)', img: '', desc: 'Deviens un officier de la Star Patrol et maintiens l\'ordre dans la galaxie. Missions coopératives en ligne.', dev: 'GalaxaForge', date: '03 Feb 2025', status: 'coming' },
   { name: 'Galaxy Run', color: 'linear-gradient(135deg, #1e272e, #485460)', img: '', desc: 'Un runner intergalactique frénétique avec des niveaux générés procéduralement. Simple à prendre en main, difficile à maîtriser.', dev: 'Pixel Rocket', date: '28 Sep 2020', status: 'available' }
 ];
-const DEFAULT_GAMERS = [
-  { name: 'Alex Mercer', score: '2,450,800', game: 'Space Journey', country: '🇫🇷 France', img: '', role: 'Lead Developer', skills: 'React · Node · Firebase' },
-  { name: 'Sarah Kim', score: '1,987,400', game: 'Blade Quest', country: '🇺🇸 USA', img: '', role: 'UI/UX Designer', skills: 'Figma · CSS · Motion' },
-  { name: 'Lukas Weber', score: '1,745,200', game: 'Frost Kingdom', country: '🇩🇪 Allemagne', img: '', role: 'Backend Engineer', skills: 'Python · AWS · PostgreSQL' },
-  { name: 'Yuki Tanaka', score: '1,620,900', game: 'Moon Tale', country: '🇯🇵 Japon', img: '', role: 'Game Designer', skills: 'Unity · C# · Blender' },
-  { name: 'Carlos Reyes', score: '1,480,300', game: 'Galaxy Run', country: '🇧🇷 Brésil', img: '', role: 'Mobile Developer', skills: 'React Native · Swift · Kotlin' },
-  { name: 'James Black', score: '1,310,700', game: 'Halloween Night', country: '🇬🇧 UK', img: '', role: 'DevOps Engineer', skills: 'Docker · CI/CD · Kubernetes' },
-  { name: 'Nina Okonkwo', score: '1,240,500', game: 'Star Patrol', country: '🇳🇬 Nigeria', img: '', role: 'QA Lead', skills: 'Cypress · Jest · Selenium' },
-  { name: 'Pierre Dubois', score: '1,090,100', game: 'Ocean Dive', country: '🇫🇷 France', img: '', role: 'Community Manager', skills: 'Discord · Marketing · Support' }
-];
 const DEFAULT_NOTIFICATIONS = [];
 
 function normalizeGame(g, index) {
@@ -3655,7 +3572,6 @@ function normalizeGame(g, index) {
 
 function loadData()   { return []; /* Firebase est la seule source de vérité */ }
 function loadGames()  { return []; /* Firebase est la seule source de vérité */ }
-function loadGamers() { return []; /* Firebase est la seule source de vérité */ }
 let _saveInProgress = false;
 async function saveData() {
   // Attendre que Firebase soit prêt (max 8 secondes)
@@ -3682,26 +3598,24 @@ async function saveData() {
     if (window.fbMigrateBase64Fields) {
       try {
         await window.fbMigrateBase64Fields(games, ['img'], 'game');
-        await window.fbMigrateBase64Fields(topGamers, ['img', 'banner'], 'gamer');
         await window.fbMigrateBase64Fields(products, ['img'], 'product');
       } catch (e) { console.error('Migration base64 échouée:', e); }
     }
 
     // Sécurité : si tous les tableaux sont vides et qu'on avait des données avant,
     // c'est anormal — on refuse d'écraser Firebase avec des données vides
-    const totalItems = products.length + games.length + topGamers.length;
-    const hadDataBefore = (window._products_count > 0 || window._games_count > 0 || window._gamers_count > 0);
+    const totalItems = products.length + games.length;
+    const hadDataBefore = (window._products_count > 0 || window._games_count > 0);
     if (totalItems === 0 && hadDataBefore) {
       throw new Error('Sauvegarde annulée — tableaux vides alors que des données existaient');
     }
 
-    console.log('💾 saveData → Firestore', { products: products.length, games: games.length, gamers: topGamers.length });
-    await window.fbSaveData(products, games, topGamers);
+    console.log('💾 saveData → Firestore', { products: products.length, games: games.length });
+    await window.fbSaveData(products, games);
     console.log('✅ saveData OK');
     // Mettre à jour les compteurs après sauvegarde réussie
     window._products_count = products.length;
     window._games_count = games.length;
-    window._gamers_count = topGamers.length;
     try { localStorage.removeItem('gs_products'); localStorage.removeItem('gs_games'); localStorage.removeItem('gs_gamers'); } catch(e) {}
   } catch(e) {
     console.error('❌ saveData erreur:', e);
@@ -4075,7 +3989,6 @@ async function submitApplyModal() {
 
 let products = loadData();
 let games = loadGames();
-let topGamers = loadGamers();
 let heroSlides = JSON.parse(JSON.stringify(DEFAULT_HERO_SLIDES));
 let notifications = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
 let currentHeroSlide = 0;
@@ -4096,12 +4009,6 @@ window._gsSetGames = (data) => {
   data.forEach((x, i) => games.push(normalizeGame(x, i)));
   window._games_count = games.length;
   console.log('📥 games chargés:', games.length);
-};
-window._gsSetGamers = (data) => {
-  topGamers.length = 0;
-  data.forEach(x => topGamers.push(x));
-  window._gamers_count = topGamers.length;
-  console.log('📥 gamers chargés:', topGamers.length);
 };
 window._gsSetHeroSlides = (data) => {
   if (!data || !data.length) return;
@@ -5024,7 +4931,6 @@ function showPage(pageId) {
   if (pageId === 'home') document.getElementById('nav-home')?.classList.add('active');
   if (pageId === 'top-gamers') renderGamersPage();
   if (pageId === 'games') renderGamesPage();
-  if (pageId === 'gamers') renderCommunityPage();
   if (pageId === 'my-list') renderMyListPage();
   if (pageId === 'announcements') renderAnnouncementsFeed();
   if (pageId === 'account') renderAccountPage();
@@ -5233,90 +5139,6 @@ function renderGamersPage() {
   });
 }
 
-// ===== RENDER: COMMUNITY PAGE =====
-function renderCommunityPage() {
-  const avatarIcon = (size) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
-  const gameIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 12h4M8 10v4"/><circle cx="15" cy="11" r="1"/><circle cx="18" cy="13" r="1"/></svg>`;
-  const globeIcon = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>`;
-
-  // Badge count
-  const countEl = document.getElementById('community-count-badge');
-  if (countEl) countEl.textContent = `— ${topGamers.length} joueurs`;
-
-  // ---- PODIUM TOP 3 ----
-  const podiumEl = document.getElementById('community-podium');
-  if (podiumEl && topGamers.length >= 1) {
-    const podiumData = [
-      { rank: 2, gamer: topGamers[1], height: '160px', color: '#888', bg: 'rgba(136,136,136,0.08)', border: 'rgba(136,136,136,0.25)', label: 'ARGENT' },
-      { rank: 1, gamer: topGamers[0], height: '200px', color: 'var(--lime)', bg: 'rgba(var(--lime-rgb),0.08)', border: 'rgba(var(--lime-rgb),0.35)', label: 'OR' },
-      { rank: 3, gamer: topGamers[2], height: '130px', color: '#cd7f32', bg: 'rgba(205,127,50,0.08)', border: 'rgba(205,127,50,0.25)', label: 'BRONZE' },
-    ].filter(p => p.gamer);
-
-    podiumEl.innerHTML = `
-      <div style="display:flex;align-items:flex-end;justify-content:center;gap:12px;max-width:700px;margin:0 auto 0">
-        ${podiumData.map(p => `
-          <div onclick="openGamerModal(${p.rank - 1})" style="flex:1;display:flex;flex-direction:column;align-items:center;cursor:pointer;gap:0">
-            <!-- Avatar + crown area -->
-            <div style="display:flex;flex-direction:column;align-items:center;margin-bottom:12px;position:relative">
-              ${p.rank === 1 ? `<div style="font-size:22px;margin-bottom:6px"><i data-lucide="crown"></i></div>` : `<div style="height:28px"></div>`}
-              <div style="width:${p.rank===1?'80px':'64px'};height:${p.rank===1?'80px':'64px'};border-radius:50%;overflow:hidden;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;border:3px solid ${p.color};box-shadow:0 0 20px ${p.color}44;transition:transform 0.2s" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform=''">
-                ${p.gamer.img ? `<img src="${p.gamer.img}" style="width:100%;height:100%;object-fit:cover" alt="">` : avatarIcon(p.rank===1?32:24)}
-              </div>
-              <div class="verified-name" style="margin-top:10px;font-weight:700;font-size:${p.rank===1?'15px':'13px'};text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">${p.gamer.name}${verifiedBadgeHTML()}</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:${p.rank===1?'20px':'16px'};color:${p.color};margin-top:2px">${p.gamer.score}</div>
-              <div style="font-size:10px;color:#555;margin-top:2px">${p.gamer.game}</div>
-            </div>
-            <!-- Podium block -->
-            <div style="width:100%;height:${p.height};background:${p.bg};border:1px solid ${p.border};border-bottom:none;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;position:relative;overflow:hidden">
-              <div style="position:absolute;inset:0;background:linear-gradient(to bottom,${p.color}08,transparent)"></div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:48px;color:${p.color};opacity:0.15;line-height:1">${p.rank}</div>
-              <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:${p.color};opacity:0.7">${p.label}</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-  }
-
-  // ---- LEADERBOARD rows (rank 4+) ----
-  const rankColors = ['var(--lime)','#888','#cd7f32'];
-  document.getElementById('community-top3').innerHTML = topGamers.map((g, i) => {
-    const isTop3 = i < 3;
-    const color = rankColors[i] || 'rgba(255,255,255,0.12)';
-    return `
-    <div onclick="openGamerModal(${i})" style="
-      display:flex;align-items:center;gap:16px;padding:14px 20px;
-      background:${isTop3 ? 'rgba(255,255,255,0.02)' : 'var(--card-bg)'};
-      border:1px solid ${isTop3 ? color+'33' : 'rgba(255,255,255,0.05)'};
-      cursor:pointer;transition:all 0.2s;position:relative;
-      ${isTop3 ? `box-shadow:inset 3px 0 0 ${color};` : ''}
-    "
-    onmouseover="this.style.borderColor='rgba(var(--lime-rgb),0.22)';this.style.background='#161616';this.style.transform='translateX(4px)'"
-    onmouseout="this.style.borderColor='${isTop3 ? color+'33' : 'rgba(255,255,255,0.05)'}';this.style.background='${isTop3 ? 'rgba(255,255,255,0.02)' : 'var(--card-bg)'}';this.style.transform=''">
-      <!-- Rank number -->
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;color:${color};min-width:40px;text-align:center;line-height:1">${i+1}</div>
-      <!-- Avatar -->
-      <div style="width:42px;height:42px;border-radius:50%;overflow:hidden;background:var(--gradient-accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;border:2px solid ${isTop3 ? color+'55' : 'rgba(255,255,255,0.06)'}">
-        ${g.img ? `<img src="${g.img}" style="width:100%;height:100%;object-fit:cover" alt="">` : avatarIcon(20)}
-      </div>
-      <!-- Info -->
-      <div style="flex:1;min-width:0">
-        <div class="verified-name" style="font-weight:700;font-size:14px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${g.name}${verifiedBadgeHTML()}</div>
-        <div style="display:flex;align-items:center;gap:12px;font-size:11px;color:#444">
-          <span style="display:flex;align-items:center;gap:4px;color:#555">${gameIcon} ${g.game}</span>
-          <span style="display:flex;align-items:center;gap:4px;color:#555">${globeIcon} ${g.country}</span>
-        </div>
-      </div>
-      <!-- Score -->
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:${isTop3 ? color : 'var(--lime)'};letter-spacing:0.5px">${g.score}</div>
-      <!-- Arrow -->
-      <div style="color:rgba(var(--lime-rgb),0.25);margin-left:8px">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
-      </div>
-    </div>`;
-  }).join('');
-  if (window.lucide) lucide.createIcons();
-}
 
 // ===== GAME MODAL =====
 function playCurtainTransition(callback) {
@@ -5608,8 +5430,8 @@ function renderGamesOnSite() {
 async function handleImgUpload(input, key) {
   const file = input.files[0];
   if (!file) return;
-  // Upload hero-bg / hero-banner / staff (gamer, gamer-banner) vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
-  if (key === 'hero-bg' || key === 'hero-banner' || key === 'gamer' || key === 'gamer-banner' || key === 'game' || key === 'ann-img') {
+  // Upload hero-bg / hero-banner / game / annonce vers Firebase Storage (preview only, sauvegarde via le formulaire d'édition)
+  if (key === 'hero-bg' || key === 'hero-banner' || key === 'game' || key === 'ann-img') {
     showToast('Upload en cours...');
     const isVideo = file.type.startsWith('video/');
     try {
@@ -5735,7 +5557,6 @@ function openAdmin() {
   document.getElementById('admin-panel').classList.add('open');
   document.body.style.overflow = 'hidden';
   renderGamesList();
-  renderGamersList();
   renderHeroList();
   fillHeroGameSelect();
   updateStats();
@@ -5914,7 +5735,6 @@ function updateStats() {
   }
   if (document.getElementById('products-card-title')) document.getElementById('products-card-title').textContent = `Produits (${products.length})`;
   if (document.getElementById('games-card-title')) document.getElementById('games-card-title').textContent = `Jeux (${games.length})`;
-  if (document.getElementById('gamers-card-title')) document.getElementById('gamers-card-title').textContent = `Gamers (${topGamers.length})`;
 }
 
 // (Firebase callbacks définis plus haut via window._gsSetXxx)
@@ -7195,111 +7015,6 @@ function addGame() {
   document.getElementById('game-edit-form').scrollIntoView({ behavior: 'smooth' });
 }
 
-// ===== GAMERS ADMIN =====
-function renderGamersList() {
-  const list = document.getElementById('gamers-list');
-  const avatarIcon = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
-  list.innerHTML = topGamers.map((g, i) => `
-    <div class="gamer-list-item">
-      <div style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;color:${i<3?'var(--lime)':'rgba(255,255,255,0.2)'};min-width:36px">#${i+1}</div>
-      <div class="gamer-list-avatar">${g.img ? `<img src="${g.img}" alt="">` : avatarIcon}</div>
-      <div class="game-list-info">
-        <div class="game-list-name">${g.name}</div>
-        <div class="game-list-meta">${g.game} · ${g.country} · ${g.score} pts</div>
-      </div>
-      <div class="game-list-actions">
-        <button class="btn-edit" onclick="editGamer(${i})">Éditer</button>
-        <button class="btn-delete" onclick="deleteGamer(${i})">Suppr</button>
-      </div>
-    </div>`).join('');
-  updateStats();
-}
-
-function editGamer(i) {
-  document.getElementById('gme-name').value = topGamers[i].name;
-  document.getElementById('gme-username').value = topGamers[i].username || '';
-  document.getElementById('gme-score').value = topGamers[i].score;
-  document.getElementById('gme-victory').value = topGamers[i].victory || '';
-  document.getElementById('gme-game').value = topGamers[i].game;
-  document.getElementById('gme-country').value = topGamers[i].country;
-  document.getElementById('gme-desc').value = topGamers[i].desc || '';
-  document.getElementById('gme-youtube').value = topGamers[i].youtube || '';
-  document.getElementById('gme-discord').value = topGamers[i].discord || '';
-  document.getElementById('gme-roblox').value = topGamers[i].roblox || '';
-  document.getElementById('gme-index').value = i;
-  tempImgs['gamer'] = topGamers[i].img || '';
-  const preview = document.getElementById('gamer-img-preview');
-  if (topGamers[i].img) { document.getElementById('gamer-img-preview-img').src = topGamers[i].img; preview.style.display = 'inline-block'; }
-  else preview.style.display = 'none';
-  tempImgs['gamer-banner'] = topGamers[i].banner || '';
-  tempImgs['gamer-banner-isVideo'] = !!topGamers[i].bannerIsVideo;
-  const bannerPreview = document.getElementById('gamer-banner-img-preview');
-  const bannerPreviewImg = document.getElementById('gamer-banner-img-preview-img');
-  const bannerPreviewVideo = document.getElementById('gamer-banner-video-preview');
-  if (topGamers[i].banner) {
-    if (topGamers[i].bannerIsVideo) { bannerPreviewVideo.src = topGamers[i].banner; bannerPreviewVideo.style.display = 'block'; bannerPreviewImg.style.display = 'none'; }
-    else { bannerPreviewImg.src = topGamers[i].banner; bannerPreviewImg.style.display = 'block'; bannerPreviewVideo.style.display = 'none'; bannerPreviewVideo.removeAttribute('src'); }
-    bannerPreview.style.display = 'inline-block';
-  } else bannerPreview.style.display = 'none';
-  document.getElementById('gamer-edit-form').style.display = 'block';
-  document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
-}
-
-function cancelGamerEdit() { document.getElementById('gamer-edit-form').style.display = 'none'; delete tempImgs['gamer']; delete tempImgs['gamer-banner']; delete tempImgs['gamer-banner-isVideo']; }
-
-async function saveGamerEdit() {
-  if (_saveInProgress) return;
-  const i = parseInt(document.getElementById('gme-index').value);
-  const data = {
-    name: document.getElementById('gme-name').value,
-    username: document.getElementById('gme-username').value,
-    score: document.getElementById('gme-score').value,
-    victory: document.getElementById('gme-victory').value,
-    game: document.getElementById('gme-game').value,
-    country: document.getElementById('gme-country').value,
-    desc: document.getElementById('gme-desc').value,
-    youtube: document.getElementById('gme-youtube').value.trim(),
-    discord: document.getElementById('gme-discord').value.trim(),
-    roblox: document.getElementById('gme-roblox').value.trim(),
-    img: ('gamer' in tempImgs) ? tempImgs['gamer'] : (i >= 0 && i < topGamers.length ? topGamers[i].img || '' : ''),
-    banner: ('gamer-banner' in tempImgs) ? tempImgs['gamer-banner'] : (i >= 0 && i < topGamers.length ? topGamers[i].banner || '' : ''),
-    bannerIsVideo: ('gamer-banner-isVideo' in tempImgs) ? tempImgs['gamer-banner-isVideo'] : (i >= 0 && i < topGamers.length ? !!topGamers[i].bannerIsVideo : false)
-  };
-  if (!data.name.trim()) { showToast('⚠️ Nom requis'); return; }
-  if (i === -1) topGamers.push(data); else topGamers[i] = data;
-  showToast('Sauvegarde en cours...');
-  try {
-    await saveData();
-    renderGamersList(); renderGamersPage(); cancelGamerEdit();
-    showToast('✅ Membre sauvegardé !'); logChange('Membre "' + data.name + '" modifié');
-  } catch(e) {
-    if (i === -1) topGamers.pop();
-    showToast('❌ Erreur sauvegarde');
-  }
-}
-
-function deleteGamer(i) {
-  showConfirm('Supprimer ce membre ?', 'Cette action est irréversible.', async () => {
-    topGamers.splice(i, 1);
-    showToast('Suppression en cours...');
-    await saveData();
-    renderGamersList(); renderGamersPage(); updateStats();
-    showToast('Membre supprimé ✅'); logChange('Membre supprimé');
-  });
-}
-
-function addGamer() {
-  document.getElementById('gme-name').value = ''; document.getElementById('gme-username').value = '';
-  document.getElementById('gme-score').value = ''; document.getElementById('gme-victory').value = '';
-  document.getElementById('gme-game').value = ''; document.getElementById('gme-country').value = '';
-  document.getElementById('gme-desc').value = '';
-  document.getElementById('gme-youtube').value = ''; document.getElementById('gme-discord').value = ''; document.getElementById('gme-roblox').value = '';
-  document.getElementById('gme-index').value = -1; document.getElementById('gamer-img-preview').style.display = 'none';
-  document.getElementById('gamer-banner-img-preview').style.display = 'none';
-  delete tempImgs['gamer']; delete tempImgs['gamer-banner']; document.getElementById('gamer-edit-form').style.display = 'block';
-  document.getElementById('gamer-edit-form').scrollIntoView({ behavior: 'smooth' });
-}
-
 // ===== FEATURE =====
 
 // ===== FOOTER =====
@@ -7526,7 +7241,6 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('game-modal').classList.contains('open')) { closeModalDirect(); return; }
     if (document.getElementById('trailer-modal').classList.contains('open')) { closeTrailerModalDirect(); return; }
-    if (document.getElementById('gamer-modal').classList.contains('open')) { closeGamerModalDirect(); return; }
     if (document.getElementById('product-modal').classList.contains('open')) { closeProductModalDirect(); return; }
     if (document.getElementById('signin-modal').classList.contains('open')) { closeSignInDirect(); return; }
     if (document.getElementById('confirm-modal').classList.contains('open')) { closeConfirm(); return; }
@@ -8753,33 +8467,6 @@ function updateNavAfterLogout() {
   if (adminMobile) adminMobile.style.display = 'none';
 }
 
-// ===== GAMER PROFILE MODAL =====
-function openGamerModal(i) {
-  const g = topGamers[i];
-  const avatarIcon = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
-  document.getElementById('gm-avatar').innerHTML = g.img ? `<img src="${g.img}" style="width:100%;height:100%;object-fit:cover" alt="">` : avatarIcon;
-  document.getElementById('gm-rank-badge').innerHTML = `${g.role || ('Rang #' + (i+1))}`;
-  document.getElementById('gm-name').innerHTML = `<span class="verified-name">${escapeHTML(g.name)}${verifiedBadgeHTML()}</span>`;
-  document.getElementById('gm-country').textContent = (g.country || '') + (g.skills ? '  ·  ' + g.skills : '');
-  document.getElementById('gm-score').textContent = g.score;
-  document.getElementById('gm-game').textContent = g.game;
-  // Simulate win count from score
-  const wins = Math.floor(parseInt(g.score.replace(/,/g,'')) / 12500);
-  document.getElementById('gm-wins').textContent = wins.toLocaleString('fr');
-  // Color header by rank
-  const colors = ['linear-gradient(135deg,rgba(var(--lime-rgb),0.12),rgba(var(--lime-rgb),0.03))','linear-gradient(135deg,rgba(200,200,200,0.08),rgba(0,0,0,0))','linear-gradient(135deg,rgba(205,127,50,0.1),rgba(0,0,0,0))'];
-  document.getElementById('gm-header').style.background = colors[i] || 'transparent';
-  document.getElementById('gamer-modal').classList.add('open');
-  document.body.style.overflow = 'hidden';
-}
-function closeGamerModal(e) {
-  if (e.target === document.getElementById('gamer-modal')) closeGamerModalDirect();
-}
-function closeGamerModalDirect() {
-  document.getElementById('gamer-modal').classList.remove('open');
-  document.body.style.overflow = '';
-}
-
 // ===== TEAM MEMBER PROFILE MODAL =====
 function openTeamMemberModal(id) {
   const g = (teamStaffCache || []).find(u => u.id === id);
@@ -9235,43 +8922,6 @@ select.authbox-input option {
         </div>
 
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== GAMER PROFILE MODAL ===== -->
-<div class="modal-overlay" id="gamer-modal" onclick="closeGamerModal(event)">
-  <div class="modal-box" style="max-width:560px;padding:0;overflow:hidden">
-    <button class="modal-close" onclick="closeGamerModalDirect()">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button>
-    <!-- Profile header -->
-    <div id="gm-header" style="padding:48px 40px 32px;position:relative;display:flex;align-items:center;gap:24px">
-      <div id="gm-avatar" style="width:80px;height:80px;border-radius:50%;overflow:hidden;flex-shrink:0;border:3px solid var(--lime);display:flex;align-items:center;justify-content:center;background:var(--gradient-accent)"></div>
-      <div>
-        <div id="gm-rank-badge" style="display:inline-flex;align-items:center;gap:6px;background:rgba(var(--lime-rgb),0.12);border:1px solid rgba(var(--lime-rgb),0.25);color:var(--lime);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:11px;letter-spacing:1.5px;padding:4px 12px;text-transform:uppercase;margin-bottom:10px"></div>
-        <div id="gm-name" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:36px;text-transform:uppercase;line-height:1;margin-bottom:6px"></div>
-        <div id="gm-country" style="font-size:13px;color:#888"></div>
-      </div>
-    </div>
-    <!-- Stats -->
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid rgba(255,255,255,0.06)">
-      <div style="padding:20px;text-align:center;border-right:1px solid rgba(255,255,255,0.06)">
-        <div id="gm-score" style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:var(--lime);margin-bottom:4px"></div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555">Score</div>
-      </div>
-      <div style="padding:20px;text-align:center;border-right:1px solid rgba(255,255,255,0.06)">
-        <div id="gm-game" style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;color:#fff;margin-bottom:4px"></div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555">Jeu favori</div>
-      </div>
-      <div style="padding:20px;text-align:center">
-        <div id="gm-wins" style="font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:24px;color:#fff;margin-bottom:4px"></div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:#555">Victoires</div>
-      </div>
-    </div>
-    <!-- Footer action -->
-    <div style="padding:20px 40px 28px;border-top:1px solid rgba(255,255,255,0.06)">
-      <button class="btn-primary" style="width:100%" onclick="closeGamerModalDirect()">Fermer</button>
     </div>
   </div>
 </div>
