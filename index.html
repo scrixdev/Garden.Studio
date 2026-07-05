@@ -1551,6 +1551,21 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 .btn-edit { color: var(--lime); }
 .btn-delete { color: #ff6060; }
+.reset-game-select-wrap { position: relative; display: inline-flex; align-items: center; }
+.reset-game-select {
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase;
+  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px;
+  padding: 10px 38px 10px 18px; cursor: pointer; max-width: 220px;
+  background: var(--glass-highlight), var(--glass-bg); border: 1px solid var(--glass-border);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow); color: var(--white); outline: none;
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.reset-game-select:hover { background: var(--glass-highlight), var(--glass-bg-strong); border-color: rgba(255,255,255,0.5); }
+.reset-game-select:focus { border-color: rgba(var(--lime-rgb),0.35); box-shadow: var(--glass-shadow), 0 0 0 3px rgba(var(--lime-rgb),0.08); }
+.reset-game-select option { background: #1a1a1a; color: var(--white); text-transform: none; font-family: 'Barlow', sans-serif; letter-spacing: normal; }
+.reset-game-select-arrow { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 14px; height: 14px; color: var(--white); opacity: 0.6; pointer-events: none; }
 .btn-accept, .btn-refuse {
   border-radius: 999px; letter-spacing: 0.5px; text-transform: uppercase;
   font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 11px;
@@ -3321,7 +3336,10 @@ window.fbClearLoginHistory = async function(uid) {
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllAnnouncements()"><i data-lucide="bell-off"></i> Réinitialiser toutes les annonces</button>
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
-            <select id="reset-game-select" class="form-select" style="max-width:220px;font-size:12px;padding:9px 12px"></select>
+            <div class="reset-game-select-wrap">
+              <select id="reset-game-select" class="reset-game-select"></select>
+              <i data-lucide="chevron-down" class="reset-game-select-arrow"></i>
+            </div>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetOneGamePlays()"><i data-lucide="rotate-ccw"></i> Réinitialiser le compteur de ce jeu</button>
           </div>
         </div>
@@ -3751,6 +3769,15 @@ window.fbClearLoginHistory = async function(uid) {
           <div class="admin-card-header"><span class="admin-card-title">Titre du site</span></div>
           <div class="form-group"><label class="form-label">Titre de l'onglet</label><input type="text" class="form-input" id="f-page-title" value="Garden Studio - Discover Collect Game"></div>
           <button class="btn-primary" style="font-size:12px" onclick="applyPageTitle()">Appliquer</button>
+        </div>
+        <div class="admin-card">
+          <div class="admin-card-header"><span class="admin-card-title">Modération des commentaires</span></div>
+          <div class="admin-section-sub" style="margin-bottom:12px">Liste les mots à bannir (un par ligne ou séparés par une virgule). Dès qu'un joueur poste un commentaire contenant un de ces mots, il est automatiquement remplacé par des ***.</div>
+          <div class="form-group">
+            <label class="form-label">Mots bannis</label>
+            <textarea class="form-textarea" id="f-banned-words" placeholder="ex: motinterdit1, motinterdit2"></textarea>
+          </div>
+          <button class="btn-primary" style="font-size:12px" onclick="saveBannedWords()">Enregistrer</button>
         </div>
       </div>
 
@@ -5063,7 +5090,7 @@ async function postGameComment() {
       uid: currentUser.email,
       username: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
       avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
-      text: text.slice(0, 500)
+      text: censorText(text.slice(0, 500))
     };
     if (replyingToComment) {
       payload.replyTo = { id: replyingToComment.id, username: replyingToComment.username, text: replyingToComment.text.slice(0, 200) };
@@ -7871,6 +7898,33 @@ async function resetColors() {
 }
 
 // ===== SETTINGS =====
+// Liste des mots bannis (modération des commentaires), chargée depuis Firebase via applySettingsFromData.
+let bannedWords = [];
+function parseBannedWordsInput(raw) {
+  return (raw || '')
+    .split(/[\n,]/)
+    .map(w => w.trim())
+    .filter(Boolean);
+}
+async function saveBannedWords() {
+  bannedWords = parseBannedWordsInput(document.getElementById('f-banned-words')?.value || '');
+  if (window.fbSaveSettings) await window.fbSaveSettings(_getSettingsData());
+  showToast('✅ Liste des mots bannis mise à jour');
+  logChange('Liste de mots bannis mise à jour (' + bannedWords.length + ' mot(s))');
+}
+// Échappe les caractères spéciaux d'un mot pour l'utiliser dans une regex.
+function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+// Remplace chaque occurrence (mot entier, insensible à la casse) d'un mot banni par des astérisques.
+function censorText(text) {
+  if (!text || !bannedWords.length) return text;
+  let result = text;
+  bannedWords.forEach(word => {
+    if (!word) return;
+    const re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
+    result = result.replace(re, match => '*'.repeat(match.length));
+  });
+  return result;
+}
 function toggleSection(btn, selector) {
   btn.classList.toggle('on');
   const el = document.querySelector(selector);
@@ -7895,7 +7949,8 @@ function _getSettingsData() {
     card:  document.getElementById('c-card')  ? document.getElementById('c-card').value  : '#111319',
     gradient: cs.getPropertyValue('--gradient-accent').trim() || 'linear-gradient(135deg, #1a1a2e, #533483)',
     light: document.body.classList.contains('theme-light'),
-    title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title
+    title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title,
+    bannedWords: bannedWords
   };
 }
 
@@ -7915,6 +7970,9 @@ window.applySettingsFromData = function(s) {
     const inp = document.getElementById('f-page-title');
     if (inp) inp.value = s.title;
   }
+  bannedWords = Array.isArray(s?.bannedWords) ? s.bannedWords : [];
+  const bwInp = document.getElementById('f-banned-words');
+  if (bwInp) bwInp.value = bannedWords.join(', ');
 };
 
 // ===== KEYBOARD =====
