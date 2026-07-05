@@ -2056,6 +2056,11 @@ window.fbAddGameComment = async function(gameId, data) {
 window.fbDeleteGameComment = async function(gameId, commentId) {
   await deleteDoc(doc(db, 'games', gameId, 'comments', commentId));
 };
+// Supprime tous les commentaires d'un jeu d'un coup (modération globale depuis le Dashboard).
+window.fbDeleteAllGameComments = async function(gameId) {
+  const snap = await getDocs(collection(db, 'games', gameId, 'comments'));
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+};
 window.fbListenGameComments = function(gameId, callback) {
   const q = query(collection(db, 'games', gameId, 'comments'), orderBy('createdAt', 'desc'), limit(200));
   return onSnapshot(q, (snap) => {
@@ -3341,6 +3346,7 @@ window.fbClearLoginHistory = async function(uid) {
               <i data-lucide="chevron-down" class="reset-game-select-arrow"></i>
             </div>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetOneGamePlays()"><i data-lucide="rotate-ccw"></i> Réinitialiser le compteur de ce jeu</button>
+            <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmDeleteAllGameComments()"><i data-lucide="message-square-x"></i> Supprimer tous les commentaires de ce jeu</button>
           </div>
         </div>
       </div>
@@ -8189,6 +8195,34 @@ async function resetOneGamePlays(name) {
     g.plays = previous;
     console.error('Erreur reset compteur jeu:', e);
     showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+
+// ===== SUPPRESSION DE TOUS LES COMMENTAIRES D'UN JEU CIBLÉ =====
+function confirmDeleteAllGameComments() {
+  const select = document.getElementById('reset-game-select');
+  const name = select?.value;
+  if (!name) { showToast('Choisis un jeu à cibler'); return; }
+  const g = games.find(g => g.name === name);
+  if (!g) { showToast('❌ Jeu introuvable'); return; }
+  showConfirm(
+    'Supprimer tous les commentaires ?',
+    `Cette action va supprimer TOUS les commentaires de "${name}" définitivement. Impossible à annuler.`,
+    () => deleteAllGameComments(g)
+  );
+}
+async function deleteAllGameComments(g) {
+  if (!window.fbDeleteAllGameComments) return;
+  try {
+    await window.fbDeleteAllGameComments(gameCommentsId(g));
+    showToast(`✅ Tous les commentaires de "${g.name}" ont été supprimés`);
+    logChange('Tous les commentaires supprimés : "' + g.name + '"');
+    if (currentCommentsGameId === gameCommentsId(g) && document.getElementById('game-modal').classList.contains('open')) {
+      openGameModalDirect(parseInt(document.getElementById('game-modal').dataset.index));
+    }
+  } catch (e) {
+    console.error('Erreur suppression commentaires:', e);
+    showToast('❌ Erreur lors de la suppression');
   }
 }
 
