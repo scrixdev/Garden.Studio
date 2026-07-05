@@ -1194,17 +1194,26 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-submit-btn:hover { background: var(--glass-highlight), rgba(var(--lime-rgb),0.34); transform: scale(1.06); }
 .comment-submit-btn:active { transform: scale(0.94); }
 .comment-submit-btn svg, .comment-submit-btn i { width: 17px; height: 17px; }
-.comments-list { display: flex; flex-direction: column; gap: 12px; }
+.comments-list { display: flex; flex-direction: column; gap: 14px; }
+/* ===== YOUTUBE-STYLE GLASS COMMENT BUBBLE ===== */
 .comment-item {
-  display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px;
-  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+  display: flex; gap: 12px; align-items: flex-start; padding: 16px 16px 14px; border-radius: 20px;
+  background: var(--glass-highlight), rgba(255,255,255,0.055);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(20px) saturate(170%); -webkit-backdrop-filter: blur(20px) saturate(170%);
+  box-shadow: var(--glass-shadow), 0 8px 24px rgba(0,0,0,0.28);
+  position: relative; transition: border-color 0.2s, box-shadow 0.2s;
+}
+.comment-item:hover {
+  border-color: rgba(255,255,255,0.4);
+  box-shadow: var(--glass-shadow), 0 10px 30px rgba(0,0,0,0.35);
 }
 .comment-avatar { flex-shrink: 0; }
-.comment-body { flex: 1; min-width: 0; }
-.comment-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.comment-body { flex: 1; min-width: 0; padding: 0; margin: 0; border-radius: 0; }
+.comment-header { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; }
 .comment-author { font-weight: 700; font-size: 13px; color: var(--white); }
 .comment-date { font-size: 11px; color: var(--gray); white-space: nowrap; }
-.comment-text { font-size: 13.5px; color: rgba(255,255,255,0.82); line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
+.comment-text { font-size: 13.5px; color: rgba(255,255,255,0.85); line-height: 1.55; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
 .comment-delete-btn { background: none; border: none; padding: 2px; color: rgba(255,255,255,0.35); cursor: pointer; flex-shrink: 0; display: flex; transition: color 0.15s; }
 .comment-delete-btn:hover { color: #ff6259; }
 .comment-delete-btn svg { width: 14px; height: 14px; }
@@ -1215,11 +1224,59 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-reply-cancel { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; flex-shrink: 0; display: flex; padding: 2px; }
 .comment-reply-cancel:hover { color: #fff; }
 .comment-reply-cancel svg { width: 15px; height: 15px; }
-.comment-item { cursor: pointer; }
-.comment-item:hover .comment-body { background: rgba(255,255,255,0.03); }
-.comment-body { border-radius: 8px; transition: background 0.15s; padding: 2px 6px; margin: -2px -6px; }
-.comment-quote { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 4px; padding-left: 8px; border-left: 2px solid rgba(255,255,255,0.2); }
+.comment-quote { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 6px; padding-left: 8px; border-left: 2px solid rgba(255,255,255,0.2); }
 .comment-quote strong { color: rgba(255,255,255,0.65); }
+/* Barre d'actions (like / dislike / répondre) en pilules glass, façon YouTube */
+.comment-actions-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.comment-vote-btn {
+  display: flex; align-items: center; gap: 6px; cursor: pointer;
+  background: var(--glass-highlight), rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.65); font-size: 12px; font-weight: 700; font-family: 'Barlow', sans-serif;
+  padding: 6px 12px; border-radius: 999px; backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%); box-shadow: var(--glass-shadow);
+  transition: color 0.15s, background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.comment-vote-btn:hover { color: #fff; background: var(--glass-highlight), rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.32); }
+.comment-vote-btn:active { transform: scale(0.92); }
+.comment-vote-btn svg { width: 14px; height: 14px; }
+.comment-vote-btn span:empty { display: none; }
+.comment-vote-btn.active-like { color: var(--lime); background: var(--glass-highlight), rgba(var(--lime-rgb),0.2); border-color: rgba(var(--lime-rgb),0.45); }
+.comment-vote-btn.active-dislike { color: #ff6259; background: var(--glass-highlight), rgba(255,98,89,0.16); border-color: rgba(255,98,89,0.4); }
+.comment-reply-btn2 {
+  background: var(--glass-highlight), rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;
+  cursor: pointer; padding: 7px 14px; border-radius: 999px; backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%); box-shadow: var(--glass-shadow);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.comment-reply-btn2:hover { color: #fff; background: var(--glass-highlight), rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.32); }
+/* Menu ⋮ (signaler / supprimer) */
+.comment-menu-wrap { position: relative; flex-shrink: 0; margin-left: auto; }
+.comment-menu-btn {
+  width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  background: var(--glass-highlight), rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14);
+  color: rgba(255,255,255,0.5); cursor: pointer; border-radius: 999px; backdrop-filter: blur(6px) saturate(150%);
+  -webkit-backdrop-filter: blur(6px) saturate(150%); box-shadow: var(--glass-shadow);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+}
+.comment-menu-btn:hover { color: #fff; background: var(--glass-highlight), rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.35); }
+.comment-menu-btn svg { width: 16px; height: 16px; }
+.comment-menu-dropdown {
+  display: none; position: absolute; top: 34px; right: 0; min-width: 160px;
+  background: var(--glass-highlight), rgba(16,17,22,0.94); border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 6px; box-shadow: var(--glass-shadow), 0 16px 38px rgba(0,0,0,0.55);
+  z-index: 30; backdrop-filter: blur(26px) saturate(180%); -webkit-backdrop-filter: blur(26px) saturate(180%);
+}
+.comment-menu-dropdown.open { display: block; animation: commentMenuPop 0.15s ease; }
+@keyframes commentMenuPop { from { opacity: 0; transform: translateY(-4px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.comment-menu-item {
+  display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 11px; background: none;
+  border: none; color: rgba(255,255,255,0.85); font-size: 12.5px; font-weight: 600; text-align: left;
+  cursor: pointer; border-radius: 9px; transition: background 0.15s;
+}
+.comment-menu-item:hover { background: rgba(255,255,255,0.1); }
+.comment-menu-item svg { width: 14px; height: 14px; flex-shrink: 0; }
+.comment-menu-item.danger { color: #ff6259; }
 
 /* ===== FEATURE ===== */
 
@@ -1712,7 +1769,7 @@ footer {
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1952,6 +2009,44 @@ window.fbListenGameComments = function(gameId, callback) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   }, (err) => { console.error('Erreur écoute commentaires:', err); callback([]); });
+};
+
+// ===== LIKES / DISLIKES DE COMMENTAIRES (champs likes[]/dislikes[] sur le doc commentaire) =====
+// Un like retire automatiquement le dislike existant (et inversement), comme sur YouTube.
+window.fbToggleCommentReaction = async function(gameId, commentId, uid, type) {
+  const ref = doc(db, 'games', gameId, 'comments', commentId);
+  const field = type === 'like' ? 'likes' : 'dislikes';
+  const otherField = type === 'like' ? 'dislikes' : 'likes';
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  const hasReacted = (data[field] || []).includes(uid);
+  const hasOther = (data[otherField] || []).includes(uid);
+  const updates = {};
+  if (hasReacted) {
+    updates[field] = arrayRemove(uid);
+  } else {
+    updates[field] = arrayUnion(uid);
+    if (hasOther) updates[otherField] = arrayRemove(uid);
+  }
+  await updateDoc(ref, updates);
+};
+
+// ===== SIGNALEMENTS DE COMMENTAIRES (Firestore: reports/{reportId}) =====
+// Collection globale : chaque signalement pointe vers le jeu + le commentaire concernés,
+// pour permettre à un admin de le retrouver et de le supprimer directement depuis le panel.
+window.fbReportComment = async function(data) {
+  const ref = await addDoc(collection(db, 'reports'), { ...data, createdAt: serverTimestamp() });
+  return ref.id;
+};
+window.fbGetReports = async function() {
+  const snap = await getDocs(collection(db, 'reports'));
+  const arr = [];
+  snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+  return arr;
+};
+window.fbDeleteReport = async function(id) {
+  await deleteDoc(doc(db, 'reports', id));
 };
 
 // ===== LIKES DE JEUX (Firestore: games/{gameId}/likes/{email}) =====
@@ -3136,6 +3231,10 @@ window.fbClearLoginHistory = async function(uid) {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
         Candidatures <span id="cand-badge" style="background:var(--lime);color:var(--dark);font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
       </div>
+      <div class="sidebar-item" id="sidebar-reports-btn" onclick="showSection('signalements',this);loadReportsAdmin()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+        Signalements <span id="reports-badge" style="background:#ff4040;color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
+      </div>
       <div class="sidebar-item" onclick="showSection('announcements',this);renderAnnouncementsHistory()">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l18-5v12L3 14v-3z"/><path d="M11.6 16.8a2 2 0 0 1-3.2 2.4L6 15"/></svg>
         Annonces
@@ -3155,6 +3254,7 @@ window.fbClearLoginHistory = async function(uid) {
           <div class="stat-card"><div class="stat-value" id="dash-games-count">10</div><div class="stat-label">Jeux</div></div>
           <div class="stat-card"><div class="stat-value" id="dash-gamers-count">8</div><div class="stat-label">Membres équipe</div></div>
           <div class="stat-card"><div class="stat-value" id="dash-cand-count" style="color:var(--lime)">0</div><div class="stat-label">Candidatures</div></div>
+          <div class="stat-card"><div class="stat-value" id="dash-reports-count" style="color:#ff4040">0</div><div class="stat-label">Signalements</div></div>
         </div>
         <div class="admin-card">
           <div class="admin-card-header"><span class="admin-card-title">Modifications récentes</span></div>
@@ -3666,6 +3766,42 @@ window.fbClearLoginHistory = async function(uid) {
         </div>
       </div>
 
+      <!-- SIGNALEMENTS -->
+      <div class="admin-section" id="section-signalements">
+        <div class="admin-section-title">Signalements</div>
+        <div class="admin-section-sub">Commentaires signalés par les joueurs (insultes, spam, contenu inapproprié...)</div>
+        <div id="reports-list"></div>
+
+        <!-- Detail modal -->
+        <div class="modal-overlay" id="report-detail" onclick="closeReportDetail(event)" style="z-index:10000">
+          <div class="modal-box" style="max-width:560px;width:92%;height:auto;max-height:86vh;overflow-y:auto;background:var(--glass-highlight), rgba(10,10,14,0.82);border:1px solid var(--glass-border);backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);box-shadow:var(--glass-shadow), 0 30px 80px rgba(0,0,0,0.55);border-radius:20px;padding:36px 40px">
+            <button class="modal-close" onclick="closeReportDetail()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ff4040;margin-bottom:8px">Signalement</div>
+            <div id="rd-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:20px;line-height:1.1;padding-right:40px"></div>
+            <div style="margin-bottom:16px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Commentaire signalé</div>
+              <div id="rd-comment-text" style="font-size:13.5px;color:#fff;line-height:1.7;background:rgba(255,64,64,0.08);border:1px solid rgba(255,64,64,0.22);padding:14px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+              <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Auteur du commentaire</div><div id="rd-author" style="font-size:14px;font-weight:600"></div></div>
+              <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Signalé par</div><div id="rd-reporter" style="font-size:14px;font-weight:600"></div></div>
+              <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Jeu concerné</div><div id="rd-game" style="font-size:14px;font-weight:600;color:var(--lime)"></div></div>
+              <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Date</div><div id="rd-date" style="font-size:14px;font-weight:600"></div></div>
+            </div>
+            <div style="margin-bottom:20px">
+              <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Raison du signalement</div>
+              <div id="rd-reason" style="font-size:13px;color:var(--gray);line-height:1.7;background:var(--glass-highlight), rgba(0,0,0,0.35);border:1px solid var(--glass-border);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:var(--glass-shadow);padding:14px;border-radius:10px"></div>
+            </div>
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+              <button class="btn-delete" onclick="deleteReportedComment()"><i data-lucide="trash-2"></i> Supprimer le commentaire</button>
+              <button class="btn-outline" style="font-size:11px;padding:10px 20px" onclick="dismissReport()"><i data-lucide="check"></i> Ignorer (rien à faire)</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- ANNONCES -->
       <div class="admin-section" id="section-announcements">
         <div class="admin-section-title">Annonces</div>
@@ -4022,6 +4158,112 @@ function filterCandidatures(filter, btn) {
   });
   if (btn) { btn.className = 'btn-primary'; btn.style.fontSize = '11px'; btn.style.padding = '7px 16px'; }
   renderCandidatures();
+}
+
+// ===== SIGNALEMENTS (Firestore: collection "reports") =====
+let reports = [];
+let reportsLoaded = false;
+let currentReportIndex = -1;
+async function loadReportsAdmin(force) {
+  if (reportsLoaded && !force) return;
+  const list = document.getElementById('reports-list');
+  try {
+    reports = window.fbGetReports ? await window.fbGetReports() : [];
+    reports.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+    reportsLoaded = true;
+  } catch (e) {
+    console.error('❌ Erreur chargement signalements:', e);
+    reports = [];
+    if (list) list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray)">Erreur de chargement des signalements.</div>';
+    return;
+  }
+  updateReportsBadge();
+  renderReports();
+}
+function updateReportsBadge() {
+  const badge = document.getElementById('reports-badge');
+  if (badge) { badge.textContent = reports.length; badge.style.display = reports.length ? 'inline' : 'none'; }
+  const dashEl = document.getElementById('dash-reports-count');
+  if (dashEl) dashEl.textContent = reports.length;
+}
+function renderReports() {
+  const list = document.getElementById('reports-list');
+  if (!list) return;
+  if (!reports.length) {
+    list.innerHTML = `<div style="text-align:center;padding:40px;color:var(--gray);font-size:13px">Aucun signalement pour l'instant. 🎉</div>`;
+    return;
+  }
+  list.innerHTML = reports.map((r, i) => {
+    const dateStr = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '';
+    return `<div class="cand-item" onclick="openReportDetail(${i})">
+      <div class="cand-avatar" style="background:rgba(255,64,64,0.15);color:#ff4040">${(r.commentAuthor || '?').charAt(0).toUpperCase()}</div>
+      <div class="cand-info">
+        <div class="cand-name">${escapeHTML(r.commentAuthor || 'Utilisateur')} <span style="color:var(--gray)">· signalé par ${escapeHTML(r.reportedByUsername || 'un joueur')}</span></div>
+        <div class="cand-meta">${escapeHTML((r.commentText || '').slice(0, 70))}${(r.commentText || '').length > 70 ? '…' : ''} ${dateStr ? '· ' + dateStr : ''}</div>
+      </div>
+      <span class="cand-status" style="background:rgba(255,64,64,0.1);color:#ff4040">Signalé</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>`;
+  }).join('');
+  if (window.lucide) lucide.createIcons();
+}
+function openReportDetail(idx) {
+  currentReportIndex = idx;
+  const r = reports[idx];
+  document.getElementById('rd-title').textContent = `Commentaire de ${r.commentAuthor || 'Utilisateur'}`;
+  document.getElementById('rd-comment-text').textContent = r.commentText || '(commentaire vide ou déjà supprimé)';
+  document.getElementById('rd-author').textContent = r.commentAuthor || 'Utilisateur';
+  document.getElementById('rd-reporter').textContent = r.reportedByUsername || 'Utilisateur';
+  const g = games.find(gm => gameCommentsId(gm) === r.gameId);
+  document.getElementById('rd-game').textContent = g ? (g.name || r.gameId) : (r.gameId || '—');
+  document.getElementById('rd-date').textContent = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) + ' à ' + r.createdAt.toDate().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : 'À l\'instant';
+  document.getElementById('rd-reason').textContent = r.reason || 'Aucune raison précisée.';
+  document.getElementById('report-detail').classList.add('open');
+}
+function closeReportDetail(e) {
+  if (e && e.target !== document.getElementById('report-detail')) return;
+  document.getElementById('report-detail').classList.remove('open');
+}
+function deleteReportedComment() {
+  if (currentReportIndex < 0) return;
+  const r = reports[currentReportIndex];
+  showConfirm('Supprimer ce commentaire ?', 'Le commentaire sera définitivement supprimé du jeu concerné, et le signalement sera clos.', async () => {
+    try {
+      if (r.gameId && r.commentId && window.fbDeleteGameComment) {
+        await window.fbDeleteGameComment(r.gameId, r.commentId);
+      }
+      if (window.fbDeleteReport) await window.fbDeleteReport(r.id);
+    } catch (e) {
+      console.error('❌ Erreur suppression commentaire signalé:', e);
+      showToast('❌ Erreur lors de la suppression');
+      return;
+    }
+    reports.splice(currentReportIndex, 1);
+    updateReportsBadge();
+    document.getElementById('report-detail').classList.remove('open');
+    currentReportIndex = -1;
+    renderReports();
+    showToast('Commentaire supprimé et signalement clos.');
+  });
+}
+function dismissReport() {
+  if (currentReportIndex < 0) return;
+  const r = reports[currentReportIndex];
+  showConfirm('Ignorer ce signalement ?', "Le commentaire restera visible, mais le signalement disparaîtra du panel.", async () => {
+    try {
+      if (window.fbDeleteReport) await window.fbDeleteReport(r.id);
+    } catch (e) {
+      console.error('❌ Erreur suppression signalement:', e);
+      showToast('❌ Erreur lors de la mise à jour');
+      return;
+    }
+    reports.splice(currentReportIndex, 1);
+    updateReportsBadge();
+    document.getElementById('report-detail').classList.remove('open');
+    currentReportIndex = -1;
+    renderReports();
+    showToast('Signalement ignoré.');
+  }, 'Ignorer', false);
 }
 
 // ===== APPLY MODAL =====
@@ -4551,28 +4793,103 @@ function renderGameComments(comments) {
     list.innerHTML = `<div class="comments-empty">Aucun commentaire pour l'instant. Sois le premier à réagir !</div>`;
     return;
   }
+  const uid = currentUser ? currentUser.email : null;
   list.innerHTML = comments.map(c => {
     const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
     const authorName = escapeHTML(c.username || 'Utilisateur');
     const quote = c.replyTo ? `<div class="comment-quote"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong> : ${escapeHTML((c.replyTo.text || '').slice(0, 80))}</div>` : '';
+    const likes = c.likes || [];
+    const dislikes = c.dislikes || [];
+    const liked = uid && likes.includes(uid);
+    const disliked = uid && dislikes.includes(uid);
     return `<div class="comment-item">
       <div class="comment-avatar">${navAvatarHTML(c.avatarURL, c.username, 34)}</div>
-      <div class="comment-body" title="Cliquer pour répondre" onclick="startReplyToComment('${c.id}')">
+      <div class="comment-body">
         <div class="comment-header">
           <span class="comment-author">${authorName}</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="comment-date">${formatCommentDate(c.createdAt)}</span>
-            ${canDelete ? `<button type="button" class="comment-delete-btn" onclick="event.stopPropagation();deleteGameComment('${c.id}')" title="Supprimer">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-            </button>` : ''}
-          </div>
+          <span class="comment-date">${formatCommentDate(c.createdAt)}</span>
         </div>
         ${quote}
         <div class="comment-text">${escapeHTML(c.text)}</div>
+        <div class="comment-actions-row">
+          <button type="button" class="comment-vote-btn ${liked ? 'active-like' : ''}" onclick="toggleCommentVote('${c.id}','like')" title="J'aime">
+            <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+            <span>${likes.length > 0 ? likes.length : ''}</span>
+          </button>
+          <button type="button" class="comment-vote-btn ${disliked ? 'active-dislike' : ''}" onclick="toggleCommentVote('${c.id}','dislike')" title="Je n'aime pas">
+            <svg viewBox="0 0 24 24" fill="${disliked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
+          </button>
+          <button type="button" class="comment-reply-btn2" onclick="startReplyToComment('${c.id}')">Répondre</button>
+        </div>
+      </div>
+      <div class="comment-menu-wrap">
+        <button type="button" class="comment-menu-btn" onclick="toggleCommentMenu(event,'${c.id}')" title="Options">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="0"><circle cx="12" cy="6" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="18" r="1.8" fill="currentColor"/></svg>
+        </button>
+        <div class="comment-menu-dropdown" id="comment-menu-${c.id}">
+          <button type="button" class="comment-menu-item" onclick="reportComment('${c.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            Signaler
+          </button>
+          ${canDelete ? `<button type="button" class="comment-menu-item danger" onclick="deleteGameComment('${c.id}')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            Supprimer
+          </button>` : ''}
+        </div>
       </div>
     </div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
+}
+// Ferme tous les menus ⋮ ouverts quand on clique ailleurs
+document.addEventListener('click', () => {
+  document.querySelectorAll('.comment-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+});
+function toggleCommentMenu(ev, commentId) {
+  ev.stopPropagation();
+  const target = document.getElementById('comment-menu-' + commentId);
+  const wasOpen = target && target.classList.contains('open');
+  document.querySelectorAll('.comment-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+  if (target && !wasOpen) target.classList.add('open');
+}
+async function toggleCommentVote(commentId, type) {
+  if (!requireAccount()) return;
+  if (!currentCommentsGameId || !window.fbToggleCommentReaction) return;
+  try {
+    await window.fbToggleCommentReaction(currentCommentsGameId, commentId, currentUser.email, type);
+  } catch (e) {
+    console.error('Erreur vote commentaire:', e);
+    showToast('❌ Erreur lors du vote');
+  }
+}
+// ===== SIGNALER UN COMMENTAIRE =====
+// Envoie le commentaire signalé dans la collection "reports", consultable et supprimable
+// depuis le panel admin (section Signalements).
+function reportComment(commentId) {
+  if (!requireAccount()) return;
+  const c = lastRenderedComments.find(x => x.id === commentId);
+  if (!c) return;
+  document.querySelectorAll('.comment-menu-dropdown.open').forEach(el => el.classList.remove('open'));
+  showPrompt('Signaler ce commentaire', 'Explique brièvement pourquoi (insulte, spam, contenu inapproprié...)', '', async (reason) => {
+    if (!window.fbReportComment) return;
+    try {
+      await window.fbReportComment({
+        gameId: currentCommentsGameId,
+        commentId: c.id,
+        commentText: c.text || '',
+        commentAuthor: c.username || 'Utilisateur',
+        commentAuthorUid: c.uid || '',
+        reportedByUid: currentUser.email,
+        reportedByUsername: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
+        reason: (reason || '').slice(0, 300),
+        status: 'pending'
+      });
+      showToast('Commentaire signalé. Merci de nous aider à garder le site sain !');
+    } catch (e) {
+      console.error('Erreur signalement commentaire:', e);
+      showToast('❌ Erreur lors du signalement');
+    }
+  });
 }
 // ===== RÉPONDRE À UN COMMENTAIRE =====
 // On clique sur le message de quelqu'un -> une bannière "Réponse à ..." apparaît
@@ -5976,6 +6293,7 @@ function openAdmin() {
   updateAdminMembersVisibility();
   allMembersCache = null;
   loadCandidaturesAdmin(true);
+  loadReportsAdmin(true);
 }
 
 function closeAdmin() {
