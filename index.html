@@ -5122,24 +5122,57 @@ async function postGameComment() {
     }
     const newCommentId = await window.fbAddGameComment(gameCommentsId(g), payload);
     // Mot banni détecté : signalement automatique avec le texte ORIGINAL (non censuré)
-    // pour que l'admin puisse voir exactement ce qui a été écrit, dans le panel Signalements.
-    if (flagged && window.fbReportComment) {
+    // pour que l'admin puisse voir exactement ce qui a été écrit, dans le panel Signalements,
+    // PUIS suppression automatique du commentaire fautif, ET avertissement envoyé à l'auteur
+    // (notif personnelle visible dans la page Annonces, compteur d'avertissements sur son profil).
+    if (flagged) {
       try {
-        await window.fbReportComment({
-          gameId: gameCommentsId(g),
-          commentId: newCommentId,
-          commentText: originalText,
-          commentAuthor: authorUsername,
-          commentAuthorAvatar: currentUserProfile?.avatarURL || currentUser.photoURL || '',
-          commentAuthorUid: currentUser.email,
-          reportedByUid: currentUser.email,
-          reportedByUsername: 'Signalement automatique (mot banni)',
-          reason: 'Mot banni détecté automatiquement dans ce commentaire.',
-          status: 'pending'
-        });
-        reportsLoaded = false; // force le rechargement de la liste au prochain passage sur l'onglet Signalements
+        if (window.fbReportComment) {
+          await window.fbReportComment({
+            gameId: gameCommentsId(g),
+            commentId: newCommentId,
+            commentText: originalText,
+            commentAuthor: authorUsername,
+            commentAuthorAvatar: currentUserProfile?.avatarURL || currentUser.photoURL || '',
+            commentAuthorUid: currentUser.email,
+            reportedByUid: currentUser.email,
+            reportedByUsername: 'Signalement automatique (mot banni)',
+            reason: 'Mot banni détecté automatiquement — commentaire supprimé et avertissement envoyé à l\'auteur.',
+            status: 'pending'
+          });
+          reportsLoaded = false; // force le rechargement de la liste au prochain passage sur l'onglet Signalements
+        }
       } catch (e) {
         console.error('Erreur signalement automatique:', e);
+      }
+      try {
+        // Suppression automatique du commentaire fautif (l'auteur peut supprimer son propre
+        // commentaire selon les règles Firestore, donc ça passe même sans droits admin).
+        if (window.fbDeleteGameComment) {
+          await window.fbDeleteGameComment(gameCommentsId(g), newCommentId);
+        }
+      } catch (e) {
+        console.error('Erreur suppression automatique du commentaire:', e);
+      }
+      try {
+        // Avertissement : compteur stocké sur le profil de l'auteur + notif personnelle
+        // (visible uniquement par lui, dans la page Annonces) l'informant du motif et
+        // le prévenant qu'un nouvel avertissement entraînera des sanctions.
+        const newWarningCount = (currentUserProfile?.warningCount || 0) + 1;
+        if (window.fbSaveUserProfile) {
+          await window.fbSaveUserProfile(currentUser.uid, { warningCount: newWarningCount });
+          currentUserProfile = { ...(currentUserProfile || {}), warningCount: newWarningCount };
+        }
+        await publishNotification(
+          'announcement',
+          '⚠️ Avertissement',
+          `Ton commentaire a été supprimé automatiquement car il contenait un langage inapproprié (insulte ou mot banni). Ceci est ton avertissement n°${newWarningCount}. Si tu reçois un nouvel avertissement, des sanctions seront prises contre ton compte (suspension ou bannissement).`,
+          '',
+          currentUser.email
+        );
+        showToast('⚠️ Commentaire supprimé : langage inapproprié détecté. Tu as reçu un avertissement.');
+      } catch (e) {
+        console.error('Erreur envoi avertissement:', e);
       }
     }
     input.value = '';
