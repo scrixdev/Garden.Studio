@@ -1821,7 +1821,7 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, collectionGroup, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1933,6 +1933,19 @@ window.fbAddPersonalNotification = async function(uid, item) {
 };
 window.fbGetPersonalNotifications = async function(uid) {
   const snap = await getDocs(collection(db, 'users', uid, 'notifications'));
+  const arr = [];
+  snap.forEach(d => arr.push(d.data()));
+  return arr;
+};
+window.fbDeletePersonalNotification = async function(uid, id) {
+  await deleteDoc(doc(db, 'users', uid, 'notifications', id));
+};
+// Admin uniquement : lit les notifications personnelles de TOUS les comptes d'un coup
+// (via une "collection group query", autorisée par la règle isAdmin() sur
+// users/{uid}/notifications). Utilisé pour lister/supprimer les avertissements de
+// modération depuis le panel Annonces, quel que soit le membre concerné.
+window.fbGetAllPersonalNotifications = async function() {
+  const snap = await getDocs(collectionGroup(db, 'notifications'));
   const arr = [];
   snap.forEach(d => arr.push(d.data()));
   return arr;
@@ -5273,7 +5286,8 @@ async function postGameComment() {
         const template = bannedMatch.category === 'harcelement' ? warningMsgHarcelement : warningMsgInsulte;
         const detailMsg = template.replace(/\{n\}/g, newWarningCount);
         const title = bannedMatch.category === 'harcelement' ? '⚠️ Avertissement — Harcèlement' : '⚠️ Avertissement — Insulte';
-        await publishPersonalNotification('announcement', title, detailMsg, currentUser.uid);
+        const warningType = bannedMatch.category === 'harcelement' ? 'warning-harcelement' : 'warning-insulte';
+        await publishPersonalNotification(warningType, title, detailMsg, currentUser.uid, '', { fromUsername: authorUsername });
         showToast(`⚠️ Commentaire supprimé : ${categoryLabel} détectée. Tu as reçu un avertissement.`);
       } catch (e) {
         console.error('Erreur envoi avertissement:', e);
@@ -5667,7 +5681,7 @@ async function saveNotifications() { if (window.fbSaveNotifications) await windo
 function notifAllowed(n) {
   if (!currentUser || !currentUserProfile) return true;
   const prefs = currentUserProfile.notifPrefs || {};
-  if (n.type === 'announcement') return prefs.announcements !== false;
+  if (n.type === 'announcement' || n.type === 'warning-harcelement' || n.type === 'warning-insulte') return prefs.announcements !== false;
   return prefs.games !== false;
 }
 function notifIsForCurrentUser(n) {
@@ -5698,7 +5712,7 @@ async function publishNotification(type, title, detail, gameName, targetUserId, 
 async function publishPersonalNotification(type, title, detail, targetUid, gameName, extra) {
   const linkedGame = (gameName && typeof games !== 'undefined') ? games.find(g => g.name === gameName) : null;
   const item = Object.assign(
-    { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), type, title, detail, gameName: gameName || '', img: linkedGame?.img || '', date: new Date().toISOString(), targetUid: targetUid || null },
+    { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), type, title, detail, gameName: gameName || '', img: linkedGame?.img || '', date: new Date().toISOString(), targetUid: targetUid || null, uid: targetUid || null },
     extra || {}
   );
   // Affichage immédiat côté client (pas besoin d'attendre l'aller-retour Firestore).
@@ -5814,29 +5828,56 @@ const AUTO_ANNOUNCEMENT_LABELS = {
   'game-deleted': { label: '🎮 Jeu supprimé', color: '#ff5252' },
   'hero-created': { label: '🖼️ Bannière publiée', color: '#39FF14' },
   'hero-updated': { label: '🖼️ Bannière modifiée', color: '#2f7dfa' },
-  'hero-deleted': { label: '🖼️ Bannière supprimée', color: '#ff5252' }
+  'hero-deleted': { label: '🖼️ Bannière supprimée', color: '#ff5252' },
+  'warning-harcelement': { label: '⚠️ Avertissement — Harcèlement', color: '#ff4040' },
+  'warning-insulte': { label: '⚠️ Avertissement — Insulte', color: '#ffb020' }
 };
-function renderAnnouncementsHistory() {
+// Types d'avertissements personnels : stockés dans users/{uid}/notifications (pas dans
+// le document partagé site/notifications), donc traités à part dans le panel admin.
+const WARNING_TYPES = ['warning-harcelement', 'warning-insulte'];
+// Cache des avertissements de TOUS les comptes, chargé à la demande (dès qu'on ouvre
+// l'onglet Annonces en admin) pour éviter une lecture Firestore à chaque frappe/rendu.
+let _adminWarningNotifs = null;
+async function loadAdminWarningNotifs(force) {
+  if (_adminWarningNotifs && !force) return _adminWarningNotifs;
+  if (!isAdmin() || !window.fbGetAllPersonalNotifications) { _adminWarningNotifs = []; return _adminWarningNotifs; }
+  try {
+    const all = await window.fbGetAllPersonalNotifications();
+    _adminWarningNotifs = all.filter(n => WARNING_TYPES.includes(n.type));
+  } catch (e) {
+    console.error('Erreur chargement avertissements (admin):', e);
+    _adminWarningNotifs = [];
+  }
+  return _adminWarningNotifs;
+}
+async function renderAnnouncementsHistory() {
   const list = document.getElementById('announcements-list');
   if (!list) return;
-  // Annonces manuelles + annonces automatiques (jeux/hero), on exclut les notifs ciblées (candidatures, etc.)
+  const warnings = await loadAdminWarningNotifs();
+  // Annonces manuelles + annonces automatiques (jeux/hero) + avertissements de modération
+  // (tous comptes confondus), on exclut les autres notifs ciblées (candidatures, etc.)
   const anns = notifications
     .filter(n => n.type === 'announcement' || AUTO_ANNOUNCEMENT_LABELS[n.type])
-    .filter(n => !n.targetUserId && !n.targetUid)
+    .filter(n => (!n.targetUserId && !n.targetUid) || WARNING_TYPES.includes(n.type))
+    .concat(warnings)
+    .filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i) // dédoublonne (ex: ton propre avertissement présent des 2 côtés)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   if (!anns.length) { list.innerHTML = 'Aucune annonce envoyée pour l\'instant.'; return; }
   list.innerHTML = anns.map(n => {
     const pollTag = n.poll ? '<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(124,92,255,0.15);color:#a78bfa;font-size:10.5px;font-weight:700;vertical-align:middle">🗳️ sondage</span>' : '';
     const auto = AUTO_ANNOUNCEMENT_LABELS[n.type];
     const autoTag = auto ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:${auto.color}22;color:${auto.color};font-size:10.5px;font-weight:700;vertical-align:middle">${auto.label}</span>` : '';
+    const isWarning = WARNING_TYPES.includes(n.type);
+    const targetTag = isWarning && n.fromUsername ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--gray);font-size:10.5px;font-weight:700;vertical-align:middle">👤 ${escapeHTML(n.fromUsername)}</span>` : '';
+    const deleteAction = isWarning ? `confirmDeleteWarningNotif('${n.uid}','${n.id}')` : `confirmDeleteAnnouncement('${n.id}')`;
     return `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
       <div style="min-width:0;flex:1">
-        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.title)}${pollTag}${autoTag}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.title)}${pollTag}${autoTag}${targetTag}</div>
         <div style="font-size:12.5px;color:var(--gray);line-height:1.5;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.detail)}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">${formatNotifTime(n.date)}</div>
       </div>
-      <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="confirmDeleteAnnouncement('${n.id}')"><i data-lucide="trash-2"></i></button>
+      <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
     </div>`;
   }).join('');
   if (window.lucide) lucide.createIcons({ nodes: [list] });
@@ -5844,6 +5885,26 @@ function renderAnnouncementsHistory() {
 function confirmDeleteAnnouncement(id) {
   showConfirm('Supprimer cette annonce ?', 'Cette action est irréversible.', async () => {
     await deleteAnnouncement(id);
+  });
+}
+// Supprime un avertissement de modération (insulte/harcèlement) : contrairement aux
+// annonces classiques, il vit dans users/{uid}/notifications et pas dans le document
+// partagé site/notifications, donc on passe par fbDeletePersonalNotification.
+function confirmDeleteWarningNotif(uid, id) {
+  showConfirm('Supprimer cet avertissement ?', 'Cette action est irréversible.', async () => {
+    try {
+      if (window.fbDeletePersonalNotification) await window.fbDeletePersonalNotification(uid, id);
+      if (_adminWarningNotifs) _adminWarningNotifs = _adminWarningNotifs.filter(n => n.id !== id);
+      personalNotifications = personalNotifications.filter(n => n.id !== id);
+      const idx = notifications.findIndex(n => n.id === id);
+      if (idx !== -1) notifications.splice(idx, 1);
+      renderNotifications();
+      renderAnnouncementsHistory();
+      showToast('Avertissement supprimé');
+    } catch (e) {
+      console.error('Erreur suppression avertissement:', e);
+      showToast('❌ Erreur lors de la suppression');
+    }
   });
 }
 async function deleteAnnouncement(id) {
