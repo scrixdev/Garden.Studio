@@ -151,6 +151,11 @@ nav {
 .settings-avatar-preview { width: 72px; height: 72px; border-radius: 50%; object-fit: cover; flex: none; border: 3px solid rgba(255,255,255,0.08); }
 .settings-avatar-fallback { width: 72px; height: 72px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #fff; flex: none; border: 3px solid rgba(255,255,255,0.08); }
 .settings-banner-preview { width: 100%; height: 110px; border-radius: 14px; object-fit: cover; margin-bottom: 14px; background: rgba(255,255,255,0.04); }
+.banner-crop-frame { position: relative; width: 100%; aspect-ratio: 3 / 1; border-radius: 14px; overflow: hidden; background: #000; border: 1px solid rgba(255,255,255,0.14); cursor: grab; touch-action: none; user-select: none; }
+.banner-crop-frame:active { cursor: grabbing; }
+.banner-crop-frame img { position: absolute; top: 0; left: 0; max-width: none; max-height: none; pointer-events: none; will-change: transform, width, height; }
+.banner-crop-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--gray); }
+.banner-crop-zoom-row input[type="range"] { flex: 1; accent-color: var(--lime); }
 .settings-info-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .settings-info-row:last-child { border-bottom: none; }
 .settings-info-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.45); flex: none; }
@@ -2816,9 +2821,33 @@ window.fbClearLoginHistory = async function(uid) {
   </div>
 </div>
 
+<!-- ===== BANNER CROP MODAL (recadrage bannière profil, style Discord) ===== -->
+<div class="modal-overlay" id="banner-crop-modal" style="z-index:10500">
+  <div class="modal-box" style="max-width:520px;height:auto;max-height:none;padding:26px;overflow:visible">
+    <button class="modal-close" onclick="closeBannerCropModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:4px">Recadrer la bannière</div>
+    <p style="font-size:12.5px;color:var(--gray);margin-bottom:16px">Glisse l'image pour choisir la partie visible, ajuste le zoom si besoin.</p>
+    <div class="banner-crop-frame" id="banner-crop-frame">
+      <img id="banner-crop-img" src="" alt="" draggable="false">
+    </div>
+    <div class="banner-crop-zoom-row">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.65" y2="14.65"/></svg>
+      <input type="range" id="banner-crop-zoom" min="1" max="3" step="0.01" value="1" oninput="bannerCropZoomChange(this.value)">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.65" y2="14.65"/><line x1="10" y1="7" x2="10" y2="13"/><line x1="7" y1="10" x2="13" y2="10"/></svg>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:18px">
+      <button class="btn-outline" style="flex:1;padding:12px" onclick="closeBannerCropModal()">Annuler</button>
+      <button class="btn-primary" style="flex:1;padding:12px" onclick="confirmBannerCrop()">Valider</button>
+    </div>
+  </div>
+</div>
+
 <!-- ===== FOOTER ===== -->
 <footer class="site-footer">
   <div class="site-footer-grid">
+
 
     <!-- BRAND -->
     <div class="footer-brand">
@@ -7020,7 +7049,10 @@ async function saveGameEdit() {
     publishedAt: wasNew ? new Date().toISOString() : (games[i]?.publishedAt || new Date().toISOString()),
     plays: i >= 0 && games[i]?.plays ? games[i].plays : 0,
     likes: i >= 0 && Array.isArray(games[i]?.likes) ? games[i].likes : [],
-    dislikes: i >= 0 && Array.isArray(games[i]?.dislikes) ? games[i].dislikes : []
+    likesAt: i >= 0 && games[i]?.likesAt && typeof games[i].likesAt === 'object' ? games[i].likesAt : {},
+    dislikes: i >= 0 && Array.isArray(games[i]?.dislikes) ? games[i].dislikes : [],
+    ratings: i >= 0 && games[i]?.ratings && typeof games[i].ratings === 'object' ? games[i].ratings : {},
+    ratingsAt: i >= 0 && games[i]?.ratingsAt && typeof games[i].ratingsAt === 'object' ? games[i].ratingsAt : {}
   }, i >= 0 ? i : games.length);
   if (!data.name.trim()) { showToast('Nom requis'); return; }
   if (wasNew) games.push(data); else games[i] = data;
@@ -8276,6 +8308,7 @@ function clearLoginHistoryFlow() {
 async function handleSettingsImageUpload(input, kind) {
   const file = input.files && input.files[0];
   if (!file) return;
+  if (kind === 'banner') { openBannerCropModal(file, input); return; }
   showToast('Upload en cours...');
   try {
     let url;
@@ -8284,7 +8317,7 @@ async function handleSettingsImageUpload(input, kind) {
     } else {
       url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file); });
     }
-    if (kind === 'avatar') settingsTempAvatar = url; else settingsTempBanner = url;
+    settingsTempAvatar = url;
     input.value = '';
     renderSettingsPage();
     showToast('✅ Image ajoutée — n\'oublie pas d\'enregistrer');
@@ -8293,6 +8326,112 @@ async function handleSettingsImageUpload(input, kind) {
     showToast('❌ Erreur upload — vérifie les règles Firebase Storage');
   }
 }
+// ===== RECADRAGE BANNIÈRE (glisser/zoomer avant upload, comme Discord) =====
+let bannerCropState = null;
+function openBannerCropModal(file, input) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const frame = document.getElementById('banner-crop-frame');
+      const frameW = frame.clientWidth, frameH = frame.clientHeight;
+      const baseScale = Math.max(frameW / img.naturalWidth, frameH / img.naturalHeight);
+      bannerCropState = {
+        img, file, natW: img.naturalWidth, natH: img.naturalHeight,
+        baseScale, zoom: 1, frameW, frameH,
+        offX: (frameW - img.naturalWidth * baseScale) / 2,
+        offY: (frameH - img.naturalHeight * baseScale) / 2,
+        dragging: false, startX: 0, startY: 0, startOffX: 0, startOffY: 0
+      };
+      document.getElementById('banner-crop-img').src = e.target.result;
+      document.getElementById('banner-crop-zoom').value = 1;
+      updateBannerCropTransform();
+      document.getElementById('banner-crop-modal').classList.add('open');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  if (input) input.value = '';
+}
+function closeBannerCropModal() {
+  document.getElementById('banner-crop-modal')?.classList.remove('open');
+  bannerCropState = null;
+}
+function clampBannerCropOffsets() {
+  const s = bannerCropState; if (!s) return;
+  const dispW = s.natW * s.baseScale * s.zoom, dispH = s.natH * s.baseScale * s.zoom;
+  const minX = s.frameW - dispW, minY = s.frameH - dispH;
+  s.offX = Math.min(0, Math.max(minX, s.offX));
+  s.offY = Math.min(0, Math.max(minY, s.offY));
+}
+function updateBannerCropTransform() {
+  const s = bannerCropState; if (!s) return;
+  clampBannerCropOffsets();
+  const dispW = s.natW * s.baseScale * s.zoom, dispH = s.natH * s.baseScale * s.zoom;
+  const imgEl = document.getElementById('banner-crop-img');
+  if (!imgEl) return;
+  imgEl.style.width = dispW + 'px';
+  imgEl.style.height = dispH + 'px';
+  imgEl.style.transform = `translate(${s.offX}px, ${s.offY}px)`;
+}
+function bannerCropZoomChange(val) {
+  const s = bannerCropState; if (!s) return;
+  s.zoom = parseFloat(val) || 1;
+  updateBannerCropTransform();
+}
+function bannerCropDragStart(ev) {
+  const s = bannerCropState; if (!s) return;
+  ev.preventDefault();
+  const p = ev.touches ? ev.touches[0] : ev;
+  s.dragging = true;
+  s.startX = p.clientX; s.startY = p.clientY;
+  s.startOffX = s.offX; s.startOffY = s.offY;
+}
+function bannerCropDragMove(ev) {
+  const s = bannerCropState; if (!s || !s.dragging) return;
+  ev.preventDefault();
+  const p = ev.touches ? ev.touches[0] : ev;
+  s.offX = s.startOffX + (p.clientX - s.startX);
+  s.offY = s.startOffY + (p.clientY - s.startY);
+  updateBannerCropTransform();
+}
+function bannerCropDragEnd() { if (bannerCropState) bannerCropState.dragging = false; }
+function confirmBannerCrop() {
+  const s = bannerCropState; if (!s) return;
+  const OUT_W = 1200, OUT_H = 400;
+  const scale = s.baseScale * s.zoom;
+  const sx = -s.offX / scale, sy = -s.offY / scale;
+  const sw = s.frameW / scale, sh = s.frameH / scale;
+  const canvas = document.createElement('canvas');
+  canvas.width = OUT_W; canvas.height = OUT_H;
+  canvas.getContext('2d').drawImage(s.img, sx, sy, sw, sh, 0, 0, OUT_W, OUT_H);
+  canvas.toBlob(async (blob) => {
+    const savedFile = s.file;
+    closeBannerCropModal();
+    showToast('Upload en cours...');
+    try {
+      let url;
+      if (window.fbUploadImage) {
+        const croppedFile = new File([blob], (savedFile?.name || 'banner').replace(/\.[^.]+$/, '') + '-cropped.jpg', { type: 'image/jpeg' });
+        url = await window.fbUploadImage(croppedFile, 'user-banner');
+      } else {
+        url = canvas.toDataURL('image/jpeg', 0.9);
+      }
+      settingsTempBanner = url;
+      renderSettingsPage();
+      showToast('✅ Image ajoutée — n\'oublie pas d\'enregistrer');
+    } catch (e) {
+      console.error('Upload error:', e);
+      showToast('❌ Erreur upload — vérifie les règles Firebase Storage');
+    }
+  }, 'image/jpeg', 0.9);
+}
+document.addEventListener('mousemove', bannerCropDragMove);
+document.addEventListener('mouseup', bannerCropDragEnd);
+document.addEventListener('touchmove', bannerCropDragMove, { passive: false });
+document.addEventListener('touchend', bannerCropDragEnd);
+document.addEventListener('mousedown', (ev) => { if (ev.target && ev.target.closest && ev.target.closest('#banner-crop-frame')) bannerCropDragStart(ev); });
+document.addEventListener('touchstart', (ev) => { if (ev.target && ev.target.closest && ev.target.closest('#banner-crop-frame')) bannerCropDragStart(ev); }, { passive: false });
 function removeSettingsImage(kind) {
   if (kind === 'avatar') settingsTempAvatar = ''; else settingsTempBanner = '';
   renderSettingsPage();
