@@ -3778,12 +3778,29 @@ window.fbClearLoginHistory = async function(uid) {
         </div>
         <div class="admin-card">
           <div class="admin-card-header"><span class="admin-card-title">Modération des commentaires</span></div>
-          <div class="admin-section-sub" style="margin-bottom:12px">Liste les mots à bannir (un par ligne ou séparés par une virgule). Dès qu'un joueur poste un commentaire contenant un de ces mots, il est automatiquement remplacé par des ***.</div>
+          <div class="admin-section-sub" style="margin-bottom:16px">Liste les mots à bannir par catégorie (un par ligne ou séparés par une virgule). Dès qu'un joueur poste un commentaire contenant un de ces mots : il est automatiquement censuré (***), supprimé, signalé, et l'auteur reçoit l'avertissement personnalisé de la catégorie correspondante.</div>
+
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ff9d2f;margin-bottom:8px">😡 Catégorie : Harcèlement</div>
           <div class="form-group">
             <label class="form-label">Mots bannis</label>
-            <textarea class="form-textarea" id="f-banned-words" placeholder="ex: motinterdit1, motinterdit2"></textarea>
+            <textarea class="form-textarea" id="f-banned-words-harcelement" placeholder="ex: motinterdit1, motinterdit2"></textarea>
           </div>
-          <button class="btn-primary" style="font-size:12px" onclick="saveBannedWords()">Enregistrer</button>
+          <div class="form-group">
+            <label class="form-label">Message d'avertissement <span style="color:var(--gray);font-weight:400;text-transform:none;letter-spacing:0">— utilise {n} pour le numéro d'avertissement</span></label>
+            <textarea class="form-textarea" id="f-warning-msg-harcelement" placeholder="Message envoyé à l'auteur du commentaire..."></textarea>
+          </div>
+
+          <div style="font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#ff4040;margin:20px 0 8px">🤬 Catégorie : Insulte</div>
+          <div class="form-group">
+            <label class="form-label">Mots bannis</label>
+            <textarea class="form-textarea" id="f-banned-words-insulte" placeholder="ex: motinterdit1, motinterdit2"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Message d'avertissement <span style="color:var(--gray);font-weight:400;text-transform:none;letter-spacing:0">— utilise {n} pour le numéro d'avertissement</span></label>
+            <textarea class="form-textarea" id="f-warning-msg-insulte" placeholder="Message envoyé à l'auteur du commentaire..."></textarea>
+          </div>
+
+          <button class="btn-primary" style="font-size:12px;margin-top:8px" onclick="saveBannedWords()">Enregistrer</button>
         </div>
       </div>
 
@@ -5134,7 +5151,8 @@ async function postGameComment() {
   input.disabled = true; if (btn) btn.disabled = true;
   try {
     const originalText = text.slice(0, 500);
-    const flagged = textHasBannedWord(originalText);
+    const bannedMatch = findBannedWordMatch(originalText);
+    const flagged = !!bannedMatch;
     const authorUsername = currentUserProfile?.username || currentUser.displayName || 'Utilisateur';
     const payload = {
       uid: currentUser.email,
@@ -5155,8 +5173,10 @@ async function postGameComment() {
     // Mot banni détecté : signalement automatique avec le texte ORIGINAL (non censuré)
     // pour que l'admin puisse voir exactement ce qui a été écrit, dans le panel Signalements,
     // PUIS suppression automatique du commentaire fautif, ET avertissement envoyé à l'auteur
-    // (notif personnelle visible dans la page Annonces, compteur d'avertissements sur son profil).
+    // (notif personnelle visible dans la page Annonces, compteur d'avertissements sur son profil),
+    // avec le message dédié à la catégorie détectée (harcèlement ou insulte).
     if (flagged) {
+      const categoryLabel = bannedMatch.category === 'harcelement' ? 'harcèlement' : 'insulte';
       try {
         if (window.fbReportComment) {
           await window.fbReportComment({
@@ -5167,8 +5187,8 @@ async function postGameComment() {
             commentAuthorAvatar: currentUserProfile?.avatarURL || currentUser.photoURL || '',
             commentAuthorUid: currentUser.email,
             reportedByUid: currentUser.email,
-            reportedByUsername: 'Signalement automatique (mot banni)',
-            reason: 'Mot banni détecté automatiquement — commentaire supprimé et avertissement envoyé à l\'auteur.',
+            reportedByUsername: `Signalement automatique (${categoryLabel})`,
+            reason: `Mot banni détecté automatiquement — catégorie "${categoryLabel}" — commentaire supprimé et avertissement envoyé à l'auteur.`,
             status: 'pending'
           });
           reportsLoaded = false; // force le rechargement de la liste au prochain passage sur l'onglet Signalements
@@ -5188,20 +5208,19 @@ async function postGameComment() {
       try {
         // Avertissement : compteur stocké sur le profil de l'auteur + notif personnelle
         // (visible uniquement par lui, dans la page Annonces) l'informant du motif et
-        // le prévenant qu'un nouvel avertissement entraînera des sanctions.
+        // le prévenant qu'un nouvel avertissement entraînera des sanctions. Le message
+        // utilisé dépend de la catégorie détectée (chacune a le sien, personnalisable
+        // dans Réglages > Modération des commentaires).
         const newWarningCount = (currentUserProfile?.warningCount || 0) + 1;
         if (window.fbSaveUserProfile) {
           await window.fbSaveUserProfile(currentUser.uid, { warningCount: newWarningCount });
           currentUserProfile = { ...(currentUserProfile || {}), warningCount: newWarningCount };
         }
-        await publishNotification(
-          'announcement',
-          '⚠️ Avertissement',
-          `Ton commentaire a été supprimé automatiquement car il contenait un langage inapproprié (insulte ou mot banni). Ceci est ton avertissement n°${newWarningCount}. Si tu reçois un nouvel avertissement, des sanctions seront prises contre ton compte (suspension ou bannissement).`,
-          '',
-          currentUser.email
-        );
-        showToast('⚠️ Commentaire supprimé : langage inapproprié détecté. Tu as reçu un avertissement.');
+        const template = bannedMatch.category === 'harcelement' ? warningMsgHarcelement : warningMsgInsulte;
+        const detailMsg = template.replace(/\{n\}/g, newWarningCount);
+        const title = bannedMatch.category === 'harcelement' ? '⚠️ Avertissement — Harcèlement' : '⚠️ Avertissement — Insulte';
+        await publishNotification('announcement', title, detailMsg, '', currentUser.email);
+        showToast(`⚠️ Commentaire supprimé : ${categoryLabel} détectée. Tu as reçu un avertissement.`);
       } catch (e) {
         console.error('Erreur envoi avertissement:', e);
       }
@@ -8057,8 +8076,15 @@ async function resetColors() {
 }
 
 // ===== SETTINGS =====
-// Liste des mots bannis (modération des commentaires), chargée depuis Firebase via applySettingsFromData.
-let bannedWords = [];
+// Mots bannis (modération des commentaires), séparés en 2 catégories : harcèlement et
+// insulte. Chaque catégorie a sa propre liste de mots ET son propre message
+// d'avertissement automatique, chargés depuis Firebase via applySettingsFromData.
+const DEFAULT_WARNING_MSG_HARCELEMENT = "Ton commentaire a été supprimé automatiquement car il contenait des propos de harcèlement. Ceci est ton avertissement n°{n}. Si tu reçois un nouvel avertissement, des sanctions seront prises contre ton compte (suspension ou bannissement).";
+const DEFAULT_WARNING_MSG_INSULTE = "Ton commentaire a été supprimé automatiquement car il contenait une insulte. Ceci est ton avertissement n°{n}. Si tu reçois un nouvel avertissement, des sanctions seront prises contre ton compte (suspension ou bannissement).";
+let bannedWordsHarcelement = [];
+let bannedWordsInsulte = [];
+let warningMsgHarcelement = DEFAULT_WARNING_MSG_HARCELEMENT;
+let warningMsgInsulte = DEFAULT_WARNING_MSG_INSULTE;
 function parseBannedWordsInput(raw) {
   return (raw || '')
     .split(/[\n,]/)
@@ -8066,28 +8092,44 @@ function parseBannedWordsInput(raw) {
     .filter(Boolean);
 }
 async function saveBannedWords() {
-  bannedWords = parseBannedWordsInput(document.getElementById('f-banned-words')?.value || '');
+  bannedWordsHarcelement = parseBannedWordsInput(document.getElementById('f-banned-words-harcelement')?.value || '');
+  bannedWordsInsulte = parseBannedWordsInput(document.getElementById('f-banned-words-insulte')?.value || '');
+  warningMsgHarcelement = (document.getElementById('f-warning-msg-harcelement')?.value || '').trim() || DEFAULT_WARNING_MSG_HARCELEMENT;
+  warningMsgInsulte = (document.getElementById('f-warning-msg-insulte')?.value || '').trim() || DEFAULT_WARNING_MSG_INSULTE;
   if (window.fbSaveSettings) await window.fbSaveSettings(_getSettingsData());
-  showToast('✅ Liste des mots bannis mise à jour');
-  logChange('Liste de mots bannis mise à jour (' + bannedWords.length + ' mot(s))');
+  showToast('✅ Modération mise à jour');
+  logChange(`Modération mise à jour (${bannedWordsHarcelement.length} mot(s) harcèlement, ${bannedWordsInsulte.length} mot(s) insulte)`);
 }
 // Échappe les caractères spéciaux d'un mot pour l'utiliser dans une regex.
 function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-// Remplace chaque occurrence (mot entier, insensible à la casse) d'un mot banni par des astérisques.
+// Remplace chaque occurrence (mot entier, insensible à la casse) d'un mot banni, toutes
+// catégories confondues, par des astérisques.
 function censorText(text) {
-  if (!text || !bannedWords.length) return text;
+  if (!text) return text;
   let result = text;
-  bannedWords.forEach(word => {
+  [...bannedWordsHarcelement, ...bannedWordsInsulte].forEach(word => {
     if (!word) return;
     const re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
     result = result.replace(re, match => '*'.repeat(match.length));
   });
   return result;
 }
-// Détecte si un texte contient au moins un mot banni (mot entier, insensible à la casse).
+// Détecte si un texte contient un mot banni et renvoie sa catégorie ('harcelement' ou
+// 'insulte') + le mot trouvé, pour choisir le bon message d'avertissement à envoyer.
+// Retourne null si le texte est propre.
+function findBannedWordMatch(text) {
+  if (!text) return null;
+  for (const word of bannedWordsInsulte) {
+    if (word && new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i').test(text)) return { category: 'insulte', word };
+  }
+  for (const word of bannedWordsHarcelement) {
+    if (word && new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i').test(text)) return { category: 'harcelement', word };
+  }
+  return null;
+}
+// Détecte si un texte contient au moins un mot banni, toutes catégories confondues.
 function textHasBannedWord(text) {
-  if (!text || !bannedWords.length) return false;
-  return bannedWords.some(word => word && new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i').test(text));
+  return !!findBannedWordMatch(text);
 }
 function toggleSection(btn, selector) {
   btn.classList.toggle('on');
@@ -8114,7 +8156,10 @@ function _getSettingsData() {
     gradient: cs.getPropertyValue('--gradient-accent').trim() || 'linear-gradient(135deg, #1a1a2e, #533483)',
     light: document.body.classList.contains('theme-light'),
     title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title,
-    bannedWords: bannedWords
+    bannedWordsHarcelement: bannedWordsHarcelement,
+    bannedWordsInsulte: bannedWordsInsulte,
+    warningMsgHarcelement: warningMsgHarcelement,
+    warningMsgInsulte: warningMsgInsulte
   };
 }
 
@@ -8134,9 +8179,27 @@ window.applySettingsFromData = function(s) {
     const inp = document.getElementById('f-page-title');
     if (inp) inp.value = s.title;
   }
-  bannedWords = Array.isArray(s?.bannedWords) ? s.bannedWords : [];
-  const bwInp = document.getElementById('f-banned-words');
-  if (bwInp) bwInp.value = bannedWords.join(', ');
+  // Migration douce : si l'ancienne liste unique "bannedWords" existe encore (site pas
+  // encore resauvegardé depuis la mise à jour) et qu'aucune des 2 nouvelles catégories
+  // n'a de valeur, on verse l'ancienne liste dans "Insulte" par défaut plutôt que de
+  // perdre les mots déjà configurés.
+  const legacyList = Array.isArray(s?.bannedWords) ? s.bannedWords : [];
+  bannedWordsHarcelement = Array.isArray(s?.bannedWordsHarcelement) ? s.bannedWordsHarcelement : [];
+  bannedWordsInsulte = Array.isArray(s?.bannedWordsInsulte)
+    ? s.bannedWordsInsulte
+    : (legacyList.length ? legacyList : []);
+  warningMsgHarcelement = (typeof s?.warningMsgHarcelement === 'string' && s.warningMsgHarcelement.trim())
+    ? s.warningMsgHarcelement : DEFAULT_WARNING_MSG_HARCELEMENT;
+  warningMsgInsulte = (typeof s?.warningMsgInsulte === 'string' && s.warningMsgInsulte.trim())
+    ? s.warningMsgInsulte : DEFAULT_WARNING_MSG_INSULTE;
+  const bwHInp = document.getElementById('f-banned-words-harcelement');
+  if (bwHInp) bwHInp.value = bannedWordsHarcelement.join(', ');
+  const bwIInp = document.getElementById('f-banned-words-insulte');
+  if (bwIInp) bwIInp.value = bannedWordsInsulte.join(', ');
+  const wmHInp = document.getElementById('f-warning-msg-harcelement');
+  if (wmHInp) wmHInp.value = warningMsgHarcelement;
+  const wmIInp = document.getElementById('f-warning-msg-insulte');
+  if (wmIInp) wmIInp.value = warningMsgInsulte;
 };
 
 // ===== KEYBOARD =====
