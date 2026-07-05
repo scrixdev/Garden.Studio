@@ -413,9 +413,8 @@ nav > * { pointer-events: auto; } /* mais chaque élément réel (logo, liens, r
 #trailer-modal { background: rgba(4,4,8,0.65); backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%); }
 #trailer-modal .modal-box {
   width: 92%; max-width: 1200px; height: 82vh; max-height: 800px;
-  padding: 14px; border-radius: 30px;
-  background: var(--glass-highlight), rgba(255,255,255,0.05);
-  backdrop-filter: blur(30px) saturate(180%); -webkit-backdrop-filter: blur(30px) saturate(180%);
+  padding: 0; border-radius: 24px;
+  background: #000;
   border: 1px solid var(--glass-border);
   transform: scale(0.94); opacity: 0; overflow: hidden;
   transition: transform 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.35s ease;
@@ -423,8 +422,28 @@ nav > * { pointer-events: auto; } /* mais chaque élément réel (logo, liens, r
   display: flex; align-items: center; justify-content: center;
 }
 #trailer-modal.open .modal-box { transform: scale(1); opacity: 1; }
-#trailer-modal video { width: 100%; height: 100%; object-fit: contain; background: #000; display: block; border-radius: 20px; }
+#trailer-modal video { width: 100%; height: 100%; object-fit: cover; background: #000; display: block; border-radius: 0; }
 #trailer-modal .modal-close { display: flex; }
+
+/* ===== IMAGE LIGHTBOX ===== */
+#img-lightbox-modal { background: rgba(4,4,8,0.75); backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%); z-index: 10600; }
+.lightbox-box {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  max-width: 92vw; max-height: 90vh;
+  transform: scale(0.94); opacity: 0; transition: transform 0.35s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease;
+}
+#img-lightbox-modal.open .lightbox-box { transform: scale(1); opacity: 1; }
+.lightbox-box img {
+  max-width: 92vw; max-height: 90vh; object-fit: contain; display: block;
+  border-radius: 16px; border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 40px 120px rgba(0,0,0,0.65);
+}
+.lightbox-box .modal-close {
+  position: fixed; top: 22px; right: 26px;
+  background: var(--glass-highlight), var(--glass-bg);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  box-shadow: var(--glass-shadow);
+}
 
 /* ===== TRAILER PLAYER (liquid glass, style Apple TV) ===== */
 .trailer-player { position: relative; width: 100%; height: 100%; cursor: default; }
@@ -2776,6 +2795,16 @@ window.fbClearLoginHistory = async function(uid) {
   </div>
 </div>
 
+<!-- ===== IMAGE LIGHTBOX (agrandir une image d'annonce) ===== -->
+<div class="modal-overlay" id="img-lightbox-modal" onclick="closeImgLightbox(event)">
+  <div class="lightbox-box">
+    <button class="modal-close" onclick="closeImgLightboxDirect()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <img id="img-lightbox-img" src="" alt="" onclick="event.stopPropagation()">
+  </div>
+</div>
+
 <!-- ===== TRAILER MODAL (bande-annonce seule, lecteur custom liquid glass) ===== -->
 <div class="modal-overlay" id="trailer-modal" onclick="closeTrailerModal(event)">
   <div class="modal-box">
@@ -4873,7 +4902,7 @@ function renderAnnGalleryHTML(n) {
   if (!imgs.length) return '';
   const countClass = imgs.length >= 4 ? 'count-4plus' : `count-${imgs.length}`;
   const shown = imgs.slice(0, 4);
-  return `<div class="ann-gallery ${countClass}">${shown.map(url => `<img src="${escapeHTML(url)}" alt="" onclick="window.open('${escapeHTML(url)}','_blank')">`).join('')}</div>`;
+  return `<div class="ann-gallery ${countClass}">${shown.map(url => `<img src="${escapeHTML(url)}" alt="" onclick="event.stopPropagation();openImgLightbox('${escapeHTML(url)}')">`).join('')}</div>`;
 }
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
@@ -4893,7 +4922,7 @@ function renderAnnouncementsFeed() {
       : `<div class="ann-time">${formatNotifTime(n.date)}</div>`;
     const head = `<div class="ann-card-head"><img class="ann-avatar" src="${GS_LOGO}" alt=""><div class="ann-who"><div class="ann-name verified-name">GARDEN STUDIO${verifiedBadgeHTML()}</div><div class="ann-handle">@GARDEN STUDIO</div></div>${timeBlock}</div>`;
     if (isGameCard) {
-      return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt=""></div>`;
+      return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt="" style="cursor:zoom-in" onclick="event.stopPropagation();openImgLightbox('${escapeHTML(n.img)}')"></div>`;
     }
     const isLong = (n.detail || '').length > 220;
     const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
@@ -5297,6 +5326,25 @@ function closeTrailerModalDirect() {
   clearTimeout(_trailerHideTimer);
   document.getElementById('trailer-modal').classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ===== IMAGE LIGHTBOX (agrandir une image d'annonce) =====
+function openImgLightbox(url) {
+  if (!url) return;
+  const img = document.getElementById('img-lightbox-img');
+  if (!img) return;
+  img.src = url;
+  document.getElementById('img-lightbox-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeImgLightbox(e) {
+  if (e.target === document.getElementById('img-lightbox-modal')) closeImgLightboxDirect();
+}
+function closeImgLightboxDirect() {
+  document.getElementById('img-lightbox-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  const img = document.getElementById('img-lightbox-img');
+  if (img) img.src = '';
 }
 
 let _trailerHideTimer = null;
@@ -7261,6 +7309,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') {
     if (document.getElementById('game-modal').classList.contains('open')) { closeModalDirect(); return; }
     if (document.getElementById('trailer-modal').classList.contains('open')) { closeTrailerModalDirect(); return; }
+    if (document.getElementById('img-lightbox-modal').classList.contains('open')) { closeImgLightboxDirect(); return; }
     if (document.getElementById('product-modal').classList.contains('open')) { closeProductModalDirect(); return; }
     if (document.getElementById('signin-modal').classList.contains('open')) { closeSignInDirect(); return; }
     if (document.getElementById('confirm-modal').classList.contains('open')) { closeConfirm(); return; }
