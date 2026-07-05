@@ -3889,9 +3889,13 @@ window.fbClearLoginHistory = async function(uid) {
               <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Raison du signalement</div>
               <div id="rd-reason" style="font-size:13px;color:var(--gray);line-height:1.7;background:var(--glass-highlight), rgba(0,0,0,0.35);border:1px solid var(--glass-border);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:var(--glass-shadow);padding:14px;border-radius:10px"></div>
             </div>
+            <div id="rd-auto-notice" style="display:none;align-items:center;gap:8px;margin-bottom:16px;font-size:12.5px;color:#39FF14;background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.22);padding:10px 14px;border-radius:10px">
+              <i data-lucide="check-circle" style="width:15px;height:15px;flex-shrink:0"></i>
+              <span>Commentaire déjà supprimé automatiquement — il ne reste plus qu'à traiter ce signalement.</span>
+            </div>
             <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <button class="btn-delete" onclick="deleteReportedComment()"><i data-lucide="trash-2"></i> Supprimer le commentaire</button>
-              <button class="btn-outline" style="font-size:11px;padding:10px 20px" onclick="dismissReport()"><i data-lucide="check"></i> Ignorer (rien à faire)</button>
+              <button id="rd-delete-btn" class="btn-delete" onclick="deleteReportedComment()"><i data-lucide="trash-2"></i> Supprimer le commentaire</button>
+              <button id="rd-dismiss-btn" class="btn-outline" style="font-size:11px;padding:10px 20px" onclick="dismissReport()"><i data-lucide="check"></i> Ignorer (rien à faire)</button>
             </div>
           </div>
         </div>
@@ -4291,17 +4295,27 @@ function renderReports() {
   }
   list.innerHTML = reports.map((r, i) => {
     const dateStr = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '';
+    const isAuto = isAutoReport(r);
+    const statusTag = isAuto
+      ? `<span class="cand-status" style="background:rgba(57,255,20,0.1);color:#39FF14">Déjà supprimé</span>`
+      : `<span class="cand-status" style="background:rgba(255,64,64,0.1);color:#ff4040">Signalé</span>`;
     return `<div class="cand-item" onclick="openReportDetail(${i})">
       <div class="cand-avatar" style="overflow:hidden;padding:0">${navAvatarHTML(r.commentAuthorAvatar, r.commentAuthor, 44)}</div>
       <div class="cand-info">
         <div class="cand-name">${escapeHTML(r.commentAuthor || 'Utilisateur')} <span style="color:var(--gray)">· signalé par ${escapeHTML(r.reportedByUsername || 'un joueur')}</span></div>
         <div class="cand-meta">${escapeHTML((r.commentText || '').slice(0, 70))}${(r.commentText || '').length > 70 ? '…' : ''} ${dateStr ? '· ' + dateStr : ''}</div>
       </div>
-      <span class="cand-status" style="background:rgba(255,64,64,0.1);color:#ff4040">Signalé</span>
+      ${statusTag}
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="2" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg>
     </div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
+}
+// Un signalement est "automatique" quand il vient de la détection de mots bannis
+// (client ou Cloud Function serveur) : dans ce cas le commentaire est déjà supprimé,
+// pas besoin de proposer de le supprimer une seconde fois dans le détail.
+function isAutoReport(r) {
+  return /signalement automatique/i.test(r?.reportedByUsername || '');
 }
 function openReportDetail(idx) {
   currentReportIndex = idx;
@@ -4315,7 +4329,20 @@ function openReportDetail(idx) {
   document.getElementById('rd-game').textContent = g ? (g.name || r.gameId) : (r.gameId || '—');
   document.getElementById('rd-date').textContent = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) + ' à ' + r.createdAt.toDate().toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' }) : 'À l\'instant';
   document.getElementById('rd-reason').textContent = r.reason || 'Aucune raison précisée.';
+  // Signalement auto (commentaire déjà supprimé) : on cache le bouton "Supprimer le
+  // commentaire" (inutile, ça a déjà été fait) et on affiche une bannière + un bouton
+  // "Marquer comme traité" à la place.
+  const auto = isAutoReport(r);
+  const notice = document.getElementById('rd-auto-notice');
+  const deleteBtn = document.getElementById('rd-delete-btn');
+  const dismissBtn = document.getElementById('rd-dismiss-btn');
+  if (notice) notice.style.display = auto ? 'flex' : 'none';
+  if (deleteBtn) deleteBtn.style.display = auto ? 'none' : '';
+  if (dismissBtn) dismissBtn.innerHTML = auto
+    ? '<i data-lucide="check"></i> Marquer comme traité'
+    : '<i data-lucide="check"></i> Ignorer (rien à faire)';
   document.getElementById('report-detail').classList.add('open');
+  if (window.lucide) lucide.createIcons({ nodes: [document.getElementById('report-detail')] });
 }
 function closeReportDetail(e) {
   if (e && e.target !== document.getElementById('report-detail')) return;
@@ -4346,7 +4373,11 @@ function deleteReportedComment() {
 function dismissReport() {
   if (currentReportIndex < 0) return;
   const r = reports[currentReportIndex];
-  showConfirm('Ignorer ce signalement ?', "Le commentaire restera visible, mais le signalement disparaîtra du panel.", async () => {
+  const auto = isAutoReport(r);
+  showConfirm(
+    auto ? 'Marquer ce signalement comme traité ?' : 'Ignorer ce signalement ?',
+    auto ? "Le commentaire a déjà été supprimé automatiquement, ce signalement sera simplement retiré de la liste." : "Le commentaire restera visible, mais le signalement disparaîtra du panel.",
+    async () => {
     try {
       if (window.fbDeleteReport) await window.fbDeleteReport(r.id);
     } catch (e) {
@@ -4359,7 +4390,7 @@ function dismissReport() {
     document.getElementById('report-detail').classList.remove('open');
     currentReportIndex = -1;
     renderReports();
-    showToast('Signalement ignoré.');
+    showToast(auto ? 'Signalement marqué comme traité.' : 'Signalement ignoré.');
   }, 'Ignorer', false);
 }
 
@@ -5825,11 +5856,35 @@ function renderAnnouncementsFeed() {
     if (isGameCard) {
       return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${escapeHTML(n.img)}" alt="" style="cursor:zoom-in" data-lightbox-url="${escapeHTML(n.img)}"></div>`;
     }
-    const isLong = (n.detail || '').length > 220;
     const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
-    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body${isLong ? ' clamped' : ''}" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div>${isLong ? `<button class="ann-more" id="ann-more-${n.id}" onclick="toggleAnnBody('${n.id}')">Voir plus</button>` : ''}${renderAnnGalleryHTML(n)}${pollHTML}</div>`;
+    // On clampe systématiquement au départ : la vraie décision (le texte dépasse-t-il
+    // vraiment 4 lignes ?) est faite après coup dans adjustAnnBodyClamps(), une fois le
+    // texte réellement affiché dans sa carte (la largeur de carte change selon l'écran,
+    // un simple seuil de caractères n'est pas fiable pour deviner ça à l'avance).
+    return `<div class="ann-card">${head}<div class="ann-title-text" style="margin-bottom:8px">${escapeHTML(n.title)}</div><div class="ann-body clamped" id="ann-body-${n.id}">${escapeHTML(n.detail)}</div><button class="ann-more" id="ann-more-${n.id}" style="display:none" onclick="toggleAnnBody('${n.id}')">Voir plus</button>${renderAnnGalleryHTML(n)}${pollHTML}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
+  adjustAnnBodyClamps();
+}
+// Vérifie, pour chaque texte d'annonce, s'il dépasse réellement les 4 lignes affichées.
+// Le clamp CSS (-webkit-line-clamp) ne change pas la hauteur "scrollHeight" de l'élément
+// (contrairement à un simple overflow:auto), donc on mesure la hauteur naturelle du texte
+// SANS clamp et on la compare à la hauteur de 4 lignes pour savoir si "Voir plus" est utile.
+function adjustAnnBodyClamps() {
+  document.querySelectorAll('.ann-body.clamped').forEach(body => {
+    const btn = document.getElementById('ann-more-' + body.id.replace('ann-body-', ''));
+    body.classList.remove('clamped');
+    const lineHeight = parseFloat(getComputedStyle(body).lineHeight) || 22;
+    const maxHeight = lineHeight * 4 + 2; // tolérance d'arrondi
+    const fitsWithoutClamp = body.scrollHeight <= maxHeight;
+    if (fitsWithoutClamp) {
+      // Le texte tient déjà entièrement : pas de clamp, pas de bouton "Voir plus"
+      if (btn) btn.remove();
+    } else {
+      body.classList.add('clamped');
+      if (btn) btn.style.display = '';
+    }
+  });
 }
 function handleGameSearch(query) {
   const panel = document.getElementById('search-results');
