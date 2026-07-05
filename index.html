@@ -5115,7 +5115,7 @@ async function postGameComment() {
           commentText: originalText,
           commentAuthor: authorUsername,
           commentAuthorUid: currentUser.email,
-          reportedByUid: 'system',
+          reportedByUid: currentUser.email,
           reportedByUsername: 'Signalement automatique (mot banni)',
           reason: 'Mot banni détecté automatiquement dans ce commentaire.',
           status: 'pending'
