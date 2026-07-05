@@ -2027,7 +2027,7 @@ try {
 
 console.log('🔄 Connexion en temps réel à Firestore...');
 
-let _gsFirstSnapshotsLeft = 7; // products, games, gamers, footer, heroes, settings, notifications
+let _gsFirstSnapshotsLeft = 8; // products, games, gamers, footer, heroes, settings, notifications, users
 function _gsMarkFirstSnapshotDone() {
   if (_gsFirstSnapshotsLeft > 0) _gsFirstSnapshotsLeft--;
   if (_gsFirstSnapshotsLeft === 0 && !window._gsFirebaseReady) {
@@ -2082,6 +2082,16 @@ onSnapshot(doc(db, 'site', 'notifications'), (snap) => {
   }
   _gsMarkFirstSnapshotDone();
 }, (e) => { console.warn('❌ Erreur temps réel (notifications):', e); _gsMarkFirstSnapshotDone(); });
+
+// Comptes utilisateurs (users/{uid}) : en temps réel aussi, sinon un nouveau compte créé,
+// un rôle attribué ou une photo de profil changée n'apparaît (page Équipe, panel admin,
+// compteur du dashboard) qu'après un rafraîchissement manuel de la page par les autres.
+onSnapshot(collection(db, 'users'), (snap) => {
+  const arr = [];
+  snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
+  if (typeof window._gsSetAllUsers === 'function') window._gsSetAllUsers(arr);
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (users):', e); _gsMarkFirstSnapshotDone(); });
 
 // Sécurité : si jamais Firebase ne répond pas, on masque quand même le loader après 10s
 setTimeout(() => { if (!window._gsFirebaseReady) { window._gsFirebaseReady = true; hideSiteLoader(); } }, 10000);
@@ -6266,10 +6276,14 @@ let teamStaffCache = [];
 function renderGamersPage() {
   const grid = document.getElementById('gamers-grid');
   const countBadge = document.getElementById('gamers-count-badge');
-  grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Chargement de l\'équipe...</div>';
   const avatarIcon = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
-  if (!window.fbGetAllUsers) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Équipe indisponible pour le moment.</div>'; return; }
-  window.fbGetAllUsers().then(users => {
+  // On utilise le cache temps réel (rempli par l'écoute onSnapshot sur 'users') s'il est
+  // déjà disponible : aucun refresh nécessaire quand un rôle/compte/photo change. Sinon,
+  // repli sur un chargement unique (tout premier affichage, avant le premier snapshot).
+  const usersPromise = allMembersCache ? Promise.resolve(allMembersCache) : (window.fbGetAllUsers ? window.fbGetAllUsers() : Promise.resolve(null));
+  if (!allMembersCache) grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Chargement de l\'équipe...</div>';
+  if (!window.fbGetAllUsers && !allMembersCache) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Équipe indisponible pour le moment.</div>'; return; }
+  usersPromise.then(users => {
     const staff = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role)));
     // Owner puis Co-Owner puis Admin puis les autres rôles staff, alphabétique par username ensuite
     const order = { 'Owner': -1, 'Co-Owner': 0, 'Admin': 1, 'Scripter': 2, 'Graphiste': 2, 'Helper': 2 };
@@ -6802,6 +6816,28 @@ async function ensureMembersCacheLoaded() {
   allMembersCache = (window.fbGetAllUsers ? await window.fbGetAllUsers() : []);
   return allMembersCache;
 }
+// Appelé à chaque snapshot temps réel de la collection 'users' (nouveau compte créé,
+// rôle changé, photo de profil modifiée...). Garde allMembersCache/teamStaffCache à jour
+// et re-render immédiatement tout ce qui est actuellement affiché, sans refresh.
+window._gsSetAllUsers = function(arr) {
+  allMembersCache = arr;
+  window._allUsersCache = arr;
+  if (document.getElementById('page-top-gamers')?.classList.contains('active')) renderGamersPage();
+  if (document.getElementById('admin-panel')?.classList.contains('open')) {
+    renderMembersSection();
+    renderCollabSection();
+  }
+  const dashCount = document.getElementById('dash-gamers-count');
+  if (dashCount && dashCount.textContent !== '…' && typeof STAFF_ROLES !== 'undefined') {
+    dashCount.textContent = arr.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+  }
+  // Si le compte actuellement connecté vient de recevoir un nouveau rôle depuis un autre
+  // onglet/admin, on met aussi à jour son profil local (bouton admin, badge, etc.).
+  if (currentUser) {
+    const me = arr.find(u => u.id === currentUser.uid);
+    if (me && typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(me);
+  }
+};
 async function renderMembersSection() {
   const list = document.getElementById('members-list');
   const totalBadge = document.getElementById('members-total-badge');
@@ -6983,12 +7019,16 @@ function logChange(msg) {
 function updateStats() {
   if (document.getElementById('dash-products-count')) document.getElementById('dash-products-count').textContent = products.length;
   document.getElementById('dash-games-count').textContent = games.length;
-  document.getElementById('dash-gamers-count').textContent = '…';
-  if (window.fbGetAllUsers) {
-    window.fbGetAllUsers().then(users => {
-      const el = document.getElementById('dash-gamers-count');
-      if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
-    }).catch(() => {});
+  if (allMembersCache) {
+    document.getElementById('dash-gamers-count').textContent = allMembersCache.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+  } else {
+    document.getElementById('dash-gamers-count').textContent = '…';
+    if (window.fbGetAllUsers) {
+      window.fbGetAllUsers().then(users => {
+        const el = document.getElementById('dash-gamers-count');
+        if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+      }).catch(() => {});
+    }
   }
   if (document.getElementById('products-card-title')) document.getElementById('products-card-title').textContent = `Produits (${products.length})`;
   if (document.getElementById('games-card-title')) document.getElementById('games-card-title').textContent = `Jeux (${games.length})`;
