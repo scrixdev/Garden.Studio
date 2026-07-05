@@ -245,7 +245,8 @@ nav {
 .tag-chip.static { padding: 7px 14px; }
 .tag-chip-icon { display: inline-flex; align-items: center; justify-content: center; width: 13px; height: 13px; flex: none; }
 .tag-chip-icon svg { width: 100%; height: 100%; }
-.tag-chip button { width: 18px; height: 18px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; }
+.tag-chip button { width: 22px; height: 22px; border-radius: 50%; border: none; background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.8); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; padding: 0; position: relative; }
+.tag-chip button::before { content: ''; position: absolute; inset: -6px; } /* agrandit la zone cliquable sans changer le visuel */
 .tag-chip button:hover { background: rgba(255,59,48,0.5); color: #fff; }
 .tag-empty-note { font-size: 12px; color: var(--gray); }
 /* ===== PROFIL PUBLIC ===== */
@@ -595,8 +596,8 @@ nav { padding: 14px 48px; background: rgba(255,255,255,0.12); backdrop-filter: b
 .notification-time, .search-meta { font-size: 11px; color: rgba(255,255,255,0.45); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .search-result { min-width: 0; }
 .search-result > div:last-child, .notification-item > div:last-child { min-width: 0; flex: 1; overflow: hidden; }
-.gs-rating { display: inline-flex; }
-.gs-star-btn { cursor: pointer; width: var(--gs-star-size, 22px); height: var(--gs-star-size, 22px); box-sizing: content-box; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 6px 2px; user-select: none; }
+.gs-rating { display: inline-flex; line-height: 0; }
+.gs-star-btn { cursor: pointer; width: var(--gs-star-size, 22px); height: var(--gs-star-size, 22px); box-sizing: border-box; color: rgba(255,255,255,0.35); transition: color 0.15s; display: inline-flex; align-items: center; justify-content: center; padding: 0; margin: 6px 2px; user-select: none; position: relative; z-index: 1; line-height: 0; }
 .gs-star-btn svg { width: 100%; height: 100%; display: block; pointer-events: none; }
 .gs-star-btn .gs-star-outline { fill: currentColor; }
 .gs-star-btn .gs-star-fill { opacity: 0; transition: opacity 0.15s; }
@@ -1068,7 +1069,7 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .modal-body {
   position: absolute; left: 52px; bottom: 52px; z-index: 5;
   width: min(560px, calc(100% - 104px));
-  max-height: calc(100% - 130px); overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none;
+  max-height: calc(100% - 130px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none;
   padding: 36px 40px 32px;
   border-radius: 28px;
   background: var(--glass-highlight), rgba(12,13,18,0.4);
@@ -1094,7 +1095,10 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 #game-modal .modal-badges { margin-bottom: 12px; gap: 8px; }
 #game-modal .modal-meta-grid { margin-bottom: 12px; gap: 8px; }
 #game-modal .modal-meta-pill { padding: 5px 12px; font-size: 12px; }
-#game-modal .modal-desc { font-size: 13px; margin-bottom: 14px; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+#game-modal .modal-desc { font-size: 13px; margin-bottom: 4px; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; min-height: 66px; height: 66px; overflow-wrap: anywhere; word-break: break-word; }
+#game-modal .modal-desc.expanded { -webkit-line-clamp: unset; height: auto; max-height: none; overflow: visible; }
+.modal-desc-toggle { display: none; background: none; border: none; padding: 0; margin: 0 0 14px; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--lime); cursor: pointer; }
+.modal-desc-toggle:hover { text-decoration: underline; }
 #game-modal .modal-actions { gap: 10px; align-items: center; }
 #game-modal .modal-user-actions { gap: 8px; }
 .modal-body::-webkit-scrollbar { display: none; }
@@ -1111,7 +1115,7 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .modal-meta-pill { background: var(--glass-highlight), rgba(255,255,255,0.1); backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); border: 1px solid rgba(255,255,255,0.22); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.92); }
 .modal-meta-pill.age { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.18); color: var(--white); }
 .modal-meta-pill.rating { background: var(--glass-highlight), rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.22); padding: 6px 14px; backdrop-filter: blur(5px) saturate(150%); -webkit-backdrop-filter: blur(5px) saturate(150%); box-shadow: var(--glass-shadow); display: inline-flex; align-items: center; gap: 6px; font-weight: 800; }
-.modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; }
+.modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; overflow-wrap: anywhere; word-break: break-word; }
 .modal-meta-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
 
@@ -1585,7 +1589,7 @@ footer {
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1729,47 +1733,82 @@ window.fbMigrateBase64Fields = async function(arr, fields, folder) {
   }
 };
 
-// ===== INIT DATA =====
+// ===== INIT DATA + TEMPS RÉEL =====
+// On utilise onSnapshot (au lieu d'un getDoc unique) sur chaque document du site.
+// Résultat : dès qu'un admin publie/modifie/supprime quelque chose, TOUS les onglets
+// ouverts (les siens et ceux des autres) reçoivent la mise à jour instantanément,
+// sans que personne ait besoin de rafraîchir la page.
 window._gsFirebaseReady = false;
 const _siteLoaderStart = Date.now();
 const SITE_LOADER_MIN_MS = 1200; // durée minimale d'affichage du loader, même si Firebase répond instantanément
-(async () => {
-  try {
-    // Nettoyage localStorage
-    try {
-      ['gs_products','gs_games','gs_gamers','gs_candidatures'].forEach(k => localStorage.removeItem(k));
-    } catch(e) {}
 
-    console.log('🔄 Chargement depuis Firestore...');
-    const [p, g, gm, f, h, s, n] = await Promise.all([
-      fsGet('site/products'), fsGet('site/games'), fsGet('site/gamers'),
-      fsGet('site/footer'), fsGet('site/heroes'), fsGet('site/settings'), fsGet('site/notifications')
-    ]);
+try {
+  ['gs_products','gs_games','gs_gamers','gs_candidatures'].forEach(k => localStorage.removeItem(k));
+} catch(e) {}
 
-    console.log('📦 Firestore reçu:', { products: p?.list?.length, games: g?.list?.length, gamers: gm?.list?.length });
+console.log('🔄 Connexion en temps réel à Firestore...');
 
-    // Peupler les tableaux directement ici, sans passer par window callbacks
-    // pour garantir que c'est fait de façon synchrone avant _gsFirebaseReady = true
-    if (p?.list)  { if (typeof window._gsSetProducts     === 'function') window._gsSetProducts(p.list); }
-    if (g?.list)  { if (typeof window._gsSetGames        === 'function') window._gsSetGames(g.list); }
-    if (gm?.list) { if (typeof window._gsSetGamers       === 'function') window._gsSetGamers(gm.list); }
-    if (f)        { if (typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f); }
-    if (h?.list)  { if (typeof window._gsSetHeroSlides    === 'function') window._gsSetHeroSlides(h.list); }
-    if (s)        { if (typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s); }
-    if (n?.list)  { if (typeof window._gsSetNotifications === 'function') window._gsSetNotifications(n.list); }
-    if (typeof window._gsRender === 'function') window._gsRender();
-
-    // Marquer Firebase prêt APRÈS que tout est chargé
+let _gsFirstSnapshotsLeft = 7; // products, games, gamers, footer, heroes, settings, notifications
+function _gsMarkFirstSnapshotDone() {
+  if (_gsFirstSnapshotsLeft > 0) _gsFirstSnapshotsLeft--;
+  if (_gsFirstSnapshotsLeft === 0 && !window._gsFirebaseReady) {
     window._gsFirebaseReady = true;
-    console.log('✅ Firebase prêt — products:', window._products_count, 'games:', window._games_count, 'gamers:', window._gamers_count);
-    hideSiteLoader();
-  } catch(e) {
-    console.warn('❌ Firebase init erreur:', e);
-    // Même en cas d'erreur partielle, marquer prêt pour ne pas bloquer l'UI
-    window._gsFirebaseReady = true;
+    console.log('✅ Firebase prêt (temps réel actif) — products:', window._products_count, 'games:', window._games_count, 'gamers:', window._gamers_count);
     hideSiteLoader();
   }
-})();
+}
+
+onSnapshot(doc(db, 'site', 'products'), (snap) => {
+  const p = snap.exists() ? snap.data() : null;
+  if (p?.list && typeof window._gsSetProducts === 'function') window._gsSetProducts(p.list);
+  if (typeof window._gsRender === 'function') window._gsRender();
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (products):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'games'), (snap) => {
+  const g = snap.exists() ? snap.data() : null;
+  if (g?.list && typeof window._gsSetGames === 'function') window._gsSetGames(g.list);
+  if (typeof window._gsRender === 'function') window._gsRender();
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (games):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'gamers'), (snap) => {
+  const gm = snap.exists() ? snap.data() : null;
+  if (gm?.list && typeof window._gsSetGamers === 'function') window._gsSetGamers(gm.list);
+  if (typeof window._gsRender === 'function') window._gsRender();
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (gamers):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'footer'), (snap) => {
+  const f = snap.exists() ? snap.data() : null;
+  if (f && typeof window.applyFooterFromData === 'function') window.applyFooterFromData(f);
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (footer):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'heroes'), (snap) => {
+  const h = snap.exists() ? snap.data() : null;
+  if (h?.list && typeof window._gsSetHeroSlides === 'function') window._gsSetHeroSlides(h.list);
+  if (typeof window._gsRender === 'function') window._gsRender();
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (heroes):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'settings'), (snap) => {
+  const s = snap.exists() ? snap.data() : null;
+  if (s && typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s);
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (settings):', e); _gsMarkFirstSnapshotDone(); });
+
+onSnapshot(doc(db, 'site', 'notifications'), (snap) => {
+  const n = snap.exists() ? snap.data() : null;
+  if (n?.list && typeof window._gsSetNotifications === 'function') {
+    window._gsSetNotifications(n.list);
+    if (typeof window.renderNotifications === 'function') window.renderNotifications();
+  }
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (notifications):', e); _gsMarkFirstSnapshotDone(); });
+
+// Sécurité : si jamais Firebase ne répond pas, on masque quand même le loader après 10s
+setTimeout(() => { if (!window._gsFirebaseReady) { window._gsFirebaseReady = true; hideSiteLoader(); } }, 10000);
 
 function hideSiteLoader() {
   const elapsed = Date.now() - _siteLoaderStart;
@@ -2703,7 +2742,8 @@ window.fbClearLoginHistory = async function(uid) {
       </div>
       <div class="modal-meta-grid" id="modal-meta"></div>
       <div class="modal-desc" id="modal-desc"></div>
-      <div id="modal-rating-picker" style="margin-bottom:18px"></div>
+      <button type="button" class="modal-desc-toggle" id="modal-desc-toggle" style="display:none" onclick="toggleModalDesc()">Voir plus</button>
+      <div id="modal-rating-picker" style="margin-bottom:18px;position:relative;z-index:2"></div>
       <div class="modal-actions">
         <button class="btn-primary" id="modal-play-btn" onclick="playGame()"><i data-lucide="play"></i> Jouer maintenant</button>
         <div class="modal-user-actions" id="modal-user-actions"></div>
@@ -4015,10 +4055,13 @@ window._gsSetNotifications = (data) => {
   (data || []).forEach(x => notifications.push(x));
   console.log('📥 notifications chargées:', notifications.length);
 };
-window._gsSetUser         = (user) => { currentUser = user; loadUserLibrary(); renderMyListPage(); renderNotifications(); updatePinHomeButtonUI(); renderGamesOnSite(); };
+window._gsSetUser         = (user) => { currentUser = user; loadUserLibrary(); loadPinnedTabIds(); loadReadNotificationIds(); renderMyListPage(); renderNotifications(); updatePinHomeButtonUI(); renderGamesOnSite(); };
 window._gsSetUserProfile  = (profile) => {
   currentUserProfile = profile;
-  updateNavAfterLogin(currentUser?.username || profile?.username || '', currentUser?.photoURL || profile?.avatarURL || '');
+  // On priorise le profil Firestore (nom/avatar choisis par l'utilisateur) sur les infos
+  // auto-générées depuis l'email/Google au moment de la connexion, sinon l'avatar
+  // personnalisé n'est jamais affiché et on retombe sur la lettre dérivée de l'email.
+  updateNavAfterLogin(profile?.username || currentUser?.username || '', profile?.avatarURL || currentUser?.photoURL || '');
   if (document.getElementById('page-account')?.classList.contains('active')) renderAccountPage();
   if (document.getElementById('page-settings')?.classList.contains('active')) renderSettingsPage();
   if (document.getElementById('admin-panel')?.classList.contains('open')) updateAdminMembersVisibility();
@@ -4069,15 +4112,36 @@ function handleLibrarySearch(value) {
   renderMyListPage();
 }
 function userLibraryStorageKey() { return 'gs_library_' + (currentUser?.email || 'guest').toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
-function loadUserLibrary() {
+async function loadUserLibrary() {
   if (!currentUser) { userLibrary = createEmptyLibrary(); return; }
+  // 1) Cache local : affichage instantané le temps que Firestore réponde
   try { userLibrary = { ...createEmptyLibrary(), ...(JSON.parse(localStorage.getItem(userLibraryStorageKey())) || {}) }; }
   catch(e) { userLibrary = createEmptyLibrary(); }
   if (!Array.isArray(userLibrary.categories) || !userLibrary.categories.length) userLibrary.categories = createEmptyLibrary().categories;
+  // 2) Source de vérité : Firestore (synchro entre appareils)
+  if (window.fbGetUserProfile) {
+    try {
+      const profile = await window.fbGetUserProfile(currentUser.uid);
+      if (profile && profile.library) {
+        userLibrary = { ...createEmptyLibrary(), ...profile.library };
+        if (!Array.isArray(userLibrary.categories)) userLibrary.categories = [];
+        localStorage.setItem(userLibraryStorageKey(), JSON.stringify(userLibrary));
+        renderMyListPage(); updatePinHomeButtonUI(); renderGamesOnSite();
+      }
+    } catch(e) { console.warn('Chargement My List depuis Firestore échoué, cache local utilisé:', e); }
+  }
 }
+let _saveLibraryTimeout = null;
 function saveUserLibrary() {
   if (!currentUser) return;
   localStorage.setItem(userLibraryStorageKey(), JSON.stringify(userLibrary));
+  clearTimeout(_saveLibraryTimeout);
+  _saveLibraryTimeout = setTimeout(() => {
+    if (window.fbSaveUserProfile) {
+      window.fbSaveUserProfile(currentUser.uid, { library: userLibrary })
+        .catch(e => console.warn('Sauvegarde My List Firestore échouée:', e));
+    }
+  }, 600);
 }
 // ===== PIN "MA LISTE" SUR L'ACCUEIL (plusieurs listes possibles) =====
 function myListPinStorageKey() { return 'gs_pin_mylist_home_' + (currentUser?.email || 'guest').toLowerCase().replace(/[^a-z0-9]+/g, '_'); }
@@ -4091,8 +4155,8 @@ function getLibraryKeysForTab(tabId) {
   }
   return [];
 }
-function getPinnedTabIds() {
-  if (!currentUser) return [];
+let _pinnedTabIdsCache = null;
+function getPinnedTabIdsFromLocal() {
   try {
     const raw = localStorage.getItem(myListPinStorageKey());
     if (!raw || raw === '0') return [];
@@ -4103,8 +4167,34 @@ function getPinnedTabIds() {
     return [raw]; // migration ancien format (un seul id stocké en texte brut)
   } catch(e) { return []; }
 }
+async function loadPinnedTabIds() {
+  if (!currentUser) { _pinnedTabIdsCache = []; return; }
+  // 1) Cache local : affichage instantané
+  _pinnedTabIdsCache = getPinnedTabIdsFromLocal();
+  // 2) Source de vérité : Firestore (synchro entre appareils)
+  if (window.fbGetUserProfile) {
+    try {
+      const profile = await window.fbGetUserProfile(currentUser.uid);
+      if (profile && Array.isArray(profile.pinnedLists)) {
+        _pinnedTabIdsCache = profile.pinnedLists;
+        localStorage.setItem(myListPinStorageKey(), JSON.stringify(_pinnedTabIdsCache));
+        updatePinHomeButtonUI(); renderGamesOnSite();
+      }
+    } catch(e) { console.warn('Chargement listes épinglées depuis Firestore échoué, cache local utilisé:', e); }
+  }
+}
+function getPinnedTabIds() {
+  if (!currentUser) return [];
+  if (_pinnedTabIdsCache) return _pinnedTabIdsCache;
+  return getPinnedTabIdsFromLocal();
+}
 function savePinnedTabIds(ids) {
+  _pinnedTabIdsCache = ids;
   try { localStorage.setItem(myListPinStorageKey(), JSON.stringify(ids)); } catch(e) {}
+  if (currentUser && window.fbSaveUserProfile) {
+    window.fbSaveUserProfile(currentUser.uid, { pinnedLists: ids })
+      .catch(e => console.warn('Sauvegarde listes épinglées Firestore échouée:', e));
+  }
 }
 function isTabPinned(tabId) { return getPinnedTabIds().includes(tabId); }
 function isMyListPinned() { return getPinnedTabIds().length > 0; }
@@ -4532,11 +4622,39 @@ function renderMyListPage() {
   }
   if (window.lucide) lucide.createIcons();
 }
-function getReadNotificationIds() {
+let _readNotifIdsCache = null;
+function getReadNotificationIdsFromLocal() {
   try { return JSON.parse(localStorage.getItem('gs_notif_read_' + (currentUser?.email || 'guest')) || '[]'); }
   catch(e) { return []; }
 }
-function setReadNotificationIds(ids) { localStorage.setItem('gs_notif_read_' + (currentUser?.email || 'guest'), JSON.stringify(ids)); }
+async function loadReadNotificationIds() {
+  if (!currentUser) { _readNotifIdsCache = []; return; }
+  // 1) Cache local : affichage instantané
+  _readNotifIdsCache = getReadNotificationIdsFromLocal();
+  // 2) Source de vérité : Firestore (synchro entre appareils)
+  if (window.fbGetUserProfile) {
+    try {
+      const profile = await window.fbGetUserProfile(currentUser.uid);
+      if (profile && Array.isArray(profile.readNotifIds)) {
+        _readNotifIdsCache = profile.readNotifIds;
+        localStorage.setItem('gs_notif_read_' + (currentUser?.email || 'guest'), JSON.stringify(_readNotifIdsCache));
+        renderNotifications();
+      }
+    } catch(e) { console.warn('Chargement notifications lues depuis Firestore échoué, cache local utilisé:', e); }
+  }
+}
+function getReadNotificationIds() {
+  if (_readNotifIdsCache) return _readNotifIdsCache;
+  return getReadNotificationIdsFromLocal();
+}
+function setReadNotificationIds(ids) {
+  _readNotifIdsCache = ids;
+  localStorage.setItem('gs_notif_read_' + (currentUser?.email || 'guest'), JSON.stringify(ids));
+  if (currentUser && window.fbSaveUserProfile) {
+    window.fbSaveUserProfile(currentUser.uid, { readNotifIds: ids })
+      .catch(e => console.warn('Sauvegarde notifications lues Firestore échouée:', e));
+  }
+}
 function formatNotifTime(value) {
   const d = new Date(value || Date.now());
   return d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
@@ -5156,6 +5274,37 @@ function playCurtainTransition(callback) {
   }, 500);
 }
 
+// Bouton "Voir plus / Voir moins" pour la description du jeu dans la modale.
+// La description reste toujours limitée à 3 lignes par défaut (hauteur fixe, cf. CSS)
+// pour que la position des étoiles de vote ne bouge jamais selon la longueur du texte ;
+// ce bouton permet simplement d'afficher le texte complet à la demande.
+function toggleModalDesc() {
+  const descEl = document.getElementById('modal-desc');
+  const btn = document.getElementById('modal-desc-toggle');
+  if (!descEl || !btn) return;
+  const expanded = descEl.classList.toggle('expanded');
+  btn.textContent = expanded ? 'Voir moins' : 'Voir plus';
+}
+function updateModalDescToggle() {
+  const descEl = document.getElementById('modal-desc');
+  const btn = document.getElementById('modal-desc-toggle');
+  if (!descEl || !btn) return;
+  descEl.classList.remove('expanded');
+  btn.textContent = 'Voir plus';
+  // Mesure la hauteur réelle du texte sans la limite de 3 lignes pour savoir
+  // s'il déborde et si le bouton doit être affiché.
+  const prevClamp = descEl.style.webkitLineClamp;
+  const prevHeight = descEl.style.height;
+  const prevMaxHeight = descEl.style.maxHeight;
+  descEl.style.webkitLineClamp = 'unset';
+  descEl.style.height = 'auto';
+  descEl.style.maxHeight = 'none';
+  const fullHeight = descEl.scrollHeight;
+  descEl.style.webkitLineClamp = prevClamp;
+  descEl.style.height = prevHeight;
+  descEl.style.maxHeight = prevMaxHeight;
+  btn.style.display = fullHeight > 70 ? 'inline-block' : 'none';
+}
 function openGameModal(i) {
   // Si le modal est déjà ouvert, on rafraîchit son contenu direct (pas de rideau, ex: après un vote/note)
   if (document.getElementById('game-modal').classList.contains('open')) {
@@ -5182,6 +5331,7 @@ function openGameModalDirect(i) {
     <span class="modal-meta-pill rating">${realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>'}</span>
     <span class="modal-meta-pill" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye" style="width:14px;height:14px"></i>${Number(g.plays || 0).toLocaleString('fr-FR')}</span>`;
   document.getElementById('modal-desc').textContent = g.desc || 'Aucune description disponible pour ce jeu.';
+  updateModalDescToggle();
   const ratingPicker = document.getElementById('modal-rating-picker');
   if (ratingPicker) ratingPicker.innerHTML = `<div class="modal-meta-label" style="margin-bottom:8px">Ta note</div>${ratingPickerHTML(g, i, 28)}`;
   const userActions = document.getElementById('modal-user-actions');
@@ -7820,21 +7970,23 @@ function renderSettingsPage() {
               <div class="form-group"><label class="form-label">Bio</label><textarea class="form-input" id="set-bio" rows="4" maxlength="280" placeholder="Parle un peu de toi...">${escapeHTML(p.bio || '')}</textarea></div>
               <div class="form-group">
                 <label class="form-label">Avatar</label>
-                <label class="upload-dropzone" id="set-avatar-dropzone">
-                  <input type="file" accept="image/*" style="display:none" onchange="handleSettingsImageUpload(this,'avatar')">
-                  <i data-lucide="upload-cloud"></i>
-                  <span class="upload-dropzone-text">Cliquer pour choisir un fichier</span>
-                  <span class="upload-dropzone-sub">${settingsTempAvatar ? 'Image sélectionnée' : 'Aucun fichier choisi'}</span>
-                </label>
+                <div class="img-upload-zone" id="set-avatar-dropzone">
+                  <input type="file" accept="image/*" onchange="handleSettingsImageUpload(this,'avatar')">
+                  <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                  <strong>Cliquer pour choisir un fichier</strong>
+                  <p>PNG, JPG, WEBP</p>
+                </div>
+                <div class="ann-imgs-grid" id="set-avatar-preview">${(settingsTempAvatar || avatarURL) ? `<div class="img-preview"><img src="${settingsTempAvatar || avatarURL}" alt=""><button type="button" class="img-preview-remove" onclick="removeSettingsImage('avatar')"><i data-lucide="x"></i></button></div>` : ''}</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Bannière</label>
-                <label class="upload-dropzone" id="set-banner-dropzone">
-                  <input type="file" accept="image/*" style="display:none" onchange="handleSettingsImageUpload(this,'banner')">
-                  <i data-lucide="upload-cloud"></i>
-                  <span class="upload-dropzone-text">Cliquer pour choisir un fichier</span>
-                  <span class="upload-dropzone-sub">${settingsTempBanner ? 'Image sélectionnée' : 'Aucun fichier choisi'}</span>
-                </label>
+                <div class="img-upload-zone" id="set-banner-dropzone">
+                  <input type="file" accept="image/*" onchange="handleSettingsImageUpload(this,'banner')">
+                  <div class="upload-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></div>
+                  <strong>Cliquer pour choisir un fichier</strong>
+                  <p>PNG, JPG, WEBP</p>
+                </div>
+                <div class="ann-imgs-grid" id="set-banner-preview">${(settingsTempBanner || bannerURL) ? `<div class="img-preview"><img src="${settingsTempBanner || bannerURL}" alt=""><button type="button" class="img-preview-remove" onclick="removeSettingsImage('banner')"><i data-lucide="x"></i></button></div>` : ''}</div>
               </div>
 
               <div style="height:1px;background:rgba(255,255,255,0.07);margin:26px 0"></div>
@@ -8123,17 +8275,27 @@ function clearLoginHistoryFlow() {
 }
 async function handleSettingsImageUpload(input, kind) {
   const file = input.files && input.files[0];
-  if (!file || !window.fbUploadImage) return;
+  if (!file) return;
+  showToast('Upload en cours...');
   try {
-    showToast('Upload en cours...');
-    const url = await window.fbUploadImage(file, 'user-' + kind);
+    let url;
+    if (window.fbUploadImage) {
+      url = await window.fbUploadImage(file, 'user-' + kind);
+    } else {
+      url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = e => res(e.target.result); r.onerror = rej; r.readAsDataURL(file); });
+    }
     if (kind === 'avatar') settingsTempAvatar = url; else settingsTempBanner = url;
+    input.value = '';
     renderSettingsPage();
     showToast('✅ Image ajoutée — n\'oublie pas d\'enregistrer');
   } catch (e) {
-    console.error(e);
-    showToast('❌ Erreur upload image');
+    console.error('Upload error:', e);
+    showToast('❌ Erreur upload — vérifie les règles Firebase Storage');
   }
+}
+function removeSettingsImage(kind) {
+  if (kind === 'avatar') settingsTempAvatar = ''; else settingsTempBanner = '';
+  renderSettingsPage();
 }
 async function saveSettingsProfile() {
   if (!currentUser || !window.fbSaveUserProfile) return;
