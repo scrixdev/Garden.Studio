@@ -3803,7 +3803,10 @@ window.fbClearLoginHistory = async function(uid) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--lime);margin-bottom:8px">Candidature</div>
-            <div id="cd-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;text-transform:uppercase;margin-bottom:24px;line-height:1.1;padding-right:40px"></div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:24px;padding-right:40px">
+              <div id="cd-avatar" style="flex:none"></div>
+              <div id="cd-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:26px;text-transform:uppercase;line-height:1.1"></div>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:24px">
               <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Pseudo Roblox</div><div id="cd-roblox" style="font-size:14px;font-weight:600"></div></div>
               <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Discord</div><div id="cd-discord" style="font-size:14px;font-weight:600"></div></div>
@@ -3862,7 +3865,10 @@ window.fbClearLoginHistory = async function(uid) {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
             <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#ff4040;margin-bottom:8px">Signalement</div>
-            <div id="rd-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:20px;line-height:1.1;padding-right:40px"></div>
+            <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding-right:40px">
+              <div id="rd-avatar" style="flex:none"></div>
+              <div id="rd-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;line-height:1.1"></div>
+            </div>
             <div style="margin-bottom:16px">
               <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Commentaire signalé</div>
               <div id="rd-comment-text" style="font-size:13.5px;color:#fff;line-height:1.7;background:rgba(255,64,64,0.08);border:1px solid rgba(255,64,64,0.22);padding:14px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
@@ -4130,7 +4136,7 @@ function renderCandidatures() {
   list.innerHTML = filtered.map((c, i) => {
     const realIdx = candidatures.indexOf(c);
     return `<div class="cand-item" onclick="openCandDetail(${realIdx})">
-      <div class="cand-avatar">${c.roblox.charAt(0).toUpperCase()}</div>
+      <div class="cand-avatar" style="overflow:hidden;padding:0">${navAvatarHTML(c.avatarURL, c.roblox, 44)}</div>
       <div class="cand-info">
         <div class="cand-name">${c.roblox} <span style="color:var(--gray)">· ${c.discord}</span></div>
         <div class="cand-meta">${c.poste} · ${c.date}</div>
@@ -4144,6 +4150,7 @@ function renderCandidatures() {
 function openCandDetail(idx) {
   currentCandIndex = idx;
   const c = candidatures[idx];
+  document.getElementById('cd-avatar').innerHTML = navAvatarHTML(c.avatarURL, c.roblox, 52);
   document.getElementById('cd-title').textContent = `Candidature — ${c.roblox}`;
   document.getElementById('cd-roblox').textContent  = c.roblox;
   document.getElementById('cd-discord').textContent = c.discord;
@@ -4279,7 +4286,7 @@ function renderReports() {
   list.innerHTML = reports.map((r, i) => {
     const dateStr = r.createdAt?.toDate ? r.createdAt.toDate().toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' }) : '';
     return `<div class="cand-item" onclick="openReportDetail(${i})">
-      <div class="cand-avatar" style="background:rgba(255,64,64,0.15);color:#ff4040">${(r.commentAuthor || '?').charAt(0).toUpperCase()}</div>
+      <div class="cand-avatar" style="overflow:hidden;padding:0">${navAvatarHTML(r.commentAuthorAvatar, r.commentAuthor, 44)}</div>
       <div class="cand-info">
         <div class="cand-name">${escapeHTML(r.commentAuthor || 'Utilisateur')} <span style="color:var(--gray)">· signalé par ${escapeHTML(r.reportedByUsername || 'un joueur')}</span></div>
         <div class="cand-meta">${escapeHTML((r.commentText || '').slice(0, 70))}${(r.commentText || '').length > 70 ? '…' : ''} ${dateStr ? '· ' + dateStr : ''}</div>
@@ -4293,6 +4300,7 @@ function renderReports() {
 function openReportDetail(idx) {
   currentReportIndex = idx;
   const r = reports[idx];
+  document.getElementById('rd-avatar').innerHTML = navAvatarHTML(r.commentAuthorAvatar, r.commentAuthor, 44);
   document.getElementById('rd-title').textContent = `Commentaire de ${r.commentAuthor || 'Utilisateur'}`;
   document.getElementById('rd-comment-text').textContent = r.commentText || '(commentaire vide ou déjà supprimé)';
   document.getElementById('rd-author').textContent = r.commentAuthor || 'Utilisateur';
@@ -4471,6 +4479,7 @@ async function submitApplyModal() {
     uid: currentUser.uid,
     roblox, discord,
     email: currentUser.email,
+    avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
     poste: _applyPoste,
     xp: '—',
     heures, why, apport,
@@ -5035,6 +5044,7 @@ function reportComment(commentId) {
         commentId: c.id,
         commentText: c.text || '',
         commentAuthor: c.username || 'Utilisateur',
+        commentAuthorAvatar: c.avatarURL || '',
         commentAuthorUid: c.uid || '',
         reportedByUid: currentUser.email,
         reportedByUsername: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
@@ -5114,6 +5124,7 @@ async function postGameComment() {
           commentId: newCommentId,
           commentText: originalText,
           commentAuthor: authorUsername,
+          commentAuthorAvatar: currentUserProfile?.avatarURL || currentUser.photoURL || '',
           commentAuthorUid: currentUser.email,
           reportedByUid: currentUser.email,
           reportedByUsername: 'Signalement automatique (mot banni)',
