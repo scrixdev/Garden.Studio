@@ -141,7 +141,13 @@ nav > * { pointer-events: auto; } /* mais chaque élément réel (logo, liens, r
 .account-dropdown-head { display: flex; align-items: center; gap: 12px; padding: 12px 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); margin-bottom: 6px; }
 .account-dropdown-name { font-weight: 800; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
 .account-dropdown-email { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px; }
-.account-role-badge { display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; padding: 3px 9px; border-radius: 999px; font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; width: fit-content; }
+.account-role-badge {
+  display: inline-flex; align-items: center; gap: 5px; margin-top: 5px; padding: 4px 11px;
+  border-radius: 999px; font-size: 10.5px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.5px; width: fit-content; border: 1px solid rgba(255,255,255,0.16);
+  backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), inset 0 -1px 0 rgba(255,255,255,0.04), 0 2px 8px rgba(0,0,0,0.25);
+}
 /* ===== SETTINGS PAGE ===== */
 .settings-wrap { width: 100%; display: flex; flex-direction: column; gap: 24px; }
 .settings-section { border-radius: 18px; padding: 28px; }
@@ -1312,13 +1318,26 @@ footer {
 .admin-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .admin-card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 1px; color: var(--white); text-transform: uppercase; }
 .member-item {
-  display: flex; align-items: center; gap: 16px; padding: 14px 18px; margin-bottom: 10px;
-  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
-  transition: background 0.15s, border-color 0.15s;
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 16px; padding: 16px 20px; margin-bottom: 12px;
+  background: var(--glass-highlight), rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow), 0 4px 18px rgba(0,0,0,0.22);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
-.member-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.member-item:hover {
+  background: var(--glass-highlight), rgba(255,255,255,0.095);
+  border-color: rgba(255,255,255,0.26); transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), 0 12px 30px rgba(0,0,0,0.32);
+}
 .member-item:last-child { margin-bottom: 0; }
-.member-avatar { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 17px; }
+.member-avatar {
+  width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+  background: var(--dark3); display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #fff; font-size: 17px;
+  border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+}
 .member-info { flex: 1; min-width: 0; }
 .member-name { font-weight: 700; font-size: 15px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
 .member-email { font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
@@ -1327,16 +1346,18 @@ footer {
 .member-role-slot .account-role-badge { margin-top: 0; }
 .member-role-select {
   width: 100%; appearance: none; -webkit-appearance: none; -moz-appearance: none;
-  border: 1.5px solid; border-radius: 999px; padding: 7px 30px 7px 16px;
+  border: 1.5px solid; border-radius: 999px; padding: 8px 30px 8px 16px;
   font-family: 'Barlow', sans-serif; font-size: 11.5px; font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.5px; text-align: left; cursor: pointer;
   background-repeat: no-repeat; background-position: right 12px center; background-size: 10px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-  transition: filter 0.15s, transform 0.1s;
+  backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(255,255,255,0.04), 0 2px 10px rgba(0,0,0,0.2);
+  transition: filter 0.15s, transform 0.1s, box-shadow 0.15s;
 }
-.member-role-select:hover { filter: brightness(1.25); }
+.member-role-select:hover { filter: brightness(1.22); box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -1px 0 rgba(255,255,255,0.06), 0 4px 14px rgba(0,0,0,0.3); }
 .member-role-select:active { transform: scale(0.97); }
-.member-role-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.08); }
+.member-role-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.1); }
 .member-role-select option { background: var(--dark2, #1a1a1a); color: #fff; }
 .game-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .game-list-item:last-child { border-bottom: none; }
@@ -8258,7 +8279,7 @@ function updateNavAfterLogin(username, photoURL) {
 }
 function roleBadgeStyle(role) {
   const map = {
-    'Member':    { bg: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.65)' },
+    'Member':    { bg: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)' },
     'Helper':    { bg: 'rgba(47,125,250,0.15)',  color: '#2f7dfa' },
     'Scripter':  { bg: 'rgba(124,92,255,0.15)',  color: '#7c5cff' },
     'Graphiste': { bg: 'rgba(255,95,167,0.15)',  color: '#ff5fa2' },
