@@ -1842,6 +1842,7 @@ const storage = getStorage(app);
 const googleProvider = new GoogleAuthProvider();
 
 // ===== AUTH STATE =====
+let _unsubPersonalNotifs = null;
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     const username = user.displayName || user.email.split('@')[0];
@@ -1862,8 +1863,28 @@ onAuthStateChanged(auth, async (user) => {
         const freshNotifs = await fsGet('site/notifications');
         if (freshNotifs?.list && typeof window._gsSetNotifications === 'function') { window._gsSetNotifications(freshNotifs.list); if (typeof window.renderNotifications === 'function') window.renderNotifications(); }
       } catch (e) { console.error('Erreur rechargement notifications:', e); }
+      // Notifications personnelles (avertissements, réponses de candidature...) :
+      // propres à ce compte, stockées dans users/{uid}/notifications. On les récupère
+      // une première fois, puis on écoute en temps réel (utile si un admin en envoie
+      // une pendant que le membre est connecté ailleurs).
+      if (_unsubPersonalNotifs) { _unsubPersonalNotifs(); _unsubPersonalNotifs = null; }
+      personalNotifications = [];
+      try {
+        if (window.fbGetPersonalNotifications) {
+          personalNotifications = await window.fbGetPersonalNotifications(user.uid);
+          mergePersonalNotifications();
+          if (typeof window.renderNotifications === 'function') window.renderNotifications();
+        }
+      } catch (e) { console.error('Erreur chargement notifications personnelles:', e); }
+      _unsubPersonalNotifs = onSnapshot(collection(db, 'users', user.uid, 'notifications'), (snap) => {
+        personalNotifications = snap.docs.map(d => d.data());
+        mergePersonalNotifications();
+        if (typeof window.renderNotifications === 'function') window.renderNotifications();
+      }, (e) => console.warn('❌ Erreur temps réel (notifications personnelles):', e));
     } catch (e) { console.error('Erreur chargement profil utilisateur:', e); }
   } else {
+    if (_unsubPersonalNotifs) { _unsubPersonalNotifs(); _unsubPersonalNotifs = null; }
+    personalNotifications = [];
     if (typeof window._gsSetUser === 'function') window._gsSetUser(null);
     if (typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(null);
     if (typeof window.updateNavAfterLogout === 'function') window.updateNavAfterLogout();
@@ -1903,6 +1924,19 @@ window.fbGetAllUsers = async function() {
   return arr;
 };
 window.fbUpdateUserRole = async function(uid, role) { await fsMergeSet('users/' + uid, { role }); };
+// ===== NOTIFICATIONS PERSONNELLES (Firestore: users/{uid}/notifications/{id}) =====
+// Contrairement à site/notifications (annonces publiques, écriture admin uniquement),
+// chaque membre peut écrire SES PROPRES notifications ici (avertissements de modération,
+// réponses de candidature...), jamais celles d'un autre — voir règles Firestore.
+window.fbAddPersonalNotification = async function(uid, item) {
+  await setDoc(doc(db, 'users', uid, 'notifications', item.id), item);
+};
+window.fbGetPersonalNotifications = async function(uid) {
+  const snap = await getDocs(collection(db, 'users', uid, 'notifications'));
+  const arr = [];
+  snap.forEach(d => arr.push(d.data()));
+  return arr;
+};
 
 // ===== SÉCURITÉ DU COMPTE : mot de passe / email / suppression =====
 async function reauthCurrentUser(currentPassword) {
@@ -4227,22 +4261,18 @@ async function setCandStatus(status) {
     openCandDetail(currentCandIndex);
     if (c.userId) {
       if (status === 'accepted') {
-        publishNotification(
+        publishPersonalNotification(
           'candidature-accepted',
           'Candidature acceptée 🎉',
           `Ta candidature pour "${c.poste}" a été acceptée ! On va te contacter très prochainement via Discord et une demande d'ami Roblox — accepte bien les demandes venant de nos comptes officiels.`,
-          null,
-          c.userId,
-          { targetUid: c.uid || null }
+          c.uid || null
         );
       } else if (status === 'refused') {
-        publishNotification(
+        publishPersonalNotification(
           'candidature-refused',
           'Réponse à ta candidature',
           `Merci pour ton intérêt envers Garden Studio. Ta candidature pour "${c.poste}" n'a pas été retenue cette fois-ci, mais n'hésite pas à retenter ta chance sur une prochaine ouverture de poste !`,
-          null,
-          c.userId,
-          { targetUid: c.uid || null }
+          c.uid || null
         );
       }
     }
@@ -4566,6 +4596,11 @@ let products = loadData();
 let games = loadGames();
 let heroSlides = JSON.parse(JSON.stringify(DEFAULT_HERO_SLIDES));
 let notifications = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
+// Notifications personnelles (avertissements, réponses de candidature...) chargées
+// depuis users/{uid}/notifications, tenues à part puis fusionnées dans "notifications"
+// à chaque fois que la liste publique (site/notifications) est (re)chargée, pour ne
+// jamais les perdre quand _gsSetNotifications() écrase le tableau.
+let personalNotifications = [];
 let currentHeroSlide = 0;
 let currentLibraryTab = 'all';
 let userLibrary = createEmptyLibrary();
@@ -4620,8 +4655,16 @@ window._gsSetHeroSlides = (data) => {
 window._gsSetNotifications = (data) => {
   notifications.length = 0;
   (data || []).forEach(x => notifications.push(x));
+  mergePersonalNotifications();
   console.log('📥 notifications chargées:', notifications.length);
 };
+// Recolle les notifications personnelles (déjà en mémoire) après un rechargement de la
+// liste publique, sans doublons, puis retrie par date décroissante.
+function mergePersonalNotifications() {
+  const existingIds = new Set(notifications.map(n => n.id));
+  personalNotifications.forEach(n => { if (!existingIds.has(n.id)) { notifications.push(n); existingIds.add(n.id); } });
+  notifications.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+}
 window._gsSetUser         = (user) => { currentUser = user; loadUserLibrary(); loadPinnedTabIds(); loadReadNotificationIds(); renderMyListPage(); renderNotifications(); updatePinHomeButtonUI(); renderGamesOnSite(); };
 window._gsSetUserProfile  = (profile) => {
   currentUserProfile = profile;
@@ -5230,7 +5273,7 @@ async function postGameComment() {
         const template = bannedMatch.category === 'harcelement' ? warningMsgHarcelement : warningMsgInsulte;
         const detailMsg = template.replace(/\{n\}/g, newWarningCount);
         const title = bannedMatch.category === 'harcelement' ? '⚠️ Avertissement — Harcèlement' : '⚠️ Avertissement — Insulte';
-        await publishNotification('announcement', title, detailMsg, '', currentUser.email);
+        await publishPersonalNotification('announcement', title, detailMsg, currentUser.uid);
         showToast(`⚠️ Commentaire supprimé : ${categoryLabel} détectée. Tu as reçu un avertissement.`);
       } catch (e) {
         console.error('Erreur envoi avertissement:', e);
@@ -5644,6 +5687,33 @@ async function publishNotification(type, title, detail, gameName, targetUserId, 
   notifications.unshift(item);
   renderNotifications();
   try { await saveNotifications(); return true; } catch(e) { console.warn('Notification non sauvegardée', e); return false; }
+}
+// Notification CIBLÉE à un seul membre (avertissement de modération, réponse de
+// candidature...), stockée dans users/{targetUid}/notifications/ au lieu du document
+// partagé site/notifications. Indispensable pour que ça marche même quand c'est un
+// membre normal (pas admin) qui déclenche sa propre notification, comme le système
+// d'avertissement automatique : les règles Firestore n'autorisent l'écriture de
+// site/notifications qu'aux admins, alors que chacun peut écrire dans SON PROPRE
+// users/{uid}/notifications.
+async function publishPersonalNotification(type, title, detail, targetUid, gameName, extra) {
+  const linkedGame = (gameName && typeof games !== 'undefined') ? games.find(g => g.name === gameName) : null;
+  const item = Object.assign(
+    { id: String(Date.now()) + Math.random().toString(36).slice(2, 6), type, title, detail, gameName: gameName || '', img: linkedGame?.img || '', date: new Date().toISOString(), targetUid: targetUid || null },
+    extra || {}
+  );
+  // Affichage immédiat côté client (pas besoin d'attendre l'aller-retour Firestore).
+  // On la garde aussi dans personalNotifications pour qu'elle survive à un rechargement
+  // de la liste publique (_gsSetNotifications écrase "notifications" à chaque snapshot).
+  if (targetUid && currentUser && targetUid === currentUser.uid) personalNotifications.unshift(item);
+  notifications.unshift(item);
+  renderNotifications();
+  try {
+    if (window.fbAddPersonalNotification && targetUid) await window.fbAddPersonalNotification(targetUid, item);
+    return true;
+  } catch (e) {
+    console.warn('Notification personnelle non sauvegardée', e);
+    return false;
+  }
 }
 
 // ===== ANNONCES LIBRES (indépendantes des fiches jeux) =====
