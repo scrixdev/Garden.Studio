@@ -8048,12 +8048,15 @@ function renderSettingsPage() {
 
           <div class="glass-card settings-section settings-profile-card" style="padding:0;overflow:hidden">
             <div class="account-banner" style="border-radius:0">${bannerURL ? `<img class="account-banner-fg" src="${bannerURL}" alt="">` : ''}</div>
-            <div style="padding:0 28px 28px">
-              <div class="account-head" style="margin-top:0;gap:20px">
-                ${avatarURL ? `<img class="account-avatar-lg" style="width:96px;height:96px;border-width:4px;margin-top:-36px" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="width:96px;height:96px;border-width:4px;font-size:34px;background:${rs.color};margin-top:-36px">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}
-                <div class="account-head-info" style="padding-bottom:0;padding-top:2px">
-                  <div class="account-username" style="font-size:16px;text-transform:none">${escapeHTML(displayName || 'Sans nom')}</div>
-                  <div class="account-email" style="margin-top:1px">@${escapeHTML(username || '—')}</div>
+            <div style="padding:0 26px 26px">
+              <div class="account-head" style="margin-top:18px;padding:0;gap:20px;align-items:center">
+                <div>${avatarURL ? `<img class="account-avatar-lg" style="width:96px;height:96px;border-width:4px;margin:0" src="${avatarURL}" alt="">` : `<div class="account-avatar-lg-fallback" style="width:96px;height:96px;border-width:4px;font-size:34px;margin:0;background:${rs.color}">${escapeHTML((displayName || '?').charAt(0).toUpperCase())}</div>`}</div>
+                <div class="account-head-info" style="padding-top:0;padding-bottom:0">
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                    <div class="account-username" style="font-size:19px">${escapeHTML(displayName || 'Sans nom')}</div>
+                    <span class="account-role-badge" style="margin-top:0;background:${rs.bg};color:${rs.color}">${escapeHTML(role)}</span>
+                  </div>
+                  <div class="account-email" style="margin-top:2px">@${escapeHTML(username || '—')}</div>
                   <div class="account-email">${escapeHTML(currentUser.email || '')}</div>
                 </div>
               </div>
@@ -8787,8 +8790,8 @@ function openTeamMemberModal(id) {
   const avatarIcon = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
   document.getElementById('tm-banner').innerHTML = g.bannerURL ? `<img class="account-banner-fg" src="${g.bannerURL}" alt="">` : '';
   document.getElementById('tm-avatar-wrap').innerHTML = g.avatarURL
-    ? `<img class="account-avatar-lg" style="width:96px;height:96px;border-width:4px;margin:0" src="${g.avatarURL}" alt="">`
-    : `<div class="account-avatar-lg-fallback" style="width:96px;height:96px;border-width:4px;margin:0;font-size:34px;background:${rs.color};display:flex;align-items:center;justify-content:center">${escapeHTML((g.username || '?').trim().charAt(0).toUpperCase())}</div>`;
+    ? `<img class="account-avatar-lg" style="width:116px;height:116px;border-width:4px;margin:0" src="${g.avatarURL}" alt="">`
+    : `<div class="account-avatar-lg-fallback" style="width:116px;height:116px;border-width:4px;margin:0;font-size:40px;background:${rs.color};display:flex;align-items:center;justify-content:center">${escapeHTML((g.username || '?').trim().charAt(0).toUpperCase())}</div>`;
   document.getElementById('tm-name').innerHTML = `<span class="verified-name">${escapeHTML(displayName)}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>`;
   const roleBadgeEl = document.getElementById('tm-role-badge');
   roleBadgeEl.textContent = role;
@@ -9281,15 +9284,15 @@ select.authbox-input option {
     </button>
     <div id="tm-banner" class="account-banner" style="border-radius:0"></div>
     <div style="padding:0 26px 26px">
-      <div class="account-head" style="margin-top:0;padding:0;gap:20px">
-        <div id="tm-avatar-wrap" style="margin-top:-36px"></div>
-        <div class="account-head-info" style="padding-top:2px;padding-bottom:0">
+      <div class="account-head" style="margin-top:18px;padding:0;gap:20px;align-items:center">
+        <div id="tm-avatar-wrap"></div>
+        <div class="account-head-info" style="padding-top:0;padding-bottom:0">
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <div class="account-username" id="tm-name" style="font-size:19px"></div>
+            <div class="account-username" id="tm-name" style="font-size:22px"></div>
             <span class="account-role-badge" id="tm-role-badge" style="margin-top:0"></span>
           </div>
-          <div class="account-email" id="tm-username" style="margin-top:2px"></div>
-          <div class="profile-meta-line" id="tm-meta" style="display:none;margin-top:4px"></div>
+          <div class="account-email" id="tm-username" style="margin-top:3px;font-size:14px"></div>
+          <div class="profile-meta-line" id="tm-meta" style="display:none;margin-top:4px;font-size:13.5px"></div>
         </div>
       </div>
       <p class="account-bio" id="tm-bio" style="margin-top:16px;font-size:14px;line-height:1.65"></p>
