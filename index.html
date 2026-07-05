@@ -1311,12 +1311,17 @@ footer {
 .admin-card > * { position: relative; z-index: 1; }
 .admin-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .admin-card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 1px; color: var(--white); text-transform: uppercase; }
-.member-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; }
-.member-item:hover { background: rgba(255,255,255,0.03); }
-.member-item:last-child { border-bottom: none; }
-.member-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; }
+.member-item {
+  display: flex; align-items: center; gap: 16px; padding: 14px 18px; margin-bottom: 10px;
+  background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 14px;
+  transition: background 0.15s, border-color 0.15s;
+}
+.member-item:hover { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.1); }
+.member-item:last-child { margin-bottom: 0; }
+.member-avatar { width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 17px; }
 .member-info { flex: 1; min-width: 0; }
-.member-name { font-weight: 700; font-size: 14px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.member-name { font-weight: 700; font-size: 15px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.member-email { font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
 .member-meta { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-role-slot { flex-shrink: 0; width: 152px; display: flex; align-items: center; justify-content: flex-end; }
 .member-role-slot .account-role-badge { margin-top: 0; }
@@ -4902,7 +4907,7 @@ function renderAnnGalleryHTML(n) {
   if (!imgs.length) return '';
   const countClass = imgs.length >= 4 ? 'count-4plus' : `count-${imgs.length}`;
   const shown = imgs.slice(0, 4);
-  return `<div class="ann-gallery ${countClass}">${shown.map(url => `<img src="${escapeHTML(url)}" alt="" onclick="event.stopPropagation();openImgLightbox('${escapeHTML(url)}')">`).join('')}</div>`;
+  return `<div class="ann-gallery ${countClass}">${shown.map(url => `<img src="${escapeHTML(url)}" alt="" data-lightbox-url="${escapeHTML(url)}">`).join('')}</div>`;
 }
 function renderAnnouncementsFeed() {
   const feed = document.getElementById('ann-feed');
@@ -4922,7 +4927,7 @@ function renderAnnouncementsFeed() {
       : `<div class="ann-time">${formatNotifTime(n.date)}</div>`;
     const head = `<div class="ann-card-head"><img class="ann-avatar" src="${GS_LOGO}" alt=""><div class="ann-who"><div class="ann-name verified-name">GARDEN STUDIO${verifiedBadgeHTML()}</div><div class="ann-handle">@GARDEN STUDIO</div></div>${timeBlock}</div>`;
     if (isGameCard) {
-      return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${n.img}" alt="" style="cursor:zoom-in" onclick="event.stopPropagation();openImgLightbox('${escapeHTML(n.img)}')"></div>`;
+      return `<div class="ann-card"${isClickable ? ' style="cursor:pointer"' : ''}${clickAttr}>${head}<div class="ann-title-text">${escapeHTML(n.title)}${n.title ? ' — ' : ''}${escapeHTML(n.detail)}</div><img class="ann-banner" src="${escapeHTML(n.img)}" alt="" style="cursor:zoom-in" data-lightbox-url="${escapeHTML(n.img)}"></div>`;
     }
     const isLong = (n.detail || '').length > 220;
     const pollHTML = n.poll ? renderAnnPollHTML(n) : '';
@@ -5346,6 +5351,16 @@ function closeImgLightboxDirect() {
   const img = document.getElementById('img-lightbox-img');
   if (img) img.src = '';
 }
+// Délégation en phase de capture : on intercepte le clic avant qu'il n'atteigne
+// la carte d'annonce (qui peut avoir son propre onclick pour ouvrir le jeu lié).
+// On évite aussi d'injecter l'URL de l'image directement dans un attribut onclick,
+// ce qui pouvait casser le JS généré si l'URL contenait certains caractères.
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest && ev.target.closest('[data-lightbox-url]');
+  if (!el) return;
+  ev.stopPropagation();
+  openImgLightbox(el.getAttribute('data-lightbox-url'));
+}, true);
 
 let _trailerHideTimer = null;
 function trailerShowControls() {
@@ -5700,6 +5715,7 @@ function renderMemberItemHTML(u) {
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
       <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
+      ${u.email ? `<div class="member-email">${escapeHTML(u.email)}</div>` : ''}
       <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
     </div>
     <div class="member-role-slot" onclick="event.stopPropagation()">
