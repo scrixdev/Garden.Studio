@@ -2020,6 +2020,10 @@ onSnapshot(doc(db, 'site', 'heroes'), (snap) => {
 onSnapshot(doc(db, 'site', 'settings'), (snap) => {
   const s = snap.exists() ? snap.data() : null;
   if (s && typeof window.applySettingsFromData === 'function') window.applySettingsFromData(s);
+  // La modération (mots bannis) dépend de ces réglages : tant que ce premier snapshot
+  // n'est pas arrivé, on ne sait pas encore quels mots sont bannis. On le signale via
+  // ce flag pour éviter de laisser passer un commentaire non modéré par erreur de timing.
+  window.moderationSettingsLoaded = true;
   _gsMarkFirstSnapshotDone();
 }, (e) => { console.warn('❌ Erreur temps réel (settings):', e); _gsMarkFirstSnapshotDone(); });
 
@@ -5140,6 +5144,13 @@ function handleCommentKeydown(ev) {
 }
 async function postGameComment() {
   if (!requireAccount()) return;
+  // Sécurité anti-contournement : si les mots bannis (chargés depuis Firestore) ne sont
+  // pas encore arrivés, on refuse de poster plutôt que de risquer un commentaire non
+  // modéré à cause d'un timing de chargement (ex: compte qui vient de se connecter).
+  if (!window.moderationSettingsLoaded) {
+    showToast('⏳ Chargement en cours, réessaie dans un instant...');
+    return;
+  }
   const modal = document.getElementById('game-modal');
   const i = parseInt(modal.dataset.index);
   const g = games[i];
@@ -8085,6 +8096,10 @@ let bannedWordsHarcelement = [];
 let bannedWordsInsulte = [];
 let warningMsgHarcelement = DEFAULT_WARNING_MSG_HARCELEMENT;
 let warningMsgInsulte = DEFAULT_WARNING_MSG_INSULTE;
+// Passe à true dès que le premier snapshot Firestore des réglages (site/settings) est
+// arrivé, donc dès que bannedWordsHarcelement/bannedWordsInsulte reflètent la vraie
+// config. Tant que c'est false, postGameComment() refuse de poster (voir plus bas).
+window.moderationSettingsLoaded = false;
 function parseBannedWordsInput(raw) {
   return (raw || '')
     .split(/[\n,]/)
