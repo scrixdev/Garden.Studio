@@ -1226,6 +1226,13 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-reply-cancel svg { width: 15px; height: 15px; }
 .comment-quote { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 6px; padding-left: 8px; border-left: 2px solid rgba(255,255,255,0.2); }
 .comment-quote strong { color: rgba(255,255,255,0.65); }
+/* ===== FIL DE RÉPONSES IMBRIQUÉES (façon YouTube) ===== */
+.comment-replies-wrap { margin-left: 46px; margin-top: 10px; padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 12px; }
+.comment-item.is-reply { padding: 12px 14px 11px; border-radius: 16px; }
+.comment-toggle-replies { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--lime); font-weight: 700; font-size: 12.5px; letter-spacing: 0.2px; cursor: pointer; margin: 10px 0 0 46px; padding: 4px 2px; }
+.comment-toggle-replies:hover { text-decoration: underline; }
+.comment-toggle-replies svg { width: 14px; height: 14px; transition: transform 0.2s; }
+.comment-toggle-replies.open svg { transform: rotate(180deg); }
 /* Barre d'actions (like / dislike / répondre) en pilules glass, façon YouTube */
 .comment-actions-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .comment-vote-btn {
@@ -4753,9 +4760,11 @@ let commentsUnsub = null;
 let currentCommentsGameId = null;
 let lastRenderedComments = [];
 let replyingToComment = null; // { id, username, text }
+let expandedReplyThreads = new Set(); // ids des commentaires racine dont on affiche les réponses
 function startCommentsListener(i) {
   if (commentsUnsub) { commentsUnsub(); commentsUnsub = null; }
   cancelReplyToComment();
+  expandedReplyThreads = new Set();
   const g = games[i];
   if (!g || !window.fbListenGameComments) return;
   const gid = gameCommentsId(g);
@@ -4783,27 +4792,57 @@ function formatCommentDate(ts) {
   if (!d || isNaN(d.getTime())) return 'À l\'instant';
   return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
-function renderGameComments(comments) {
-  const list = document.getElementById('modal-comments-list');
-  const title = document.getElementById('comments-title');
-  if (!list) return;
-  lastRenderedComments = comments;
-  if (title) title.textContent = `Commentaires (${comments.length})`;
-  if (!comments.length) {
-    list.innerHTML = `<div class="comments-empty">Aucun commentaire pour l'instant. Sois le premier à réagir !</div>`;
-    return;
+// Convertit un timestamp Firestore (ou autre) en millisecondes pour pouvoir trier.
+function commentTsMillis(ts) {
+  if (!ts) return 0;
+  if (typeof ts.toDate === 'function') return ts.toDate().getTime();
+  const d = new Date(ts);
+  return isNaN(d.getTime()) ? 0 : d.getTime();
+}
+// Regroupe les commentaires en fils de discussion : chaque réponse (même une réponse
+// à une réponse) est rattachée au commentaire racine du fil, pour un affichage imbriqué
+// façon YouTube (la réponse reste collée juste en dessous du commentaire d'origine).
+function buildCommentThreads(comments) {
+  const byId = {};
+  comments.forEach(c => { byId[c.id] = c; });
+  function findRootId(c) {
+    let cur = c, guard = 0;
+    while (cur.replyTo && byId[cur.replyTo.id] && guard < 30) {
+      cur = byId[cur.replyTo.id];
+      guard++;
+    }
+    return cur.id;
   }
+  const rootSet = new Set();
+  comments.forEach(c => {
+    if (!c.replyTo || !byId[c.replyTo.id]) rootSet.add(c.id); // pas de parent, ou parent supprimé -> racine
+  });
+  const childrenMap = {};
+  rootSet.forEach(id => { childrenMap[id] = []; });
+  comments.forEach(c => {
+    if (!rootSet.has(c.id)) {
+      const rid = findRootId(c);
+      (childrenMap[rid] || (childrenMap[rid] = [])).push(c);
+    }
+  });
+  Object.keys(childrenMap).forEach(rid => {
+    childrenMap[rid].sort((a, b) => commentTsMillis(a.createdAt) - commentTsMillis(b.createdAt));
+  });
+  const orderedRoots = comments.filter(c => rootSet.has(c.id)); // déjà triés desc par la requête Firestore
+  return { orderedRoots, childrenMap };
+}
+// Génère le HTML d'une bulle de commentaire (racine ou réponse imbriquée).
+function commentItemHTML(c, isReply) {
   const uid = currentUser ? currentUser.email : null;
-  list.innerHTML = comments.map(c => {
-    const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
-    const authorName = escapeHTML(c.username || 'Utilisateur');
-    const quote = c.replyTo ? `<div class="comment-quote"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong> : ${escapeHTML((c.replyTo.text || '').slice(0, 80))}</div>` : '';
-    const likes = c.likes || [];
-    const dislikes = c.dislikes || [];
-    const liked = uid && likes.includes(uid);
-    const disliked = uid && dislikes.includes(uid);
-    return `<div class="comment-item">
-      <div class="comment-avatar">${navAvatarHTML(c.avatarURL, c.username, 34)}</div>
+  const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
+  const authorName = escapeHTML(c.username || 'Utilisateur');
+  const quote = (isReply && c.replyTo) ? `<div class="comment-quote"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong> : ${escapeHTML((c.replyTo.text || '').slice(0, 80))}</div>` : '';
+  const likes = c.likes || [];
+  const dislikes = c.dislikes || [];
+  const liked = uid && likes.includes(uid);
+  const disliked = uid && dislikes.includes(uid);
+  return `<div class="comment-item${isReply ? ' is-reply' : ''}">
+      <div class="comment-avatar">${navAvatarHTML(c.avatarURL, c.username, isReply ? 28 : 34)}</div>
       <div class="comment-body">
         <div class="comment-header">
           <span class="comment-author">${authorName}</span>
@@ -4838,8 +4877,37 @@ function renderGameComments(comments) {
         </div>
       </div>
     </div>`;
+}
+function renderGameComments(comments) {
+  const list = document.getElementById('modal-comments-list');
+  const title = document.getElementById('comments-title');
+  if (!list) return;
+  lastRenderedComments = comments;
+  if (title) title.textContent = `Commentaires (${comments.length})`;
+  if (!comments.length) {
+    list.innerHTML = `<div class="comments-empty">Aucun commentaire pour l'instant. Sois le premier à réagir !</div>`;
+    return;
+  }
+  const { orderedRoots, childrenMap } = buildCommentThreads(comments);
+  list.innerHTML = orderedRoots.map(root => {
+    const replies = childrenMap[root.id] || [];
+    const rootHTML = commentItemHTML(root, false);
+    if (!replies.length) return `<div class="comment-thread">${rootHTML}</div>`;
+    const isOpen = expandedReplyThreads.has(root.id);
+    const toggleBtn = `<button type="button" class="comment-toggle-replies${isOpen ? ' open' : ''}" onclick="toggleReplyThread('${root.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+        ${replies.length} réponse${replies.length > 1 ? 's' : ''}
+      </button>`;
+    const repliesHTML = isOpen ? `<div class="comment-replies-wrap">${replies.map(r => commentItemHTML(r, true)).join('')}</div>` : '';
+    return `<div class="comment-thread">${rootHTML}${toggleBtn}${repliesHTML}</div>`;
   }).join('');
   if (window.lucide) lucide.createIcons();
+}
+// Ouvre / referme le fil de réponses d'un commentaire racine (sans re-requêter Firestore).
+function toggleReplyThread(rootId) {
+  if (expandedReplyThreads.has(rootId)) expandedReplyThreads.delete(rootId);
+  else expandedReplyThreads.add(rootId);
+  renderGameComments(lastRenderedComments);
 }
 // Ferme tous les menus ⋮ ouverts quand on clique ailleurs
 document.addEventListener('click', () => {
@@ -4937,6 +5005,12 @@ async function postGameComment() {
     };
     if (replyingToComment) {
       payload.replyTo = { id: replyingToComment.id, username: replyingToComment.username, text: replyingToComment.text.slice(0, 200) };
+      // On déplie automatiquement le fil pour que la nouvelle réponse apparaisse
+      // tout de suite collée sous le commentaire d'origine.
+      const byId = {}; lastRenderedComments.forEach(x => byId[x.id] = x);
+      let cur = byId[replyingToComment.id], guard = 0;
+      while (cur && cur.replyTo && byId[cur.replyTo.id] && guard < 30) { cur = byId[cur.replyTo.id]; guard++; }
+      expandedReplyThreads.add(cur ? cur.id : replyingToComment.id);
     }
     await window.fbAddGameComment(gameCommentsId(g), payload);
     input.value = '';
