@@ -3320,6 +3320,10 @@ window.fbClearLoginHistory = async function(uid) {
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllPlays()"><i data-lucide="trash-2"></i> Réinitialiser compteurs joueurs</button>
             <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetAllAnnouncements()"><i data-lucide="bell-off"></i> Réinitialiser toutes les annonces</button>
           </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,0.08)">
+            <select id="reset-game-select" class="form-select" style="max-width:220px;font-size:12px;padding:9px 12px"></select>
+            <button class="btn-delete" style="font-size:12px;padding:10px 18px" onclick="confirmResetOneGamePlays()"><i data-lucide="rotate-ccw"></i> Réinitialiser le compteur de ce jeu</button>
+          </div>
         </div>
       </div>
 
@@ -4543,7 +4547,7 @@ window._gsRender = () => {
   renderHeroSlides();
   renderMyListPage();
   renderNotifications();
-  fillHeroGameSelect();
+  fillHeroGameSelect(); fillResetGameSelect();
   updateCandBadge();
   updateStats();
   if (window.lucide) lucide.createIcons();
@@ -6462,7 +6466,7 @@ function openAdmin() {
   document.body.style.overflow = 'hidden';
   renderGamesList();
   renderHeroList();
-  fillHeroGameSelect();
+  fillHeroGameSelect(); fillResetGameSelect();
   updateStats();
   renderThemePresets();
   syncColorInputsFromVars();
@@ -7619,7 +7623,7 @@ async function saveGameEdit() {
   try {
     await saveData();
     const shouldNotify = document.getElementById('ge-notify-toggle')?.classList.contains('on');
-    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); cancelGameEdit();
+    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); fillResetGameSelect(); cancelGameEdit();
     showToast(shouldNotify ? 'Jeu sauvegardé et joueurs notifiés !' : 'Jeu sauvegardé (sans notification)');
     logChange('Jeu "' + data.name + '" ' + (wasNew ? 'publié' : 'modifié') + (shouldNotify ? '' : ' — sans notif'));
     if (shouldNotify) {
@@ -7649,7 +7653,7 @@ function deleteGame(i) {
     showToast('Suppression en cours...');
     await saveData();
     await saveHeroSlides();
-    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); updateStats();
+    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); fillResetGameSelect(); updateStats();
     showToast('Jeu supprimé'); logChange('Jeu supprimé : ' + old.name);
     await publishNotification('game-deleted', 'Jeu supprimé', old.name + ' a été retiré du catalogue.', old.name);
   });
@@ -7665,7 +7669,7 @@ function deleteGameFromForm() {
     showToast('Suppression en cours...');
     await saveData();
     await saveHeroSlides();
-    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); updateStats();
+    renderGamesList(); renderGamesOnSite(); renderGamesPage(); renderHeroSlides(); fillHeroGameSelect(); fillResetGameSelect(); updateStats();
     cancelGameEdit();
     showToast('Jeu supprimé'); logChange('Jeu supprimé : ' + old.name);
     await publishNotification('game-deleted', 'Jeu supprimé', old.name + ' a été retiré du catalogue.', old.name);
@@ -8044,6 +8048,49 @@ async function resetAllPlays() {
     }
   } catch (e) {
     console.error('Erreur reset compteurs:', e);
+    showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+
+// Remplit le menu déroulant "cibler un jeu" du Dashboard avec la liste des jeux actuels.
+function fillResetGameSelect(selected) {
+  const select = document.getElementById('reset-game-select');
+  if (!select) return;
+  const chosen = selected ?? select.value;
+  if (!games.length) {
+    select.innerHTML = `<option value="">Aucun jeu</option>`;
+    return;
+  }
+  select.innerHTML = games.map(g => `<option value="${escapeHTML(g.name)}">${escapeHTML(g.name)}</option>`).join('');
+  if (chosen) select.value = chosen;
+}
+function confirmResetOneGamePlays() {
+  const select = document.getElementById('reset-game-select');
+  const name = select?.value;
+  if (!name) { showToast('Choisis un jeu à cibler'); return; }
+  showConfirm(
+    'Réinitialiser ce compteur ?',
+    `Cette action va remettre le compteur "joueurs" de "${name}" à 0 et sauvegarder sur Firebase. Impossible à annuler.`,
+    () => resetOneGamePlays(name)
+  );
+}
+async function resetOneGamePlays(name) {
+  const g = games.find(g => g.name === name);
+  if (!g) { showToast('❌ Jeu introuvable'); return; }
+  const previous = g.plays;
+  g.plays = 0;
+  try {
+    await saveData();
+    showToast(`✅ Compteur de "${name}" remis à 0`);
+    logChange('Compteur joueurs réinitialisé : "' + name + '"');
+    if (typeof renderGamesList === 'function') renderGamesList();
+    renderGamesOnSite();
+    if (document.getElementById('game-modal').classList.contains('open')) {
+      openGameModalDirect(parseInt(document.getElementById('game-modal').dataset.index));
+    }
+  } catch (e) {
+    g.plays = previous;
+    console.error('Erreur reset compteur jeu:', e);
     showToast('❌ Erreur lors de la sauvegarde');
   }
 }
@@ -9218,7 +9265,7 @@ renderGamesOnSite();
 renderHeroSlides();
 renderNotifications();
 renderMyListPage();
-fillHeroGameSelect();
+fillHeroGameSelect(); fillResetGameSelect();
 renderHeroFontDropdown();
 renderGameFontDropdown();
 renderWeightDropdown('he');
