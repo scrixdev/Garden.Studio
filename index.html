@@ -5086,11 +5086,14 @@ async function postGameComment() {
   const btn = document.querySelector('.comment-submit-btn');
   input.disabled = true; if (btn) btn.disabled = true;
   try {
+    const originalText = text.slice(0, 500);
+    const flagged = textHasBannedWord(originalText);
+    const authorUsername = currentUserProfile?.username || currentUser.displayName || 'Utilisateur';
     const payload = {
       uid: currentUser.email,
-      username: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
+      username: authorUsername,
       avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
-      text: censorText(text.slice(0, 500))
+      text: flagged ? censorText(originalText) : originalText
     };
     if (replyingToComment) {
       payload.replyTo = { id: replyingToComment.id, username: replyingToComment.username, text: replyingToComment.text.slice(0, 200) };
@@ -5101,7 +5104,27 @@ async function postGameComment() {
       while (cur && cur.replyTo && byId[cur.replyTo.id] && guard < 30) { cur = byId[cur.replyTo.id]; guard++; }
       expandedReplyThreads.add(cur ? cur.id : replyingToComment.id);
     }
-    await window.fbAddGameComment(gameCommentsId(g), payload);
+    const newCommentId = await window.fbAddGameComment(gameCommentsId(g), payload);
+    // Mot banni détecté : signalement automatique avec le texte ORIGINAL (non censuré)
+    // pour que l'admin puisse voir exactement ce qui a été écrit, dans le panel Signalements.
+    if (flagged && window.fbReportComment) {
+      try {
+        await window.fbReportComment({
+          gameId: gameCommentsId(g),
+          commentId: newCommentId,
+          commentText: originalText,
+          commentAuthor: authorUsername,
+          commentAuthorUid: currentUser.email,
+          reportedByUid: 'system',
+          reportedByUsername: 'Signalement automatique (mot banni)',
+          reason: 'Mot banni détecté automatiquement dans ce commentaire.',
+          status: 'pending'
+        });
+        reportsLoaded = false; // force le rechargement de la liste au prochain passage sur l'onglet Signalements
+      } catch (e) {
+        console.error('Erreur signalement automatique:', e);
+      }
+    }
     input.value = '';
     autoGrowCommentInput(input);
     cancelReplyToComment();
@@ -7924,6 +7947,11 @@ function censorText(text) {
     result = result.replace(re, match => '*'.repeat(match.length));
   });
   return result;
+}
+// Détecte si un texte contient au moins un mot banni (mot entier, insensible à la casse).
+function textHasBannedWord(text) {
+  if (!text || !bannedWords.length) return false;
+  return bannedWords.some(word => word && new RegExp('\\b' + escapeRegExp(word) + '\\b', 'i').test(text));
 }
 function toggleSection(btn, selector) {
   btn.classList.toggle('on');
