@@ -1024,6 +1024,25 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .modal-overlay.open .modal-box { transform: translateY(0); }
 .apply-modal-box { height: auto !important; max-height: 90vh !important; overflow-y: auto !important; }
 #team-member-modal .modal-box { height: auto; max-height: 90vh; overflow-y: auto; }
+#team-member-modal { z-index: 10500; }
+#team-member-modal .modal-box {
+  background: var(--glass-highlight), rgba(24,26,32,0.55);
+  backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 40px 120px rgba(0,0,0,0.65);
+}
+#banner-crop-modal { background: rgba(4,4,8,0.55); backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%); }
+#banner-crop-modal .modal-box {
+  background: var(--glass-highlight), rgba(24,26,32,0.55);
+  backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow), 0 40px 120px rgba(0,0,0,0.65);
+}
+#banner-crop-modal .banner-crop-zoom-btn {
+  background: var(--glass-highlight), rgba(255,255,255,0.06);
+  backdrop-filter: blur(6px) saturate(150%); -webkit-backdrop-filter: blur(6px) saturate(150%);
+  border: 1px solid var(--glass-border); box-shadow: var(--glass-shadow);
+}
 
 /* ===== GAME MODAL = CARTE CENTREE, FOND FLOUTE ===== */
 #game-modal { background: rgba(4,4,8,0.55); backdrop-filter: blur(26px) saturate(150%); -webkit-backdrop-filter: blur(26px) saturate(150%); }
@@ -1273,7 +1292,8 @@ footer {
 .admin-card > * { position: relative; z-index: 1; }
 .admin-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
 .admin-card-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; letter-spacing: 1px; color: var(--white); text-transform: uppercase; }
-.member-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.member-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.15s; }
+.member-item:hover { background: rgba(255,255,255,0.03); }
 .member-item:last-child { border-bottom: none; }
 .member-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover; background: var(--dark3); display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 15px; }
 .member-info { flex: 1; min-width: 0; }
@@ -5628,13 +5648,13 @@ function renderMemberItemHTML(u) {
   const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—';
   const letter = (u.username || '?').trim().charAt(0).toUpperCase();
   const rs = roleBadgeStyle(role);
-  return `<div class="member-item">
+  return `<div class="member-item" style="cursor:pointer" onclick="openTeamMemberModal('${u.id}')">
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
       <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span></div>
       <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
     </div>
-    <div class="member-role-slot">
+    <div class="member-role-slot" onclick="event.stopPropagation()">
     ${owner
       ? `<span class="account-role-badge" style="background:${rs.bg};color:${rs.color}" title="Rôle fixe, non modifiable">🔒 Owner</span>`
       : `<select class="member-role-select" style="background:${rs.bg};color:${rs.color};border-color:${rs.color}55" onchange="changeMemberRole('${u.id}', this.value); const _rs=roleBadgeStyle(this.value); this.style.background=_rs.bg; this.style.color=_rs.color; this.style.borderColor=_rs.color+'55';">
@@ -8469,7 +8489,7 @@ function updateNavAfterLogout() {
 
 // ===== TEAM MEMBER PROFILE MODAL =====
 function openTeamMemberModal(id) {
-  const g = (teamStaffCache || []).find(u => u.id === id);
+  const g = (teamStaffCache || []).find(u => u.id === id) || (allMembersCache || []).find(u => u.id === id);
   if (!g) return;
   const role = getEffectiveRole(g.email, g.role);
   const rs = roleBadgeStyle(role);
