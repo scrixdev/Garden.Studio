@@ -686,6 +686,7 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .btn-ghost.active { color: var(--white); border-color: rgba(255,255,255,0.5); background: var(--glass-highlight), var(--glass-bg-strong); }
 .btn-ghost.icon-only { width: 46px; height: 46px; padding: 0; justify-content: center; flex-shrink: 0; }
 .btn-ghost.icon-only.active { color: #ffd60a; border-color: rgba(255,214,10,0.4); background: rgba(255,214,10,0.13); }
+#modal-comment-toggle-btn.active { color: var(--lime); border-color: rgba(var(--lime-rgb),0.45); background: rgba(var(--lime-rgb),0.16); }
 .glass-card {
   position: relative;
   background: linear-gradient(-45deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.09) 100%);
@@ -1173,9 +1174,27 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; overflow-wrap: anywhere; word-break: break-word; }
 .modal-meta-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.comments-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+/* ===== PANNEAU LATÉRAL DE COMMENTAIRES (façon side-panel glass, cf image de référence) ===== */
+.comments-panel {
+  width: 0; opacity: 0; margin-left: 0; overflow: hidden; pointer-events: none;
+  height: 82vh; max-height: 800px; flex-shrink: 0;
+  border-radius: 24px; border: 1px solid rgba(255,255,255,0.14);
+  background: var(--glass-highlight), rgba(14,15,20,0.6);
+  backdrop-filter: blur(28px) saturate(180%); -webkit-backdrop-filter: blur(28px) saturate(180%);
+  box-shadow: var(--glass-shadow), 0 40px 120px rgba(0,0,0,0.55);
+  display: flex; flex-direction: column;
+  transition: width 0.45s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease, margin-left 0.45s cubic-bezier(0.22,1,0.36,1);
+}
+.comments-panel.open { width: min(400px, 34vw); opacity: 1; margin-left: 20px; pointer-events: all; }
+.comments-panel-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 20px 22px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); flex-shrink: 0; }
+.comments-panel-header .comments-title { margin-bottom: 0; white-space: nowrap; }
+.comments-panel-close { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18); color: var(--white); width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: all 0.2s; }
+.comments-panel-close:hover { background: rgba(255,255,255,0.2); border-color: rgba(255,255,255,0.4); }
+.comments-panel-close svg { width: 15px; height: 15px; }
+.comments-panel-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px 22px 22px; display: flex; flex-direction: column; scrollbar-width: none; -ms-overflow-style: none; }
+.comments-panel-body::-webkit-scrollbar { display: none; }
 .comments-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--white); margin-bottom: 12px; }
-.comment-form { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px; }
+.comment-form { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px; flex-shrink: 0; }
 .comment-textarea {
   flex: 1; resize: none; min-height: 42px; max-height: 140px; padding: 11px 16px;
   background: var(--glass-highlight), rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
@@ -1224,8 +1243,11 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-reply-cancel { background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; flex-shrink: 0; display: flex; padding: 2px; }
 .comment-reply-cancel:hover { color: #fff; }
 .comment-reply-cancel svg { width: 15px; height: 15px; }
-.comment-quote { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 6px; padding-left: 8px; border-left: 2px solid rgba(255,255,255,0.2); }
-.comment-quote strong { color: rgba(255,255,255,0.65); }
+.comment-quote { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,0.45); margin-bottom: 6px; padding: 3px 0 3px 8px; border-left: 2px solid rgba(255,255,255,0.2); overflow: hidden; white-space: nowrap; }
+.comment-quote svg { flex-shrink: 0; }
+.comment-quote > span:not(.comment-quote-text) { flex-shrink: 0; }
+.comment-quote strong { color: rgba(255,255,255,0.65); flex-shrink: 0; }
+.comment-quote-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 1; }
 /* ===== FIL DE RÉPONSES IMBRIQUÉES (façon YouTube) ===== */
 .comment-replies-wrap { margin-left: 46px; margin-top: 10px; padding-left: 16px; border-left: 2px solid rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 12px; }
 .comment-item.is-reply { padding: 12px 14px 11px; border-radius: 16px; }
@@ -1247,8 +1269,8 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-vote-btn:active { transform: scale(0.92); }
 .comment-vote-btn svg { width: 14px; height: 14px; }
 .comment-vote-btn span:empty { display: none; }
-.comment-vote-btn.active-like { color: var(--lime); background: var(--glass-highlight), rgba(var(--lime-rgb),0.2); border-color: rgba(var(--lime-rgb),0.45); }
-.comment-vote-btn.active-dislike { color: #ff6259; background: var(--glass-highlight), rgba(255,98,89,0.16); border-color: rgba(255,98,89,0.4); }
+.comment-vote-btn.active-like { color: #2ecc71; background: var(--glass-highlight), rgba(46,204,113,0.18); border-color: rgba(46,204,113,0.45); }
+.comment-vote-btn.active-dislike { color: #ff4d4d; background: var(--glass-highlight), rgba(255,77,77,0.18); border-color: rgba(255,77,77,0.45); }
 .comment-reply-btn2 {
   background: var(--glass-highlight), rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.16);
   color: rgba(255,255,255,0.65); font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.4px;
@@ -2186,6 +2208,14 @@ window.fbClearLoginHistory = async function(uid) {
   .nav-search input { height: 34px; font-size: 12px; }
   .nav-icon-btn { width: 34px; height: 34px; }
   .nav-right .btn-signin, .nav-right .btn-admin { display: none !important; }
+  /* Sur mobile, le panneau de commentaires devient un overlay plein écran plutôt qu'un panneau latéral */
+  .comments-panel {
+    position: fixed; inset: 0; z-index: 6000; width: auto !important; height: auto !important; max-height: none;
+    margin-left: 0 !important; border-radius: 0; opacity: 0; transform: translateY(100%);
+    transition: transform 0.4s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .comments-panel.open { opacity: 1; transform: translateY(0); pointer-events: all; }
 }
 
 /* ===== MOBILE CLEANUP (phones <=480px) ===== */
@@ -3012,21 +3042,27 @@ window.fbClearLoginHistory = async function(uid) {
         <div class="modal-user-actions" id="modal-user-actions"></div>
         <button class="btn-outline" onclick="closeModalDirect()">Retour</button>
       </div>
-      <div class="comments-section">
-        <div class="comments-title" id="comments-title">Commentaires</div>
-        <div class="comment-reply-preview" id="comment-reply-preview" style="display:none">
-          <div class="comment-reply-preview-text">Réponse à <strong id="comment-reply-preview-name"></strong> : <span id="comment-reply-preview-excerpt"></span></div>
-          <button type="button" class="comment-reply-cancel" onclick="cancelReplyToComment()" title="Annuler"><i data-lucide="x"></i></button>
-        </div>
-        <div class="comment-form">
-          <textarea class="comment-textarea" id="modal-comment-input" placeholder="Écris un commentaire sur ce jeu..." maxlength="500" rows="1" oninput="autoGrowCommentInput(this)" onkeydown="handleCommentKeydown(event)"></textarea>
-          <button type="button" class="comment-submit-btn" onclick="postGameComment()"><i data-lucide="send"></i></button>
-        </div>
-        <div class="comments-list" id="modal-comments-list"></div>
+    </div>
+  </div>
+  <div class="comments-panel" id="comments-panel" onclick="event.stopPropagation()">
+    <div class="comments-panel-header">
+      <div class="comments-title" id="comments-title">Commentaires</div>
+      <button type="button" class="comments-panel-close" onclick="closeCommentsPanel()" title="Fermer"><i data-lucide="x"></i></button>
+    </div>
+    <div class="comments-panel-body">
+      <div class="comment-reply-preview" id="comment-reply-preview" style="display:none">
+        <div class="comment-reply-preview-text">Réponse à <strong id="comment-reply-preview-name"></strong> : <span id="comment-reply-preview-excerpt"></span></div>
+        <button type="button" class="comment-reply-cancel" onclick="cancelReplyToComment()" title="Annuler"><i data-lucide="x"></i></button>
       </div>
+      <div class="comment-form">
+        <textarea class="comment-textarea" id="modal-comment-input" placeholder="Écris un commentaire sur ce jeu..." maxlength="500" rows="1" oninput="autoGrowCommentInput(this)" onkeydown="handleCommentKeydown(event)"></textarea>
+        <button type="button" class="comment-submit-btn" onclick="postGameComment()"><i data-lucide="send"></i></button>
+      </div>
+      <div class="comments-list" id="modal-comments-list"></div>
     </div>
   </div>
 </div>
+
 
 <!-- ===== IMAGE LIGHTBOX (agrandir une image d'annonce) ===== -->
 <div class="modal-overlay" id="img-lightbox-modal" onclick="closeImgLightbox(event)">
@@ -4836,7 +4872,7 @@ function commentItemHTML(c, isReply) {
   const uid = currentUser ? currentUser.email : null;
   const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
   const authorName = escapeHTML(c.username || 'Utilisateur');
-  const quote = (isReply && c.replyTo) ? `<div class="comment-quote"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong> : ${escapeHTML((c.replyTo.text || '').slice(0, 80))}</div>` : '';
+  const quote = (isReply && c.replyTo) ? `<div class="comment-quote"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong> : <span class="comment-quote-text">${escapeHTML((c.replyTo.text || '').slice(0, 80))}</span></div>` : '';
   const likes = c.likes || [];
   const dislikes = c.dislikes || [];
   const liked = uid && likes.includes(uid);
@@ -5791,6 +5827,9 @@ function likeIconHTML() {
 function verifiedBadgeHTML() {
   return `<span class="verified-badge" title="Officiel"><svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M14.6563 5.24291C15.4743 5.88358 16 6.8804 16 8C16 9.11964 15.4743 10.1165 14.6562 10.7572C14.7816 11.7886 14.4485 12.8652 13.6568 13.6569C12.8651 14.4486 11.7885 14.7817 10.7571 14.6563C10.1164 15.4743 9.1196 16 8 16C6.88038 16 5.88354 15.4743 5.24288 14.6562C4.21141 14.7817 3.13481 14.4485 2.34312 13.6568C1.55143 12.8652 1.2183 11.7886 1.34372 10.7571C0.525698 10.1164 0 9.1196 0 8C0 6.88038 0.525715 5.88354 1.34376 5.24288C1.21834 4.21141 1.55147 3.13481 2.34316 2.34312C3.13485 1.55143 4.21145 1.2183 5.24291 1.34372C5.88358 0.525698 6.8804 0 8 0C9.11964 0 10.1165 0.525732 10.7572 1.3438C11.7886 1.21838 12.8652 1.55152 13.6569 2.3432C14.4486 3.13488 14.7817 4.21146 14.6563 5.24291ZM12.2071 6.20711L10.7929 4.79289L7 8.58579L5.20711 6.79289L3.79289 8.20711L7 11.4142L12.2071 6.20711Z" fill="currentColor"></path></svg></span>`;
 }
+function commentIconHTML() {
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640" width="20" height="20" fill="currentColor"><path d="M320 544C461.4 544 576 436.5 576 304C576 171.5 461.4 64 320 64C178.6 64 64 171.5 64 304C64 358.3 83.2 408.3 115.6 448.5L66.8 540.8C62 549.8 63.5 560.8 70.4 568.3C77.3 575.8 88.2 578.1 97.5 574.1L215.9 523.4C247.7 536.6 282.9 544 320 544zM192 272C209.7 272 224 286.3 224 304C224 321.7 209.7 336 192 336C174.3 336 160 321.7 160 304C160 286.3 174.3 272 192 272zM320 272C337.7 272 352 286.3 352 304C352 321.7 337.7 336 320 336C302.3 336 288 321.7 288 304C288 286.3 302.3 272 320 272zM416 304C416 286.3 430.3 272 448 272C465.7 272 480 286.3 480 304C480 321.7 465.7 336 448 336C430.3 336 416 321.7 416 304z"/></svg>`;
+}
 function bookmarkIconHTML() {
   return `<span class="gs-bookmark-icon">
     <svg class="gs-bm-outline" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 640 640" fill="currentColor"><path d="M128 128C128 92.7 156.7 64 192 64L448 64C483.3 64 512 92.7 512 128L512 545.1C512 570.7 483.5 585.9 462.2 571.7L320 476.8L177.8 571.7C156.5 585.9 128 570.6 128 545.1L128 128zM192 112C183.2 112 176 119.2 176 128L176 515.2L293.4 437C309.5 426.3 330.5 426.3 346.6 437L464 515.2L464 128C464 119.2 456.8 112 448 112L192 112z"/></svg>
@@ -5989,7 +6028,11 @@ function openGameModalDirect(i) {
   const userActions = document.getElementById('modal-user-actions');
   if (userActions) userActions.innerHTML = `
     <button class="btn-ghost icon-only ${(currentUser && (hasGameInList('list', i) || isFavorited(i))) ? 'active' : ''}" onclick="openLibraryPicker(${i},event)" title="Ajouter">${bookmarkIconHTML()}</button>
-    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)">${likeIconHTML()} ${gameLikeCount(g)}</button>`;
+    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)">${likeIconHTML()} ${gameLikeCount(g)}</button>
+    <button type="button" class="btn-ghost icon-only" id="modal-comment-toggle-btn" onclick="toggleCommentsPanel(event)" title="Commentaires">${commentIconHTML()}</button>`;
+  if (document.getElementById('comments-panel')?.classList.contains('open')) {
+    document.getElementById('modal-comment-toggle-btn')?.classList.add('active');
+  }
   document.getElementById('game-modal').dataset.index = i;
   document.getElementById('game-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -5997,6 +6040,26 @@ function openGameModalDirect(i) {
   if (window.lucide) lucide.createIcons();
 }
 
+function toggleCommentsPanel(ev) {
+  if (ev) ev.stopPropagation();
+  const panel = document.getElementById('comments-panel');
+  if (!panel) return;
+  if (panel.classList.contains('open')) closeCommentsPanel();
+  else openCommentsPanel();
+}
+function openCommentsPanel() {
+  const panel = document.getElementById('comments-panel');
+  const btn = document.getElementById('modal-comment-toggle-btn');
+  if (panel) panel.classList.add('open');
+  if (btn) btn.classList.add('active');
+  if (window.lucide) lucide.createIcons();
+}
+function closeCommentsPanel() {
+  const panel = document.getElementById('comments-panel');
+  const btn = document.getElementById('modal-comment-toggle-btn');
+  if (panel) panel.classList.remove('open');
+  if (btn) btn.classList.remove('active');
+}
 function closeModal(e) {
   if (e.target === document.getElementById('game-modal')) closeModalDirect();
 }
@@ -6005,6 +6068,7 @@ function closeModalDirect() {
   document.getElementById('game-modal').classList.remove('open');
   document.body.style.overflow = '';
   stopCommentsListener();
+  closeCommentsPanel();
 }
 
 // ===== TRAILER MODAL (bande-annonce plein écran, lecteur custom liquid glass) =====
