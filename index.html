@@ -1173,6 +1173,42 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .modal-desc { font-size: 14px; color: rgba(255,255,255,0.75); line-height: 1.7; margin-bottom: 18px; overflow-wrap: anywhere; word-break: break-word; }
 .modal-meta-label { font-size: 9px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.5); }
 .modal-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.comments-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); }
+.comments-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--white); margin-bottom: 12px; }
+.comment-form { display: flex; align-items: flex-end; gap: 10px; margin-bottom: 16px; }
+.comment-textarea {
+  flex: 1; resize: none; min-height: 42px; max-height: 140px; padding: 11px 16px;
+  background: var(--glass-highlight), rgba(255,255,255,0.05); border: 1px solid var(--glass-border);
+  border-radius: 16px; color: var(--white); font-family: 'Barlow', sans-serif; font-size: 13.5px;
+  line-height: 1.4; backdrop-filter: blur(12px) saturate(160%); -webkit-backdrop-filter: blur(12px) saturate(160%);
+  box-shadow: var(--glass-shadow); transition: border-color 0.15s, box-shadow 0.15s;
+}
+.comment-textarea::placeholder { color: rgba(255,255,255,0.4); }
+.comment-textarea:focus { outline: none; border-color: rgba(255,255,255,0.5); box-shadow: var(--glass-shadow), 0 0 0 3px rgba(255,255,255,0.08); }
+.comment-submit-btn {
+  flex-shrink: 0; width: 42px; height: 42px; border-radius: 50%; border: 1px solid var(--glass-border);
+  background: var(--glass-highlight), rgba(var(--lime-rgb),0.22); color: var(--white); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px) saturate(160%);
+  -webkit-backdrop-filter: blur(10px) saturate(160%); box-shadow: var(--glass-shadow); transition: transform 0.15s, background 0.15s;
+}
+.comment-submit-btn:hover { background: var(--glass-highlight), rgba(var(--lime-rgb),0.34); transform: scale(1.06); }
+.comment-submit-btn:active { transform: scale(0.94); }
+.comment-submit-btn svg, .comment-submit-btn i { width: 17px; height: 17px; }
+.comments-list { display: flex; flex-direction: column; gap: 12px; }
+.comment-item {
+  display: flex; gap: 12px; padding: 12px 14px; border-radius: 14px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+}
+.comment-avatar { flex-shrink: 0; }
+.comment-body { flex: 1; min-width: 0; }
+.comment-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 3px; }
+.comment-author { font-weight: 700; font-size: 13px; color: var(--white); }
+.comment-date { font-size: 11px; color: var(--gray); white-space: nowrap; }
+.comment-text { font-size: 13.5px; color: rgba(255,255,255,0.82); line-height: 1.5; overflow-wrap: anywhere; word-break: break-word; white-space: pre-wrap; }
+.comment-delete-btn { background: none; border: none; padding: 2px; color: rgba(255,255,255,0.35); cursor: pointer; flex-shrink: 0; display: flex; transition: color 0.15s; }
+.comment-delete-btn:hover { color: #ff6259; }
+.comment-delete-btn svg { width: 14px; height: 14px; }
+.comments-empty { text-align: center; padding: 20px 10px; color: rgba(255,255,255,0.4); font-size: 13px; }
 
 /* ===== FEATURE ===== */
 
@@ -1889,6 +1925,52 @@ function hideSiteLoader() {
 }
 // Sécurité : si jamais Firebase ne répond pas et bloque, on masque quand même après 10s
 setTimeout(hideSiteLoader, 10000);
+
+// ===== COMMENTAIRES DE JEUX (Firestore: games/{gameId}/comments/{commentId}) =====
+// Vrai système temps réel : chaque jeu a sa propre sous-collection, indépendante
+// du document principal des jeux, donc aucun risque d'écrasement entre utilisateurs.
+window.fbAddGameComment = async function(gameId, data) {
+  const ref = await addDoc(collection(db, 'games', gameId, 'comments'), { ...data, createdAt: serverTimestamp() });
+  return ref.id;
+};
+window.fbDeleteGameComment = async function(gameId, commentId) {
+  await deleteDoc(doc(db, 'games', gameId, 'comments', commentId));
+};
+window.fbListenGameComments = function(gameId, callback) {
+  const q = query(collection(db, 'games', gameId, 'comments'), orderBy('createdAt', 'desc'), limit(200));
+  return onSnapshot(q, (snap) => {
+    callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+  }, (err) => { console.error('Erreur écoute commentaires:', err); callback([]); });
+};
+
+// ===== LIKES DE JEUX (Firestore: games/{gameId}/likes/{email}) =====
+// Vrai système : un document par utilisateur (id = son email), donc impossible de liker
+// deux fois, impossible de liker pour quelqu'un d'autre, et plus aucune dépendance au
+// document "site/games" (qui n'est modifiable que par les admins). Chaque like/unlike
+// est écrit directement par l'utilisateur concerné, en temps réel, sans écrasement possible.
+window.fbToggleGameLike = async function(gameId, email, username) {
+  const ref = doc(db, 'games', gameId, 'likes', email);
+  const snap = await getDoc(ref);
+  if (snap.exists()) { await deleteDoc(ref); return false; }
+  await setDoc(ref, { uid: email, username: username || '', createdAt: serverTimestamp() });
+  return true;
+};
+window.fbListenGameLikes = function(gameId, callback) {
+  return onSnapshot(collection(db, 'games', gameId, 'likes'), (snap) => {
+    callback(snap.docs.map(d => d.id));
+  }, (err) => { console.error('Erreur écoute likes:', err); callback([]); });
+};
+
+// ===== FAVORIS DE JEUX (Firestore: games/{gameId}/favorites/{email}) =====
+// Même principe que les likes : un document par utilisateur, privé (lisible uniquement
+// par son propriétaire), pour synchroniser la liste de favoris entre tous ses appareils.
+window.fbToggleGameFavorite = async function(gameId, email) {
+  const ref = doc(db, 'games', gameId, 'favorites', email);
+  const snap = await getDoc(ref);
+  if (snap.exists()) { await deleteDoc(ref); return false; }
+  await setDoc(ref, { uid: email, createdAt: serverTimestamp() });
+  return true;
+};
 
 // ===== SAVE =====
 window.fbSaveData = async (products, games) => {
@@ -2817,6 +2899,14 @@ window.fbClearLoginHistory = async function(uid) {
         <div class="modal-user-actions" id="modal-user-actions"></div>
         <button class="btn-outline" onclick="closeModalDirect()">Retour</button>
       </div>
+      <div class="comments-section">
+        <div class="comments-title" id="comments-title">Commentaires</div>
+        <div class="comment-form">
+          <textarea class="comment-textarea" id="modal-comment-input" placeholder="Écris un commentaire sur ce jeu..." maxlength="500" rows="1" oninput="autoGrowCommentInput(this)" onkeydown="handleCommentKeydown(event)"></textarea>
+          <button type="button" class="comment-submit-btn" onclick="postGameComment()"><i data-lucide="send"></i></button>
+        </div>
+        <div class="comments-list" id="modal-comments-list"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -3635,6 +3725,9 @@ const DEFAULT_NOTIFICATIONS = [];
 function normalizeGame(g, index) {
   return {
     ...g,
+    // likes/likesAt : anciens champs, conservés uniquement pour ne pas casser d'anciennes
+    // données déjà en base. Ils ne sont plus lus nulle part : les likes viennent désormais
+    // en temps réel de la sous-collection Firestore games/{gameId}/likes (voir gameLikeCount).
     likes: Array.isArray(g.likes) ? g.likes : [],
     likesAt: (g.likesAt && typeof g.likesAt === 'object') ? g.likesAt : {},
     ratings: (g.ratings && typeof g.ratings === 'object') ? g.ratings : {},
@@ -4069,6 +4162,10 @@ let notifications = JSON.parse(JSON.stringify(DEFAULT_NOTIFICATIONS));
 let currentHeroSlide = 0;
 let currentLibraryTab = 'all';
 let userLibrary = createEmptyLibrary();
+// ===== CACHE DES LIKES (vrai système temps réel : games/{gameId}/likes/{email}) =====
+// gameLikesCache[gameId] = tableau des emails ayant liké ce jeu (source de vérité = Firestore).
+let gameLikesCache = {};
+let gameLikesUnsubs = {};
 let _heroAutoplayTimer = null;
 let _heroPaused = false;
 
@@ -4084,7 +4181,29 @@ window._gsSetGames = (data) => {
   data.forEach((x, i) => games.push(normalizeGame(x, i)));
   window._games_count = games.length;
   console.log('📥 games chargés:', games.length);
+  subscribeAllGameLikes();
 };
+// S'abonne (une seule fois par jeu) à sa sous-collection de likes en temps réel.
+// C'est le vrai système : le compteur et l'état "j'ai liké" viennent directement de
+// Firestore, plus jamais du tableau games[] (qui n'est modifiable que par les admins).
+function subscribeAllGameLikes() {
+  if (typeof window.fbListenGameLikes !== 'function') return;
+  games.forEach(g => {
+    const gid = gameCommentsId(g);
+    if (gameLikesUnsubs[gid]) return; // déjà abonné
+    gameLikesUnsubs[gid] = window.fbListenGameLikes(gid, (emails) => {
+      gameLikesCache[gid] = emails;
+      renderGamesOnSite();
+      const modal = document.getElementById('game-modal');
+      if (modal && modal.classList.contains('open')) {
+        const i = parseInt(modal.dataset.index, 10);
+        if (!isNaN(i) && games[i] && gameCommentsId(games[i]) === gid) refreshModalLikeUI(i);
+      }
+    });
+  });
+}
+function gameLikeCount(g) { return (gameLikesCache[gameCommentsId(g)] || []).length; }
+function userLikedGame(g) { return !!(currentUser && (gameLikesCache[gameCommentsId(g)] || []).includes(currentUser.email)); }
 window._gsSetHeroSlides = (data) => {
   if (!data || !data.length) return;
   heroSlides.length = 0;
@@ -4369,28 +4488,162 @@ function closeLibraryPickerDone() {
   if (index >= 0 && document.getElementById('game-modal').classList.contains('open')) openGameModal(index);
   _libraryPickerIndex = -1;
 }
-function toggleVote(index, type, ev) {
+function gameCommentsId(g) {
+  const slug = gameKey(g).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  return slug || 'game';
+}
+let commentsUnsub = null;
+let currentCommentsGameId = null;
+function startCommentsListener(i) {
+  if (commentsUnsub) { commentsUnsub(); commentsUnsub = null; }
+  const g = games[i];
+  if (!g || !window.fbListenGameComments) return;
+  const gid = gameCommentsId(g);
+  currentCommentsGameId = gid;
+  const list = document.getElementById('modal-comments-list');
+  if (list) list.innerHTML = `<div class="comments-empty">Chargement des commentaires...</div>`;
+  commentsUnsub = window.fbListenGameComments(gid, (comments) => {
+    // Si le modal a changé de jeu (ou s'est fermé) entre-temps, on ignore ce résultat périmé.
+    if (document.getElementById('game-modal').dataset.index != String(i) || !document.getElementById('game-modal').classList.contains('open')) return;
+    renderGameComments(comments);
+  });
+}
+function stopCommentsListener() {
+  if (commentsUnsub) { commentsUnsub(); commentsUnsub = null; }
+  currentCommentsGameId = null;
+}
+function autoGrowCommentInput(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+function formatCommentDate(ts) {
+  const d = ts && typeof ts.toDate === 'function' ? ts.toDate() : (ts ? new Date(ts) : null);
+  if (!d || isNaN(d.getTime())) return 'À l\'instant';
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }) + ' à ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+}
+function renderGameComments(comments) {
+  const list = document.getElementById('modal-comments-list');
+  const title = document.getElementById('comments-title');
+  if (!list) return;
+  if (title) title.textContent = `Commentaires (${comments.length})`;
+  if (!comments.length) {
+    list.innerHTML = `<div class="comments-empty">Aucun commentaire pour l'instant. Sois le premier à réagir !</div>`;
+    return;
+  }
+  list.innerHTML = comments.map(c => {
+    const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
+    return `<div class="comment-item">
+      <div class="comment-avatar">${navAvatarHTML(c.avatarURL, c.username, 34)}</div>
+      <div class="comment-body">
+        <div class="comment-header">
+          <span class="comment-author">${escapeHTML(c.username || 'Utilisateur')}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="comment-date">${formatCommentDate(c.createdAt)}</span>
+            ${canDelete ? `<button type="button" class="comment-delete-btn" onclick="deleteGameComment('${c.id}')" title="Supprimer">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+            </button>` : ''}
+          </div>
+        </div>
+        <div class="comment-text">${escapeHTML(c.text)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function handleCommentKeydown(ev) {
+  if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); postGameComment(); }
+}
+async function postGameComment() {
+  if (!requireAccount()) return;
+  const modal = document.getElementById('game-modal');
+  const i = parseInt(modal.dataset.index);
+  const g = games[i];
+  if (!g || !window.fbAddGameComment) return;
+  const input = document.getElementById('modal-comment-input');
+  const text = (input.value || '').trim();
+  if (!text) return;
+  const btn = document.querySelector('.comment-submit-btn');
+  input.disabled = true; if (btn) btn.disabled = true;
+  try {
+    await window.fbAddGameComment(gameCommentsId(g), {
+      uid: currentUser.email,
+      username: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
+      avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
+      text: text.slice(0, 500)
+    });
+    input.value = '';
+    autoGrowCommentInput(input);
+  } catch (e) {
+    console.error('Erreur publication commentaire:', e);
+    showToast('❌ Erreur lors de la publication du commentaire');
+  } finally {
+    input.disabled = false; if (btn) btn.disabled = false;
+    input.focus();
+  }
+}
+function deleteGameComment(commentId) {
+  showConfirm('Supprimer ce commentaire ?', 'Cette action est irréversible.', () => confirmDeleteGameComment(commentId), 'Supprimer', true);
+}
+async function confirmDeleteGameComment(commentId) {
+  if (!currentCommentsGameId || !window.fbDeleteGameComment) return;
+  try {
+    await window.fbDeleteGameComment(currentCommentsGameId, commentId);
+    showToast('Commentaire supprimé.');
+  } catch (e) {
+    console.error('Erreur suppression commentaire:', e);
+    showToast('❌ Erreur lors de la suppression');
+  }
+}
+let _likeToggleInFlight = {};
+async function toggleVote(index, type, ev) {
   if (ev) ev.stopPropagation();
   if (!requireAccount()) return;
   const g = games[index];
-  if (!g) return;
-  if (!Array.isArray(g.likes)) g.likes = [];
-  if (!g.likesAt || typeof g.likesAt !== 'object') g.likesAt = {};
+  if (!g || !window.fbToggleGameLike) return;
+  const gid = gameCommentsId(g);
+  if (_likeToggleInFlight[gid]) return; // évite le double-clic pendant l'écriture Firestore
+  _likeToggleInFlight[gid] = true;
   const uid = currentUser.email;
-  const likeIdx = g.likes.indexOf(uid);
-  if (likeIdx >= 0) { g.likes.splice(likeIdx, 1); delete g.likesAt[uid]; }
-  else { g.likes.push(uid); g.likesAt[uid] = new Date().toISOString(); }
-  // synchro avec la liste perso "Jeux likés" de My List
-  const key = gameKey(g);
-  const isLikedNow = g.likes.includes(uid);
-  const wasLiked = userLibrary.liked.includes(key);
-  if (isLikedNow && !wasLiked) userLibrary.liked.push(key);
-  if (!isLikedNow && wasLiked) userLibrary.liked.splice(userLibrary.liked.indexOf(key), 1);
-  saveUserLibrary();
-  renderGamesOnSite(); renderMyListPage();
-  if (document.getElementById('game-modal').classList.contains('open')) openGameModal(index);
-  saveData().catch(e => console.error('Erreur sauvegarde vote:', e));
-  showToast(isLikedNow ? 'Jeu liké 👍' : 'Like retiré.');
+  // Mise à jour optimiste de l'UI en attendant la confirmation Firestore (le listener
+  // temps réel remettra de toute façon la valeur exacte juste après).
+  const cached = gameLikesCache[gid] || (gameLikesCache[gid] = []);
+  const wasLiked = cached.includes(uid);
+  if (wasLiked) cached.splice(cached.indexOf(uid), 1); else cached.push(uid);
+  renderGamesOnSite();
+  if (document.getElementById('game-modal').classList.contains('open')) refreshModalLikeUI(index);
+  try {
+    const isLikedNow = await window.fbToggleGameLike(gid, uid, currentUser.username || '');
+    // synchro avec la liste perso "Jeux likés" de My List
+    const key = gameKey(g);
+    const wasInLib = userLibrary.liked.includes(key);
+    if (isLikedNow && !wasInLib) userLibrary.liked.push(key);
+    if (!isLikedNow && wasInLib) userLibrary.liked.splice(userLibrary.liked.indexOf(key), 1);
+    saveUserLibrary();
+    renderMyListPage();
+    showToast(isLikedNow ? 'Jeu liké 👍' : 'Like retiré.');
+  } catch (e) {
+    console.error('Erreur toggle like:', e);
+    // on annule l'optimisme si Firestore a refusé l'écriture
+    const idx2 = cached.indexOf(uid);
+    if (wasLiked && idx2 < 0) cached.push(uid);
+    if (!wasLiked && idx2 >= 0) cached.splice(idx2, 1);
+    renderGamesOnSite();
+    if (document.getElementById('game-modal').classList.contains('open')) refreshModalLikeUI(index);
+    showToast('❌ Erreur lors du like');
+  } finally {
+    delete _likeToggleInFlight[gid];
+  }
+}
+// Ne rafraîchit que le bloc "actions" de la modale (compteur de likes), sans tout
+// réouvrir/réanimer comme openGameModal(index) le ferait.
+function refreshModalLikeUI(index) {
+  const g = games[index];
+  const userActions = document.getElementById('modal-user-actions');
+  if (!g || !userActions) return;
+  const likeBtn = userActions.querySelector('.btn-ghost[onclick*="toggleVote"]');
+  if (likeBtn) {
+    likeBtn.classList.toggle('like-active', userLikedGame(g));
+    likeBtn.innerHTML = `${likeIconHTML()} ${gameLikeCount(g)}`;
+  }
 }
 const LIST_COLORS = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0a84ff','#5e5ce6','#af52de','#ff2d78'];
 let selectedNewListColorIdx = 0;
@@ -5050,7 +5303,7 @@ function userRatingOn(g) {
 }
 // ===== SCORE "JEUX POPULAIRES" : likes + note + vues, combinés =====
 function popularityScore(g) {
-  const likes = Array.isArray(g.likes) ? g.likes.length : 0;
+  const likes = gameLikeCount(g);
   const rating = getGameRating(g); // 0 à 5
   const plays = Number(g.plays || 0);
   // Poids: chaque like = 3pts, chaque point de note = 8pts (donc 5/5 = 40pts), chaque vue compte un peu (plafonnée pour ne pas écraser le reste)
@@ -5060,9 +5313,9 @@ function popularityScore(g) {
 function recentActivityCount(g, days) {
   days = days || 7;
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  const dates = []
-    .concat(g.likesAt ? Object.values(g.likesAt) : [])
-    .concat(g.ratingsAt ? Object.values(g.ratingsAt) : []);
+  // Les likes sont désormais dans Firestore (games/{id}/likes), sans horodatage exposé
+  // côté client ; seule leur quantité totale contribue déjà au score de popularité.
+  const dates = (g.ratingsAt ? Object.values(g.ratingsAt) : []);
   return dates.filter(d => { const t = Date.parse(d); return !isNaN(t) && t >= cutoff; }).length;
 }
 // Trie une liste par score, met les jeux sans activité (score 0) derrière, triés par date de publication
@@ -5123,8 +5376,7 @@ function gsResetStars(el) {
 }
 function userVoteOn(g) {
   if (!currentUser || !g) return null;
-  if (Array.isArray(g.likes) && g.likes.includes(currentUser.email)) return 'like';
-  if (Array.isArray(g.dislikes) && g.dislikes.includes(currentUser.email)) return 'dislike';
+  if (userLikedGame(g)) return 'like';
   return null;
 }
 // ===== RATING STARS =====
@@ -5293,10 +5545,11 @@ function openGameModalDirect(i) {
   const userActions = document.getElementById('modal-user-actions');
   if (userActions) userActions.innerHTML = `
     <button class="btn-ghost icon-only ${(currentUser && (hasGameInList('list', i) || isFavorited(i))) ? 'active' : ''}" onclick="openLibraryPicker(${i},event)" title="Ajouter">${bookmarkIconHTML()}</button>
-    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)">${likeIconHTML()} ${(g.likes || []).length}</button>`;
+    <button class="btn-ghost ${userVoteOn(g) === 'like' ? 'like-active' : ''}" onclick="toggleVote(${i},'like',event)">${likeIconHTML()} ${gameLikeCount(g)}</button>`;
   document.getElementById('game-modal').dataset.index = i;
   document.getElementById('game-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
+  startCommentsListener(i);
   if (window.lucide) lucide.createIcons();
 }
 
@@ -5307,6 +5560,7 @@ function closeModal(e) {
 function closeModalDirect() {
   document.getElementById('game-modal').classList.remove('open');
   document.body.style.overflow = '';
+  stopCommentsListener();
 }
 
 // ===== TRAILER MODAL (bande-annonce plein écran, lecteur custom liquid glass) =====
