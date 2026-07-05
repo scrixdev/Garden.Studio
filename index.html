@@ -3748,12 +3748,6 @@ window.fbClearLoginHistory = async function(uid) {
           <div class="form-group"><label class="form-label">Titre de l'onglet</label><input type="text" class="form-input" id="f-page-title" value="Garden Studio - Discover Collect Game"></div>
           <button class="btn-primary" style="font-size:12px" onclick="applyPageTitle()">Appliquer</button>
         </div>
-        <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Filtre de mots interdits (commentaires)</span></div>
-          <div class="admin-section-sub" style="margin-bottom:12px">Un mot par ligne. Ces mots seront automatiquement remplacés par des <strong>&#42;&#42;&#42;</strong> dans les nouveaux commentaires postés sur les jeux (insultes, spam, etc.).</div>
-          <div class="form-group"><textarea class="form-textarea" id="f-word-filter" style="min-height:120px" placeholder="ex:&#10;connard&#10;putain&#10;salope"></textarea></div>
-          <button class="btn-primary" style="font-size:12px" onclick="saveWordFilter()">Enregistrer le filtre</button>
-        </div>
       </div>
 
       <!-- ===== CANDIDATURES ===== -->
@@ -4812,30 +4806,6 @@ let currentCommentsGameId = null;
 let lastRenderedComments = [];
 let replyingToComment = null; // { id, username, text }
 let expandedReplyThreads = new Set(); // ids des commentaires racine dont on affiche les réponses
-// ===== FILTRE DE MOTS INTERDITS (censure automatique des commentaires) =====
-// Liste par défaut, modifiable depuis Admin > Paramètres > "Filtre de mots interdits".
-let bannedWordsList = ['connard', 'connasse', 'salope', 'putain', 'enculé', 'enculée', 'batard', 'bâtard'];
-// Remplace chaque mot interdit (peu importe la casse/accents en tant que mot entier)
-// par des étoiles de la même longueur, sans toucher au reste du texte.
-function censorText(text) {
-  if (!text || !bannedWordsList || !bannedWordsList.length) return text;
-  let result = text;
-  bannedWordsList.forEach(w => {
-    const clean = (w || '').trim();
-    if (!clean) return;
-    const escapedWord = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const re = new RegExp(`(^|[^a-zA-ZÀ-ÿ])(${escapedWord})([^a-zA-ZÀ-ÿ]|$)`, 'gi');
-    result = result.replace(re, (m, p1, p2, p3) => p1 + '*'.repeat(p2.length) + p3);
-  });
-  return result;
-}
-function saveWordFilter() {
-  const el = document.getElementById('f-word-filter');
-  if (!el) return;
-  bannedWordsList = el.value.split('\n').map(w => w.trim()).filter(Boolean);
-  if (window.fbSaveSettings) window.fbSaveSettings(_getSettingsData());
-  showToast('Filtre de mots interdits enregistré !');
-}
 function startCommentsListener(i) {
   if (commentsUnsub) { commentsUnsub(); commentsUnsub = null; }
   cancelReplyToComment();
@@ -5089,7 +5059,7 @@ async function postGameComment() {
       uid: currentUser.email,
       username: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
       avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
-      text: censorText(text.slice(0, 500))
+      text: text.slice(0, 500)
     };
     if (replyingToComment) {
       payload.replyTo = { id: replyingToComment.id, username: replyingToComment.username, text: replyingToComment.text.slice(0, 200) };
@@ -5601,17 +5571,33 @@ async function sendAnnouncement() {
   }
   renderAnnouncementsHistory();
 }
+// Types d'annonces "auto" générées par les fiches jeux / le hero (bannières).
+// On les affiche dans le panel admin à côté des annonces manuelles, avec un badge dédié.
+const AUTO_ANNOUNCEMENT_LABELS = {
+  'game-created': { label: '🎮 Jeu publié', color: '#39FF14' },
+  'game-updated': { label: '🎮 Jeu modifié', color: '#2f7dfa' },
+  'game-deleted': { label: '🎮 Jeu supprimé', color: '#ff5252' },
+  'hero-created': { label: '🖼️ Bannière publiée', color: '#39FF14' },
+  'hero-updated': { label: '🖼️ Bannière modifiée', color: '#2f7dfa' },
+  'hero-deleted': { label: '🖼️ Bannière supprimée', color: '#ff5252' }
+};
 function renderAnnouncementsHistory() {
   const list = document.getElementById('announcements-list');
   if (!list) return;
-  const anns = notifications.filter(n => n.type === 'announcement');
+  // Annonces manuelles + annonces automatiques (jeux/hero), on exclut les notifs ciblées (candidatures, etc.)
+  const anns = notifications
+    .filter(n => n.type === 'announcement' || AUTO_ANNOUNCEMENT_LABELS[n.type])
+    .filter(n => !n.targetUserId && !n.targetUid)
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
   if (!anns.length) { list.innerHTML = 'Aucune annonce envoyée pour l\'instant.'; return; }
   list.innerHTML = anns.map(n => {
     const pollTag = n.poll ? '<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(124,92,255,0.15);color:#a78bfa;font-size:10.5px;font-weight:700;vertical-align:middle">🗳️ sondage</span>' : '';
+    const auto = AUTO_ANNOUNCEMENT_LABELS[n.type];
+    const autoTag = auto ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:${auto.color}22;color:${auto.color};font-size:10.5px;font-weight:700;vertical-align:middle">${auto.label}</span>` : '';
     return `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
       <div style="min-width:0;flex:1">
-        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.title)}${pollTag}</div>
+        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.title)}${pollTag}${autoTag}</div>
         <div style="font-size:12.5px;color:var(--gray);line-height:1.5;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.detail)}</div>
         <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">${formatNotifTime(n.date)}</div>
       </div>
@@ -7905,8 +7891,7 @@ function _getSettingsData() {
     card:  document.getElementById('c-card')  ? document.getElementById('c-card').value  : '#111319',
     gradient: cs.getPropertyValue('--gradient-accent').trim() || 'linear-gradient(135deg, #1a1a2e, #533483)',
     light: document.body.classList.contains('theme-light'),
-    title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title,
-    wordFilter: bannedWordsList
+    title: document.getElementById('f-page-title') ? document.getElementById('f-page-title').value : document.title
   };
 }
 
@@ -7925,11 +7910,6 @@ window.applySettingsFromData = function(s) {
     document.title = s.title;
     const inp = document.getElementById('f-page-title');
     if (inp) inp.value = s.title;
-  }
-  if (s && Array.isArray(s.wordFilter)) {
-    bannedWordsList = s.wordFilter;
-    const wfEl = document.getElementById('f-word-filter');
-    if (wfEl) wfEl.value = s.wordFilter.join('\n');
   }
 };
 
