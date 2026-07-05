@@ -50,7 +50,9 @@ nav {
   background: var(--glass-highlight), rgba(20,20,24,0.45); backdrop-filter: blur(18px) saturate(160%); -webkit-backdrop-filter: blur(18px) saturate(160%);
   border-bottom: 1px solid rgba(255,255,255,0.14);
   box-shadow: inset 0 -1px 0 rgba(255,255,255,0.06);
+  pointer-events: none; /* la nav en elle-même ne doit pas bloquer les clics vers ce qu'il y a derrière */
 }
+nav > * { pointer-events: auto; } /* mais chaque élément réel (logo, liens, recherche, cloche, compte, hamburger) reste cliquable */
 .logo {
   display: flex; align-items: center; gap: 10px;
   font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 22px;
@@ -156,6 +158,10 @@ nav {
 .banner-crop-frame img { position: absolute; top: 0; left: 0; max-width: none; max-height: none; pointer-events: none; will-change: transform, width, height; }
 .banner-crop-zoom-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--gray); }
 .banner-crop-zoom-row input[type="range"] { flex: 1; accent-color: var(--lime); }
+.banner-crop-zoom-btn { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); color: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s; user-select: none; }
+.banner-crop-zoom-btn:hover { background: rgba(var(--lime-rgb),0.22); border-color: rgba(var(--lime-rgb),0.5); }
+.banner-crop-zoom-btn:active { transform: scale(0.9); }
+.banner-crop-zoom-btn:disabled { opacity: 0.35; cursor: default; background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.16); transform: none; }
 .settings-info-row { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 13px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
 .settings-info-row:last-child { border-bottom: none; }
 .settings-info-label { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.45); flex: none; }
@@ -2834,7 +2840,13 @@ window.fbClearLoginHistory = async function(uid) {
     </div>
     <div class="banner-crop-zoom-row">
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.65" y2="14.65"/></svg>
+      <button type="button" class="banner-crop-zoom-btn" id="banner-crop-zoom-minus" onmousedown="bannerCropZoomHoldStart(-1)" onmouseup="bannerCropZoomHoldStop()" onmouseleave="bannerCropZoomHoldStop()" ontouchstart="event.preventDefault();bannerCropZoomHoldStart(-1)" ontouchend="bannerCropZoomHoldStop()" aria-label="Réduire le zoom">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <input type="range" id="banner-crop-zoom" min="1" max="3" step="0.01" value="1" oninput="bannerCropZoomChange(this.value)">
+      <button type="button" class="banner-crop-zoom-btn" id="banner-crop-zoom-plus" onmousedown="bannerCropZoomHoldStart(1)" onmouseup="bannerCropZoomHoldStop()" onmouseleave="bannerCropZoomHoldStop()" ontouchstart="event.preventDefault();bannerCropZoomHoldStart(1)" ontouchend="bannerCropZoomHoldStop()" aria-label="Augmenter le zoom">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
       <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10" cy="10" r="6"/><line x1="21" y1="21" x2="14.65" y2="14.65"/><line x1="10" y1="7" x2="10" y2="13"/><line x1="7" y1="10" x2="13" y2="10"/></svg>
     </div>
     <div style="display:flex;gap:10px;margin-top:18px">
@@ -8346,6 +8358,7 @@ function openBannerCropModal(file, input) {
       document.getElementById('banner-crop-img').src = e.target.result;
       document.getElementById('banner-crop-zoom').value = 1;
       updateBannerCropTransform();
+      updateBannerCropZoomButtons();
       document.getElementById('banner-crop-modal').classList.add('open');
     };
     img.src = e.target.result;
@@ -8378,6 +8391,36 @@ function bannerCropZoomChange(val) {
   const s = bannerCropState; if (!s) return;
   s.zoom = parseFloat(val) || 1;
   updateBannerCropTransform();
+  updateBannerCropZoomButtons();
+}
+const BANNER_CROP_ZOOM_MIN = 1, BANNER_CROP_ZOOM_MAX = 3, BANNER_CROP_ZOOM_STEP = 0.1;
+function updateBannerCropZoomButtons() {
+  const s = bannerCropState; if (!s) return;
+  const minus = document.getElementById('banner-crop-zoom-minus');
+  const plus = document.getElementById('banner-crop-zoom-plus');
+  if (minus) minus.disabled = s.zoom <= BANNER_CROP_ZOOM_MIN + 0.001;
+  if (plus) plus.disabled = s.zoom >= BANNER_CROP_ZOOM_MAX - 0.001;
+}
+function bannerCropZoomStep(direction) {
+  const s = bannerCropState; if (!s) return;
+  const next = Math.min(BANNER_CROP_ZOOM_MAX, Math.max(BANNER_CROP_ZOOM_MIN, s.zoom + direction * BANNER_CROP_ZOOM_STEP));
+  s.zoom = next;
+  const slider = document.getElementById('banner-crop-zoom');
+  if (slider) slider.value = next;
+  updateBannerCropTransform();
+  updateBannerCropZoomButtons();
+}
+let _bannerZoomHoldTimeout = null, _bannerZoomHoldInterval = null;
+function bannerCropZoomHoldStart(direction) {
+  bannerCropZoomStep(direction);
+  clearTimeout(_bannerZoomHoldTimeout); clearInterval(_bannerZoomHoldInterval);
+  _bannerZoomHoldTimeout = setTimeout(() => {
+    _bannerZoomHoldInterval = setInterval(() => bannerCropZoomStep(direction), 60);
+  }, 350);
+}
+function bannerCropZoomHoldStop() {
+  clearTimeout(_bannerZoomHoldTimeout); clearInterval(_bannerZoomHoldInterval);
+  _bannerZoomHoldTimeout = null; _bannerZoomHoldInterval = null;
 }
 function bannerCropDragStart(ev) {
   const s = bannerCropState; if (!s) return;
