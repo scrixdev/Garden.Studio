@@ -2027,7 +2027,7 @@ try {
 
 console.log('🔄 Connexion en temps réel à Firestore...');
 
-let _gsFirstSnapshotsLeft = 8; // products, games, gamers, footer, heroes, settings, notifications, users
+let _gsFirstSnapshotsLeft = 7; // products, games, footer, heroes, settings, notifications, users
 function _gsMarkFirstSnapshotDone() {
   if (_gsFirstSnapshotsLeft > 0) _gsFirstSnapshotsLeft--;
   if (_gsFirstSnapshotsLeft === 0 && !window._gsFirebaseReady) {
@@ -4699,18 +4699,24 @@ window._gsSetUserProfile  = (profile) => {
   if (document.getElementById('page-settings')?.classList.contains('active')) renderSettingsPage();
   if (document.getElementById('admin-panel')?.classList.contains('open')) updateAdminMembersVisibility();
 };
+let _gsRenderScheduled = false;
 window._gsRender = () => {
-  renderProductsOnSite();
-  renderGamesOnSite();
-  renderGamesPage();
-  renderGamersPage();
-  renderHeroSlides();
-  renderMyListPage();
-  renderNotifications();
-  fillHeroGameSelect(); fillResetGameSelect();
-  updateCandBadge();
-  updateStats();
-  if (window.lucide) lucide.createIcons();
+  if (_gsRenderScheduled) return;
+  _gsRenderScheduled = true;
+  requestAnimationFrame(() => {
+    _gsRenderScheduled = false;
+    renderProductsOnSite();
+    renderGamesOnSite();
+    renderGamesPage();
+    renderGamersPage();
+    renderHeroSlides();
+    renderMyListPage();
+    renderNotifications();
+    fillHeroGameSelect(); fillResetGameSelect();
+    updateCandBadge();
+    updateStats();
+    if (window.lucide) lucide.createIcons();
+  });
 };
 
 const tempImgs = {};
