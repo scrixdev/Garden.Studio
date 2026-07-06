@@ -1500,6 +1500,27 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .member-role-select:active { transform: scale(0.97); }
 .member-role-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.1); }
 .member-role-select option { background: var(--dark2, #1a1a1a); color: #fff; }
+.announcement-item {
+  position: relative; overflow: hidden;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
+  padding: 16px 20px; margin-bottom: 12px;
+  background: var(--glass-highlight), rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow), 0 4px 18px rgba(0,0,0,0.22);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.announcement-item:hover {
+  background: var(--glass-highlight), rgba(255,255,255,0.095);
+  border-color: rgba(255,255,255,0.26); transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), 0 12px 30px rgba(0,0,0,0.32);
+}
+.announcement-item:last-child { margin-bottom: 0; }
+.announcement-item-body { min-width: 0; flex: 1; }
+.announcement-item-title { font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 4px; word-break: break-word; overflow-wrap: anywhere; }
+.announcement-item-detail { font-size: 12.5px; color: rgba(255,255,255,0.6); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; }
+.announcement-item-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; }
+.announcement-item .btn-delete { flex-shrink: 0; }
 .game-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
 .game-list-item:last-child { border-bottom: none; }
 .game-list-thumb {
@@ -6024,11 +6045,11 @@ async function renderAnnouncementsHistory() {
     const targetTag = isWarning && n.fromUsername ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--gray);font-size:10.5px;font-weight:700;vertical-align:middle">👤 ${escapeHTML(n.fromUsername)}</span>` : '';
     const deleteAction = isWarning ? `confirmDeleteWarningNotif('${n.uid}','${n.id}')` : `confirmDeleteAnnouncement('${n.id}')`;
     return `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.08)">
-      <div style="min-width:0;flex:1">
-        <div style="font-weight:700;font-size:13px;color:var(--white);margin-bottom:3px;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.title)}${pollTag}${autoTag}${targetTag}</div>
-        <div style="font-size:12.5px;color:var(--gray);line-height:1.5;word-break:break-word;overflow-wrap:anywhere">${escapeHTML(n.detail)}</div>
-        <div style="font-size:11px;color:rgba(255,255,255,0.35);margin-top:4px">${formatNotifTime(n.date)}</div>
+    <div class="announcement-item">
+      <div class="announcement-item-body">
+        <div class="announcement-item-title">${escapeHTML(n.title)}${pollTag}${autoTag}${targetTag}</div>
+        <div class="announcement-item-detail">${escapeHTML(n.detail)}</div>
+        <div class="announcement-item-time">${formatNotifTime(n.date)}</div>
       </div>
       <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
     </div>`;
