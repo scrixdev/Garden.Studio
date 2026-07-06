@@ -1850,10 +1850,13 @@ onAuthStateChanged(auth, async (user) => {
     if (typeof window._gsSetUser === 'function') window._gsSetUser({ username, email: user.email, uid: user.uid, photoURL: user.photoURL || '', provider });
     if (typeof window.updateNavAfterLogin === 'function') window.updateNavAfterLogin(username, user.photoURL || '');
     try {
-      const profile = await window.fbEnsureUserProfile(user.uid, { username, email: user.email, avatarURL: user.photoURL || '' });
-      if (profile.email !== user.email && window.fbSaveUserProfile) {
-        try { await window.fbSaveUserProfile(user.uid, { email: user.email }); profile.email = user.email; }
-        catch (e) { console.error('Erreur correction email profil:', e); }
+      const profile = await window.fbEnsureUserProfile(user.uid, { username, avatarURL: user.photoURL || '' });
+      // L'email vit désormais dans un sous-document privé (users/{uid}/private/main),
+      // jamais dans le profil public — on le resynchronise à chaque connexion pour
+      // rester à jour si l'utilisateur a changé d'email de connexion.
+      if (window.fbSyncUserEmail) {
+        try { await window.fbSyncUserEmail(user.uid, user.email); }
+        catch (e) { console.error('Erreur synchro email privé:', e); }
       }
       if (typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(profile);
       // Recharge les notifications à jour depuis Firestore à chaque connexion,
@@ -1899,12 +1902,14 @@ async function fsSet(path, data) { await setDoc(doc(db, ...path.split('/')), dat
 async function fsMergeSet(path, data) { await setDoc(doc(db, ...path.split('/')), data, { merge: true }); }
 
 // ===== PROFILS UTILISATEURS (Firestore: users/{uid}) =====
+// IMPORTANT : l'email ne fait PLUS partie de ce document public (lisible par tout le
+// monde pour la page Équipe). Il vit dans users/{uid}/private/main, lisible uniquement
+// par le propriétaire du compte ou un admin (voir règles Firestore).
 window.fbEnsureUserProfile = async function(uid, defaults) {
   const existing = await fsGet('users/' + uid);
   if (existing) return existing;
   const profile = {
     username: defaults.username || '',
-    email: defaults.email || '',
     bio: '',
     avatarURL: defaults.avatarURL || '',
     bannerURL: '',
@@ -1916,12 +1921,47 @@ window.fbEnsureUserProfile = async function(uid, defaults) {
   return profile;
 };
 window.fbGetUserProfile = async function(uid) { return await fsGet('users/' + uid); };
-window.fbSaveUserProfile = async function(uid, data) { await fsMergeSet('users/' + uid, data); };
+window.fbSaveUserProfile = async function(uid, data) {
+  // Si jamais un email traîne dans "data" (ancien code, mauvaise habitude...), on le
+  // redirige systématiquement vers le sous-document privé plutôt que le profil public.
+  if (data && Object.prototype.hasOwnProperty.call(data, 'email')) {
+    const { email, ...publicData } = data;
+    await window.fbSyncUserEmail(uid, email);
+    if (Object.keys(publicData).length) await fsMergeSet('users/' + uid, publicData);
+    return;
+  }
+  await fsMergeSet('users/' + uid, data);
+};
+// Écrit/synchronise l'email privé de l'utilisateur (users/{uid}/private/main).
+// Les règles Firestore n'acceptent cette écriture que si "email" correspond au vrai
+// email de connexion Firebase Auth du compte — impossible d'y mettre l'email de qqn d'autre.
+window.fbSyncUserEmail = async function(uid, email) {
+  await fsMergeSet('users/' + uid + '/private/main', { email });
+};
 window.fbGetAllUsers = async function() {
   const snap = await getDocs(collection(db, 'users'));
   const arr = [];
   snap.forEach(d => arr.push({ id: d.id, ...d.data() }));
   return arr;
+};
+// Admin/owner UNIQUEMENT : récupère l'email privé de tous les membres en une seule
+// requête (collectionGroup sur "private"), pour l'affichage dans le panel admin >
+// Membres. Si l'appelant n'est ni owner ni admin, les règles Firestore renvoient un
+// refus (les résultats seront vides) — cette fonction ne doit jamais être appelée
+// pour construire la page Équipe publique.
+window.fbGetAllPrivateEmails = async function() {
+  try {
+    const snap = await getDocs(collectionGroup(db, 'private'));
+    const map = {};
+    snap.forEach(d => {
+      const parentUser = d.ref.parent.parent;
+      if (parentUser) map[parentUser.id] = d.data().email || '';
+    });
+    return map;
+  } catch (e) {
+    console.warn('fbGetAllPrivateEmails: accès refusé ou erreur', e);
+    return {};
+  }
 };
 window.fbUpdateUserRole = async function(uid, role) { await fsMergeSet('users/' + uid, { role }); };
 // ===== NOTIFICATIONS PERSONNELLES (Firestore: users/{uid}/notifications/{id}) =====
@@ -1980,6 +2020,7 @@ window.fbChangeEmail = async function(currentPassword, newEmail) {
 window.fbDeleteAccount = async function(currentPassword) {
   const user = auth.currentUser;
   await reauthCurrentUser(currentPassword);
+  try { await deleteDoc(doc(db, 'users', user.uid, 'private', 'main')); } catch (e) { console.warn('Suppression email privé échouée:', e); }
   try { await deleteDoc(doc(db, 'users', user.uid)); } catch (e) { console.warn('Suppression profil Firestore échouée:', e); }
   await deleteUser(user);
 };
@@ -6290,10 +6331,10 @@ function renderGamersPage() {
   if (!allMembersCache) grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Chargement de l\'équipe...</div>';
   if (!window.fbGetAllUsers && !allMembersCache) { grid.innerHTML = '<div style="text-align:center;padding:40px;color:var(--gray);grid-column:1/-1">Équipe indisponible pour le moment.</div>'; return; }
   usersPromise.then(users => {
-    const staff = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role)));
+    const staff = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.id, u.role)));
     // Owner puis Co-Owner puis Admin puis les autres rôles staff, alphabétique par username ensuite
     const order = { 'Owner': -1, 'Co-Owner': 0, 'Admin': 1, 'Scripter': 2, 'Graphiste': 2, 'Helper': 2 };
-    staff.sort((a, b) => (order[getEffectiveRole(a.email, a.role)] ?? 3) - (order[getEffectiveRole(b.email, b.role)] ?? 3) || (a.username || '').localeCompare(b.username || ''));
+    staff.sort((a, b) => (order[getEffectiveRole(a.id, a.role)] ?? 3) - (order[getEffectiveRole(b.id, b.role)] ?? 3) || (a.username || '').localeCompare(b.username || ''));
     teamStaffCache = staff;
     if (countBadge) countBadge.textContent = `— ${staff.length} membre${staff.length > 1 ? 's' : ''}`;
     if (!staff.length) {
@@ -6301,7 +6342,7 @@ function renderGamersPage() {
       return;
     }
     grid.innerHTML = staff.map(g => {
-      const role = getEffectiveRole(g.email, g.role);
+      const role = getEffectiveRole(g.id, g.role);
       const rs = roleBadgeStyle(role);
       const letter = (g.username || '?').trim().charAt(0).toUpperCase();
       return `
@@ -6768,19 +6809,26 @@ function removeAnnImg(index) {
 }
 
 // ===== ADMINS AUTORISÉS (double sécurité : email en dur OU rôle Firestore) =====
+// Cette liste sert uniquement à isAdmin() ci-dessous, basée sur currentUser.email
+// (l'email du compte ACTUELLEMENT connecté, connu de lui-même — aucune fuite ici).
 const ADMIN_EMAILS = [
   'suco.the.shadows@gmail.com',
   // Ajoute d'autres emails ici si besoin :
   // 'autre@email.com',
 ];
-// Email du créateur : voit toujours le badge "Owner", fixe et non modifiable via le panel admin.
-const OWNER_EMAIL = 'suco.the.shadows@gmail.com';
-function isOwnerEmail(email) { return (email || '').trim().toLowerCase() === OWNER_EMAIL; }
+// UID Firebase Auth du créateur : voit toujours le badge "Owner", fixe et non modifiable
+// via le panel admin. On utilise l'UID (et non l'email) car les profils publics des AUTRES
+// membres (page Équipe, panel admin) ne contiennent plus jamais d'email — seul le
+// propriétaire d'un compte ou un admin peut voir un email, via fbGetAllPrivateEmails().
+// ⚠️ À REMPLIR : ouvre Firebase Console → Authentication → Users, trouve le compte
+// suco.the.shadows@gmail.com et colle son "User UID" ici.
+const OWNER_UID = 'LyDBXcU275YLrF4F4cGR4GeHMqA2';
+function isOwnerUid(uid) { return !!uid && uid === OWNER_UID; }
 // Un compte a le badge certifié (check bleu) dès qu'il a n'importe quel rôle autre que "Member".
 // Comparaison insensible à la casse/espaces pour éviter les soucis si le rôle vient de Firestore avec une casse différente.
 function hasVerifiedBadge(role) { return (role || 'Member').trim().toLowerCase() !== 'member'; }
-// Renvoie le rôle "effectif" à afficher : Owner est forcé pour l'email du créateur, sinon le rôle Firestore normal.
-function getEffectiveRole(email, storedRole) { return isOwnerEmail(email) ? 'Owner' : (storedRole || 'Member'); }
+// Renvoie le rôle "effectif" à afficher : Owner est forcé pour l'UID du créateur, sinon le rôle Firestore normal.
+function getEffectiveRole(uid, storedRole) { return isOwnerUid(uid) ? 'Owner' : (storedRole || 'Member'); }
 const ALL_ROLES = ['Member', 'Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner', 'Collaborateur'];
 const STAFF_ROLES = ['Helper', 'Scripter', 'Graphiste', 'Admin', 'Co-Owner', 'Owner', 'Collaborateur'];
 const ADMIN_ROLES = ['Admin', 'Co-Owner', 'Owner'];
@@ -6822,6 +6870,15 @@ async function ensureMembersCacheLoaded() {
   allMembersCache = (window.fbGetAllUsers ? await window.fbGetAllUsers() : []);
   return allMembersCache;
 }
+// Cache des emails privés (admin uniquement) : chargé à la demande quand le panel admin
+// affiche la liste des membres. Pour un visiteur/membre normal, fbGetAllPrivateEmails()
+// renvoie {} (refusé par les règles Firestore), donc aucun email ne fuite jamais ici.
+let memberEmailsCache = null;
+async function ensureMemberEmailsLoaded() {
+  if (memberEmailsCache) return memberEmailsCache;
+  memberEmailsCache = (window.fbGetAllPrivateEmails ? await window.fbGetAllPrivateEmails() : {});
+  return memberEmailsCache;
+}
 // Appelé à chaque snapshot temps réel de la collection 'users' (nouveau compte créé,
 // rôle changé, photo de profil modifiée...). Garde allMembersCache/teamStaffCache à jour
 // et re-render immédiatement tout ce qui est actuellement affiché, sans refresh.
@@ -6835,7 +6892,7 @@ window._gsSetAllUsers = function(arr) {
   }
   const dashCount = document.getElementById('dash-gamers-count');
   if (dashCount && dashCount.textContent !== '…' && typeof STAFF_ROLES !== 'undefined') {
-    dashCount.textContent = arr.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+    dashCount.textContent = arr.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.id, u.role))).length;
   }
   // Si le compte actuellement connecté vient de recevoir un nouveau rôle depuis un autre
   // onglet/admin, on met aussi à jour son profil local (bouton admin, badge, etc.).
@@ -6865,6 +6922,8 @@ async function renderMembersSection() {
     list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--gray)">Aucun utilisateur trouvé.</div>`;
     return;
   }
+  // Charge les emails privés (admin uniquement) avant le premier rendu de la liste.
+  try { await ensureMemberEmailsLoaded(); } catch (e) { console.warn('Emails membres indisponibles:', e); }
   list.innerHTML = filtered.map(u => renderMemberItemHTML(u)).join('');
 }
 async function renderCollabSection() {
@@ -6881,17 +6940,18 @@ async function renderCollabSection() {
       return;
     }
   }
-  const collabs = allMembersCache.filter(u => getEffectiveRole(u.email, u.role) === 'Collaborateur');
+  const collabs = allMembersCache.filter(u => getEffectiveRole(u.id, u.role) === 'Collaborateur');
   if (totalBadge) totalBadge.textContent = `— ${collabs.length} collaborateur${collabs.length > 1 ? 's' : ''}`;
   if (!collabs.length) {
     list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--gray)">Aucun collaborateur pour l'instant.<br>Passe par l'onglet Members et assigne le rôle "Collaborateur" à quelqu'un.</div>`;
     return;
   }
+  try { await ensureMemberEmailsLoaded(); } catch (e) { console.warn('Emails membres indisponibles:', e); }
   list.innerHTML = collabs.map(u => renderMemberItemHTML(u)).join('');
 }
 function renderMemberItemHTML(u) {
-  const owner = isOwnerEmail(u.email);
-  const role = getEffectiveRole(u.email, u.role);
+  const owner = isOwnerUid(u.id);
+  const role = getEffectiveRole(u.id, u.role);
   const created = u.createdAt ? new Date(u.createdAt).toLocaleDateString('fr-FR') : '—';
   const letter = (u.username || '?').trim().charAt(0).toUpperCase();
   const rs = roleBadgeStyle(role);
@@ -6907,7 +6967,7 @@ function renderMemberItemHTML(u) {
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
       <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>${warningBadge}</div>
-      ${u.email ? `<div class="member-email">${escapeHTML(u.email)}</div>` : ''}
+      ${(memberEmailsCache && memberEmailsCache[u.id]) ? `<div class="member-email">${escapeHTML(memberEmailsCache[u.id])}</div>` : ''}
       <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
     </div>
     <div class="member-role-slot" onclick="event.stopPropagation()">
@@ -6922,7 +6982,7 @@ function renderMemberItemHTML(u) {
 async function changeMemberRole(uid, role) {
   if (!window.fbUpdateUserRole) return;
   const target = allMembersCache?.find(x => x.id === uid);
-  if (target && isOwnerEmail(target.email)) { showToast('⛔ Le rôle Owner est fixe et ne peut pas être modifié.'); return; }
+  if (target && isOwnerUid(target.id)) { showToast('⛔ Le rôle Owner est fixe et ne peut pas être modifié.'); return; }
   try {
     await window.fbUpdateUserRole(uid, role);
     const u = allMembersCache?.find(x => x.id === uid);
@@ -7026,13 +7086,13 @@ function updateStats() {
   if (document.getElementById('dash-products-count')) document.getElementById('dash-products-count').textContent = products.length;
   document.getElementById('dash-games-count').textContent = games.length;
   if (allMembersCache) {
-    document.getElementById('dash-gamers-count').textContent = allMembersCache.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+    document.getElementById('dash-gamers-count').textContent = allMembersCache.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.id, u.role))).length;
   } else {
     document.getElementById('dash-gamers-count').textContent = '…';
     if (window.fbGetAllUsers) {
       window.fbGetAllUsers().then(users => {
         const el = document.getElementById('dash-gamers-count');
-        if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.email, u.role))).length;
+        if (el) el.textContent = users.filter(u => STAFF_ROLES.includes(getEffectiveRole(u.id, u.role))).length;
       }).catch(() => {});
     }
   }
@@ -8750,7 +8810,7 @@ function renderAccountPage() {
   if (!wrap) return;
   if (!currentUser) { showPage('home'); openSignIn(); return; }
   const p = currentUserProfile || {};
-  const role = getEffectiveRole(currentUser.email, p.role);
+  const role = getEffectiveRole(currentUser.uid, p.role);
   const rs = roleBadgeStyle(role);
   const avatarURL = p.avatarURL || currentUser.photoURL || '';
   const bannerURL = p.bannerURL || '';
@@ -8965,7 +9025,7 @@ function renderSettingsPage() {
     return;
   }
   const p = currentUserProfile || {};
-  const role = getEffectiveRole(currentUser.email, p.role);
+  const role = getEffectiveRole(currentUser.uid, p.role);
   const rs = roleBadgeStyle(role);
   const avatarURL = settingsTempAvatar || p.avatarURL || currentUser.photoURL || '';
   const bannerURL = settingsTempBanner || p.bannerURL || '';
@@ -8973,7 +9033,7 @@ function renderSettingsPage() {
   const displayName = p.displayName || username || '';
   const notifPrefs = p.notifPrefs || { announcements: true, games: true };
   const isGoogleAuth = currentUser.provider === 'google.com';
-  const isOwner = isOwnerEmail(currentUser.email);
+  const isOwner = isOwnerUid(currentUser.uid);
   if (!settingsTempSkills) settingsTempSkills = Array.isArray(p.skills) ? [...p.skills] : [];
   if (!settingsTempSoftSkills) settingsTempSoftSkills = Array.isArray(p.softSkills) ? [...p.softSkills] : [];
   if (!settingsTempSocialLinks) settingsTempSocialLinks = Array.isArray(p.socialLinks) ? [...p.socialLinks] : [];
@@ -9646,7 +9706,7 @@ function roleBadgeStyle(role) {
 function renderAccountDropdownContent(username, photoURL) {
   const wrap = document.getElementById('account-dropdown');
   if (!wrap) return;
-  const role = getEffectiveRole(currentUser?.email, currentUserProfile?.role);
+  const role = getEffectiveRole(currentUser?.uid, currentUserProfile?.role);
   const rs = roleBadgeStyle(role);
   wrap.innerHTML = `
     <div class="account-dropdown-head">
@@ -9701,7 +9761,7 @@ function updateNavAfterLogout() {
 function openTeamMemberModal(id) {
   const g = (teamStaffCache || []).find(u => u.id === id) || (allMembersCache || []).find(u => u.id === id);
   if (!g) return;
-  const role = getEffectiveRole(g.email, g.role);
+  const role = getEffectiveRole(g.id, g.role);
   const rs = roleBadgeStyle(role);
   const displayName = g.displayName || g.username || 'Membre';
   const avatarIcon = `<svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.58-7 8-7s8 3 8 7"/></svg>`;
