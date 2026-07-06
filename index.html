@@ -1538,7 +1538,7 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .announcement-toggle-btn:hover { text-decoration: underline; }
 .announcement-item-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; }
 .announcement-item .btn-delete { flex-shrink: 0; }
-.announcement-item-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.announcement-item-actions { display: flex; align-items: flex-start; gap: 8px; flex-shrink: 0; }
 .announcement-item-thumbs { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
 .announcement-thumb {
   position: relative; width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
@@ -1551,13 +1551,6 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
   position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
   background: rgba(4,4,8,0.6); backdrop-filter: blur(2px); color: #fff; font-weight: 800; font-size: 13px;
 }
-.btn-edit-ann {
-  flex-shrink: 0; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06);
-  color: var(--white); border-radius: 10px; padding: 8px 12px; font-size: 11px; cursor: pointer;
-  display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s ease, border-color 0.15s ease;
-}
-.btn-edit-ann:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
-.btn-edit-ann svg, .btn-edit-ann i { width: 13px; height: 13px; }
 .announcement-item-avatar {
   width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
   background: var(--dark3); display: flex; align-items: center; justify-content: center;
@@ -3928,7 +3921,7 @@ window.fbClearLoginHistory = async function(uid) {
 
       <!-- MEMBERS ADMIN -->
       <div class="admin-section" id="section-members">
-        <div class="admin-section-title">👥 Members</div>
+        <div class="admin-section-title">Members</div>
         <div class="admin-section-sub">Comptes utilisateurs Firestore — gère les rôles de l'équipe (visible uniquement par Admin / Co-Owner)</div>
         <div class="admin-card">
           <div class="admin-card-header">
@@ -3945,7 +3938,7 @@ window.fbClearLoginHistory = async function(uid) {
 
       <!-- COLLAB ADMIN -->
       <div class="admin-section" id="section-collab">
-        <div class="admin-section-title">🤝 Collab</div>
+        <div class="admin-section-title">Collab</div>
         <div class="admin-section-sub">Membres avec qui tu as une collaboration en cours (rôle "Collaborateur") — pour changer le rôle de quelqu'un, passe par l'onglet Members</div>
         <div class="admin-card">
           <div class="admin-card-header">
@@ -6232,7 +6225,7 @@ async function renderAnnouncementsHistory() {
     }).join('')}</div>` : '';
     // Seules les annonces manuelles (pas les auto game/hero, pas les avertissements) sont éditables.
     const isEditable = n.type === 'announcement';
-    const editBtn = isEditable ? `<button class="btn-edit-ann" onclick="editAnnouncement('${n.id}')"><i data-lucide="pencil"></i> Modifier</button>` : '';
+    const editBtn = isEditable ? `<button class="btn-edit" onclick="editAnnouncement('${n.id}')"><i data-lucide="pencil"></i> Modifier</button>` : '';
     return `
     <div class="announcement-item">
       ${avatarHTML}
@@ -6245,7 +6238,7 @@ async function renderAnnouncementsHistory() {
       </div>
       <div class="announcement-item-actions">
         ${editBtn}
-        <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
+        <button class="btn-delete" onclick="${deleteAction}"><i data-lucide="trash-2"></i> Suppr</button>
       </div>
     </div>`;
   }).join('');
