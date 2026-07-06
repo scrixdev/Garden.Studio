@@ -1321,7 +1321,8 @@ a:hover .gs-bookmark-icon .gs-bm-solid, .btn-ghost:hover .gs-bookmark-icon .gs-b
 .comment-item.is-reply .comment-date { font-size: 10.5px; }
 .comment-item.is-reply .comment-text { font-size: 12.5px; }
 .comment-item.is-reply .comment-quote { font-size: 11px; padding: 5px 9px; }
-.comment-toggle-replies { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--lime); font-weight: 700; font-size: 12.5px; letter-spacing: 0.2px; cursor: pointer; margin: 10px 0 0 40px; padding: 4px 2px; }
+.comment-toggle-replies { display: flex; align-items: center; gap: 6px; background: none; border: none; color: var(--lime); font-weight: 700; font-size: 12.5px; letter-spacing: 0.2px; cursor: pointer; margin: 6px 0 0 40px; padding: 10px 12px; border-radius: 10px; min-height: 38px; position: relative; z-index: 2; -webkit-tap-highlight-color: rgba(var(--lime-rgb),0.25); touch-action: manipulation; }
+.comment-toggle-replies:hover, .comment-toggle-replies:active { background: rgba(var(--lime-rgb),0.1); }
 .comment-toggle-replies:hover { text-decoration: underline; }
 .comment-toggle-replies svg { width: 14px; height: 14px; transition: transform 0.2s; }
 .comment-toggle-replies.open svg { transform: rotate(180deg); }
@@ -5585,14 +5586,14 @@ function commentItemHTML(c, isReply) {
         <div class="comment-text">${escapeHTML(c.text)}</div>
         <div class="comment-actions-row">
           <button type="button" class="comment-vote-btn ${liked ? 'active-like' : ''}" onclick="toggleCommentVote('${c.id}','like')" title="J'aime">
-            <svg viewBox="0 0 24 24" fill="${liked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+            <i data-lucide="thumbs-up" style="fill:${liked ? 'currentColor' : 'none'}"></i>
             <span>${likes.length > 0 ? likes.length : ''}</span>
           </button>
           <button type="button" class="comment-vote-btn ${disliked ? 'active-dislike' : ''}" onclick="toggleCommentVote('${c.id}','dislike')" title="Je n'aime pas">
-            <svg viewBox="0 0 24 24" fill="${disliked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M17 14V2"/><path d="M9 18.12 10 14H4.17a2 2 0 0 1-1.92-2.56l2.33-8A2 2 0 0 1 6.5 2H20a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2.76a2 2 0 0 0-1.79 1.11L12 22a3.13 3.13 0 0 1-3-3.88Z"/></svg>
+            <i data-lucide="thumbs-down" style="fill:${disliked ? 'currentColor' : 'none'}"></i>
             <span>${dislikes.length > 0 ? dislikes.length : ''}</span>
           </button>
-          <button type="button" class="comment-reply-btn2" onclick="startReplyToComment('${c.id}')">Répondre</button>
+          <button type="button" class="comment-reply-btn2" onclick="event.stopPropagation();startReplyToComment('${c.id}')">Répondre</button>
         </div>
       </div>
       <div class="comment-menu-wrap">
@@ -5628,8 +5629,8 @@ function renderGameComments(comments) {
     const rootHTML = commentItemHTML(root, false);
     if (!replies.length) return `<div class="comment-thread">${rootHTML}</div>`;
     const isOpen = expandedReplyThreads.has(root.id);
-    const toggleBtn = `<button type="button" class="comment-toggle-replies${isOpen ? ' open' : ''}" onclick="toggleReplyThread('${root.id}')">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    const toggleBtn = `<button type="button" class="comment-toggle-replies${isOpen ? ' open' : ''}" onclick="event.stopPropagation();toggleReplyThread('${root.id}')">
+        <i data-lucide="chevron-down"></i>
         ${replies.length} réponse${replies.length > 1 ? 's' : ''}
       </button>`;
     const repliesHTML = isOpen ? `<div class="comment-replies-wrap">${replies.map(r => commentItemHTML(r, true)).join('')}</div>` : '';
