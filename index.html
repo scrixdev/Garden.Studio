@@ -7649,13 +7649,13 @@ function isCurrentlyBanned(u) {
 function banBadgeHTML(u) {
   const status = u.banStatus || 'none';
   if (status === 'banned') {
-    return `<span class="account-role-badge" style="background:#ff404022;color:#ff4040;margin-left:8px" title="${escapeHTML(u.banReason || '')}">🔨 Banni</span>`;
+    return `<span class="account-role-badge" style="background:#ff404022;color:#ff4040;margin-left:8px;margin-top:0" title="${escapeHTML(u.banReason || '')}">🔨 Banni</span>`;
   }
   if (status === 'timeout') {
     const ms = banUntilMs(u);
     if (ms !== null && ms > Date.now()) {
       const until = new Date(ms).toLocaleDateString('fr-FR');
-      return `<span class="account-role-badge" style="background:#ffb02022;color:#ffb020;margin-left:8px" title="${escapeHTML(u.banReason || '')}">⏳ Jusqu'au ${until}</span>`;
+      return `<span class="account-role-badge" style="background:#ffb02022;color:#ffb020;margin-left:8px;margin-top:0" title="${escapeHTML(u.banReason || '')}">⏳ Jusqu'au ${until}</span>`;
     }
   }
   return '';
