@@ -1504,6 +1504,12 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .member-role-select:active { transform: scale(0.97); }
 .member-role-select:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.1); }
 .member-role-select option { background: var(--dark2, #1a1a1a); color: #fff; }
+.member-sanction-slot { display: flex; align-items: center; gap: 6px; margin-left: 10px; }
+.sanction-btn { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s; flex-shrink: 0; }
+.sanction-btn svg { width: 14px; height: 14px; }
+.sanction-btn:hover { background: rgba(255,176,32,0.18); border-color: rgba(255,176,32,0.4); color: #ffb020; transform: translateY(-1px); }
+.sanction-btn:active { transform: scale(0.92); }
+.sanction-btn-danger:hover { background: rgba(255,64,64,0.18); border-color: rgba(255,64,64,0.4); color: #ff4040; }
 .announcement-item {
   position: relative; overflow: hidden;
   display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
@@ -1894,7 +1900,7 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 <!-- ===== FIREBASE SDK ===== -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, getDoc, setDoc, collection, collectionGroup, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, query, where, orderBy, limit, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, getDoc, setDoc, collection, collectionGroup, getDocs, addDoc, updateDoc, deleteDoc, serverTimestamp, Timestamp, query, where, orderBy, limit, onSnapshot, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, GoogleAuthProvider, signInWithPopup, updatePassword, verifyBeforeUpdateEmail, EmailAuthProvider, reauthenticateWithCredential, reauthenticateWithPopup, deleteUser } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
@@ -1932,6 +1938,9 @@ onAuthStateChanged(auth, async (user) => {
         catch (e) { console.error('Erreur synchro email privé:', e); }
       }
       if (typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(profile);
+      // Surveillance en temps réel des sanctions (ban définitif, ban temporaire,
+      // exclusion) sur le propre compte du membre connecté — voir startSelfBanWatch().
+      startSelfBanWatch(user.uid);
       // Recharge les notifications à jour depuis Firestore à chaque connexion,
       // pour éviter qu'un ancien instantané (chargé avant la connexion, ou lors
       // d'un test avec un autre compte dans le même onglet) ne reste affiché.
@@ -1973,11 +1982,78 @@ onAuthStateChanged(auth, async (user) => {
   } else {
     if (_unsubPersonalNotifs) { _unsubPersonalNotifs(); _unsubPersonalNotifs = null; }
     personalNotifications = [];
+    stopSelfBanWatch();
     if (typeof window._gsSetUser === 'function') window._gsSetUser(null);
     if (typeof window._gsSetUserProfile === 'function') window._gsSetUserProfile(null);
     if (typeof window.updateNavAfterLogout === 'function') window.updateNavAfterLogout();
   }
 });
+
+// ===== SURVEILLANCE TEMPS RÉEL DES SANCTIONS (ban / ban temporaire / exclusion) =====
+// Dès qu'un admin bannit, met en ban temporaire, débannit ou exclut (kick) le compte
+// actuellement connecté, ce listener le détecte EN TEMPS RÉEL (sans refresh) et réagit :
+// - banni définitivement ou ban temporaire encore actif -> écran de sanction + déconnexion
+// - exclusion (kick) -> simple déconnexion immédiate, sans écran de sanction ni restriction
+// Ceci est une protection côté UX ; la vraie protection (empêcher d'écrire quoi que ce
+// soit) vit dans les règles Firestore (isBannedNow()), donc même si quelqu'un contourne
+// ce listener via la console, il ne peut plus rien poster/liker/voter.
+let _unsubSelfBanWatch = null;
+let _selfBanFirstSnapshot = true;
+let _lastKnownForceLogoutAt = null;
+function startSelfBanWatch(uid) {
+  stopSelfBanWatch();
+  _selfBanFirstSnapshot = true;
+  _lastKnownForceLogoutAt = null;
+  _unsubSelfBanWatch = onSnapshot(doc(db, 'users', uid), (snap) => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    if (_selfBanFirstSnapshot) {
+      _lastKnownForceLogoutAt = d.forceLogoutAt ? d.forceLogoutAt.toMillis() : null;
+      _selfBanFirstSnapshot = false;
+    }
+    handleSelfBanSnapshot(d);
+  }, () => {});
+}
+function stopSelfBanWatch() {
+  if (_unsubSelfBanWatch) { _unsubSelfBanWatch(); _unsubSelfBanWatch = null; }
+}
+async function handleSelfBanSnapshot(d) {
+  const now = Date.now();
+  const untilMs = (d.banUntil && typeof d.banUntil.toMillis === 'function') ? d.banUntil.toMillis() : null;
+  const isPermaBanned = d.banStatus === 'banned';
+  const isTimeoutActive = d.banStatus === 'timeout' && untilMs !== null && untilMs > now;
+  if (isPermaBanned || isTimeoutActive) {
+    stopSelfBanWatch();
+    showBanScreen(isPermaBanned ? 'banned' : 'timeout', d.banReason || '', untilMs);
+    try { await signOut(auth); } catch (e) {}
+    return;
+  }
+  const forceLogoutMs = d.forceLogoutAt ? d.forceLogoutAt.toMillis() : null;
+  if (forceLogoutMs !== null && forceLogoutMs !== _lastKnownForceLogoutAt) {
+    _lastKnownForceLogoutAt = forceLogoutMs;
+    stopSelfBanWatch();
+    showToast('👢 Tu as été déconnecté par un administrateur.');
+    try { await signOut(auth); } catch (e) {}
+  }
+}
+function showBanScreen(type, reason, untilMs) {
+  const titleEl = document.getElementById('ban-screen-title');
+  const detailEl = document.getElementById('ban-screen-detail');
+  const reasonEl = document.getElementById('ban-screen-reason');
+  if (!titleEl || !detailEl || !reasonEl) return;
+  if (type === 'banned') {
+    titleEl.textContent = 'Compte banni';
+    detailEl.textContent = 'Ton compte a été banni définitivement de Garden Studio. Tu ne peux plus te connecter.';
+  } else {
+    const d = untilMs ? new Date(untilMs) : null;
+    titleEl.textContent = 'Suspension temporaire';
+    detailEl.textContent = d ? `Ton compte est suspendu jusqu'au ${d.toLocaleString('fr-FR')}.` : 'Ton compte est temporairement suspendu.';
+  }
+  if (reason) { reasonEl.textContent = 'Raison : ' + reason; reasonEl.style.display = 'block'; }
+  else { reasonEl.style.display = 'none'; }
+  document.getElementById('ban-screen-modal')?.classList.add('open');
+}
+function closeBanScreen() { document.getElementById('ban-screen-modal')?.classList.remove('open'); }
 
 // ===== FIRESTORE =====
 async function fsGet(path) {
@@ -2049,6 +2125,26 @@ window.fbGetAllPrivateEmails = async function() {
   }
 };
 window.fbUpdateUserRole = async function(uid, role) { await fsMergeSet('users/' + uid, { role }); };
+// ===== SANCTIONS (ban définitif / ban temporaire / exclusion) =====
+// Un ban (définitif ou temporaire) bloque TOUTES les écritures du membre visé côté
+// règles Firestore (commentaires, likes, notes, votes, signalements...), et le déconnecte
+// immédiatement (voir startSelfBanWatch). Une exclusion (kick) ne fait QUE le déconnecter
+// une fois, sans laisser de sanction derrière — il peut se reconnecter tout de suite.
+window.fbSetUserBan = async function(uid, { status, until, reason }) {
+  await fsMergeSet('users/' + uid, {
+    banStatus: status, // 'banned' ou 'timeout'
+    banUntil: (status === 'timeout' && until) ? Timestamp.fromDate(new Date(until)) : null,
+    banReason: reason || '',
+    bannedAt: serverTimestamp(),
+    bannedBy: (currentUser && currentUser.uid) || ''
+  });
+};
+window.fbUnbanUser = async function(uid) {
+  await fsMergeSet('users/' + uid, { banStatus: 'none', banUntil: null, banReason: '', bannedAt: null, bannedBy: '' });
+};
+window.fbKickUser = async function(uid) {
+  await fsMergeSet('users/' + uid, { forceLogoutAt: serverTimestamp() });
+};
 // ===== NOTIFICATIONS PERSONNELLES (Firestore: users/{uid}/notifications/{id}) =====
 // Contrairement à site/notifications (annonces publiques, écriture admin uniquement),
 // chaque membre peut écrire SES PROPRES notifications ici (avertissements de modération,
@@ -3546,6 +3642,10 @@ window.fbClearLoginHistory = async function(uid) {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M16 11l2 2 4-4"/></svg>
         Collab
       </div>
+      <div class="sidebar-item" id="sidebar-bans-btn" onclick="showSection('bans',this);renderBansSection()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
+        Bannissement <span id="bans-badge" style="background:#ff4040;color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
+      </div>
 
 
       <div class="sidebar-item" onclick="showSection('footer-admin',this)">
@@ -3946,6 +4046,19 @@ window.fbClearLoginHistory = async function(uid) {
             <span style="font-size:12px;color:var(--gray);font-weight:700" id="collab-total-badge">— collaborateurs</span>
           </div>
           <div id="collab-list" style="color:var(--gray);font-size:13px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- BANNISSEMENT ADMIN -->
+      <div class="admin-section" id="section-bans">
+        <div class="admin-section-title">Bannissement</div>
+        <div class="admin-section-sub">Comptes actuellement bannis (définitivement ou temporairement) — débannis-les ici en un clic. Pour appliquer une sanction, passe par l'onglet Members.</div>
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-title">Sanctions actives</span>
+            <span style="font-size:12px;color:var(--gray);font-weight:700" id="bans-total-badge">— comptes</span>
+          </div>
+          <div id="bans-list" style="color:var(--gray);font-size:13px">Chargement...</div>
         </div>
       </div>
 
@@ -7222,6 +7335,7 @@ window._gsSetAllUsers = function(arr) {
   if (document.getElementById('admin-panel')?.classList.contains('open')) {
     renderMembersSection();
     renderCollabSection();
+    renderBansSection();
   }
   const dashCount = document.getElementById('dash-gamers-count');
   if (dashCount && dashCount.textContent !== '…' && typeof STAFF_ROLES !== 'undefined') {
@@ -7258,6 +7372,7 @@ async function renderMembersSection() {
   // Charge les emails privés (admin uniquement) avant le premier rendu de la liste.
   try { await ensureMemberEmailsLoaded(); } catch (e) { console.warn('Emails membres indisponibles:', e); }
   list.innerHTML = filtered.map(u => renderMemberItemHTML(u)).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [list] });
 }
 async function renderCollabSection() {
   const list = document.getElementById('collab-list');
@@ -7281,6 +7396,7 @@ async function renderCollabSection() {
   }
   try { await ensureMemberEmailsLoaded(); } catch (e) { console.warn('Emails membres indisponibles:', e); }
   list.innerHTML = collabs.map(u => renderMemberItemHTML(u)).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [list] });
 }
 function renderMemberItemHTML(u) {
   const owner = isOwnerUid(u.id);
@@ -7296,10 +7412,19 @@ function renderMemberItemHTML(u) {
   const warningBadge = warningCount > 0
     ? `<span class="account-role-badge warning-badge-icon" style="background:${warnColor}22;color:${warnColor};margin-left:8px;cursor:pointer" title="${warningCount} avertissement${warningCount > 1 ? 's' : ''} — cliquer pour réinitialiser" onclick="event.stopPropagation();resetMemberWarnings('${u.id}')">${WARNING_TRIANGLE_ICON}${warningCount}</span>`
     : '';
+  const sanctionBadge = banBadgeHTML(u);
+  const isSelf = !!(currentUser && currentUser.uid === u.id);
+  const sanctionButtons = (owner || isSelf) ? '' : `
+    <div class="member-sanction-slot" onclick="event.stopPropagation()">
+      ${isCurrentlyBanned(u) ? `<button class="sanction-btn" title="Débannir" onclick="unbanMember('${u.id}')"><i data-lucide="check"></i></button>` : ''}
+      <button class="sanction-btn" title="Exclure (déconnexion immédiate, sans sanction durable)" onclick="openKickConfirm('${u.id}')"><i data-lucide="log-out"></i></button>
+      <button class="sanction-btn" title="Ban temporaire" onclick="openBanModal('${u.id}','timeout')"><i data-lucide="clock"></i></button>
+      <button class="sanction-btn sanction-btn-danger" title="Bannir définitivement" onclick="openBanModal('${u.id}','banned')"><i data-lucide="ban"></i></button>
+    </div>`;
   return `<div class="member-item" style="cursor:pointer" onclick="openTeamMemberModal('${u.id}')">
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
-      <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>${warningBadge}</div>
+      <div class="member-name"><span class="verified-name">${escapeHTML(u.username || '(sans pseudo)')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>${warningBadge}${sanctionBadge}</div>
       ${(memberEmailsCache && memberEmailsCache[u.id]) ? `<div class="member-email">${escapeHTML(memberEmailsCache[u.id])}</div>` : ''}
       <div class="member-meta">ID: ${escapeHTML(u.id)} · Créé le ${created}</div>
     </div>
@@ -7310,6 +7435,7 @@ function renderMemberItemHTML(u) {
           ${ALL_ROLES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
         </select>`}
     </div>
+    ${sanctionButtons}
   </div>`;
 }
 async function changeMemberRole(uid, role) {
@@ -7331,6 +7457,181 @@ async function changeMemberRole(uid, role) {
     console.error(e);
     showToast('❌ Erreur lors du changement de rôle');
   }
+}
+// ===== SANCTIONS : helpers d'affichage =====
+function banUntilMs(u) {
+  if (!u || !u.banUntil) return null;
+  if (typeof u.banUntil.toMillis === 'function') return u.banUntil.toMillis();
+  const t = new Date(u.banUntil).getTime();
+  return isNaN(t) ? null : t;
+}
+function isCurrentlyBanned(u) {
+  if (!u) return false;
+  if (u.banStatus === 'banned') return true;
+  if (u.banStatus === 'timeout') {
+    const ms = banUntilMs(u);
+    return ms !== null && ms > Date.now();
+  }
+  return false;
+}
+function banBadgeHTML(u) {
+  const status = u.banStatus || 'none';
+  if (status === 'banned') {
+    return `<span class="account-role-badge" style="background:#ff404022;color:#ff4040;margin-left:8px" title="${escapeHTML(u.banReason || '')}">🔨 Banni</span>`;
+  }
+  if (status === 'timeout') {
+    const ms = banUntilMs(u);
+    if (ms !== null && ms > Date.now()) {
+      const until = new Date(ms).toLocaleDateString('fr-FR');
+      return `<span class="account-role-badge" style="background:#ffb02022;color:#ffb020;margin-left:8px" title="${escapeHTML(u.banReason || '')}">⏳ Jusqu'au ${until}</span>`;
+    }
+  }
+  return '';
+}
+// ===== SANCTIONS : modale de ban (définitif ou temporaire) =====
+let _banActionTarget = null;
+let _banActionType = null; // 'banned' | 'timeout'
+function openBanModal(uid, type) {
+  if (!isAdmin()) return;
+  const target = allMembersCache?.find(x => x.id === uid);
+  if (!target) return;
+  if (isOwnerUid(uid)) { showToast('⛔ Impossible de sanctionner le Owner.'); return; }
+  if (currentUser && currentUser.uid === uid) { showToast('⛔ Tu ne peux pas te sanctionner toi-même.'); return; }
+  _banActionTarget = uid;
+  _banActionType = type;
+  document.getElementById('ban-modal-title').textContent = type === 'banned' ? 'Bannir définitivement' : 'Ban temporaire';
+  document.getElementById('ban-modal-username').textContent = target.username || '(sans pseudo)';
+  document.getElementById('ban-modal-reason').value = '';
+  const durWrap = document.getElementById('ban-modal-duration-wrap');
+  if (durWrap) durWrap.style.display = type === 'timeout' ? 'block' : 'none';
+  const durSelect = document.getElementById('ban-modal-duration-select');
+  if (durSelect) durSelect.value = '24h';
+  toggleBanCustomDate();
+  const okBtn = document.getElementById('ban-modal-ok-btn');
+  if (okBtn) okBtn.style.background = type === 'banned' ? '#ff4040' : '#ffb020';
+  document.getElementById('ban-action-modal').classList.add('open');
+}
+function closeBanModal() {
+  document.getElementById('ban-action-modal').classList.remove('open');
+  _banActionTarget = null;
+  _banActionType = null;
+}
+function toggleBanCustomDate() {
+  const sel = document.getElementById('ban-modal-duration-select')?.value;
+  const wrap = document.getElementById('ban-modal-custom-date-wrap');
+  if (wrap) wrap.style.display = sel === 'custom' ? 'block' : 'none';
+}
+function computeBanUntil() {
+  const sel = document.getElementById('ban-modal-duration-select')?.value;
+  if (sel === 'custom') {
+    const v = document.getElementById('ban-modal-custom-date')?.value;
+    return v ? new Date(v).toISOString() : null;
+  }
+  const hoursMap = { '1h': 1, '24h': 24, '7d': 24 * 7, '30d': 24 * 30 };
+  const h = hoursMap[sel] || 24;
+  return new Date(Date.now() + h * 3600 * 1000).toISOString();
+}
+async function confirmBanAction() {
+  if (!_banActionTarget || !window.fbSetUserBan) return;
+  const reason = (document.getElementById('ban-modal-reason')?.value || '').trim();
+  let until = null;
+  if (_banActionType === 'timeout') {
+    until = computeBanUntil();
+    if (!until) { showToast('⚠️ Choisis une durée valide.'); return; }
+  }
+  const uid = _banActionTarget;
+  const type = _banActionType;
+  try {
+    await window.fbSetUserBan(uid, { status: type, until, reason });
+    const u = allMembersCache?.find(x => x.id === uid);
+    if (u) { u.banStatus = type; u.banUntil = until ? new Date(until) : null; u.banReason = reason; }
+    showToast(type === 'banned' ? '🔨 Compte banni définitivement' : '⏳ Ban temporaire appliqué');
+    closeBanModal();
+    renderMembersSection(); renderCollabSection(); renderBansSection();
+  } catch (e) {
+    console.error(e);
+    showToast('❌ Erreur lors du bannissement');
+  }
+}
+function unbanMember(uid) {
+  if (!isAdmin()) return;
+  const target = allMembersCache?.find(x => x.id === uid);
+  showConfirm(
+    `Débannir ${target?.username || 'ce membre'} ?`,
+    'Il retrouvera immédiatement un accès normal au site.',
+    async () => {
+      if (!window.fbUnbanUser) return;
+      try {
+        await window.fbUnbanUser(uid);
+        const u = allMembersCache?.find(x => x.id === uid);
+        if (u) { u.banStatus = 'none'; u.banUntil = null; u.banReason = ''; }
+        showToast('✅ Compte débanni');
+        renderMembersSection(); renderCollabSection(); renderBansSection();
+      } catch (e) {
+        console.error(e);
+        showToast('❌ Erreur lors du débannissement');
+      }
+    },
+    'Débannir', false
+  );
+}
+function openKickConfirm(uid) {
+  if (!isAdmin()) return;
+  const target = allMembersCache?.find(x => x.id === uid);
+  if (isOwnerUid(uid)) { showToast("⛔ Impossible d'exclure le Owner."); return; }
+  if (currentUser && currentUser.uid === uid) { showToast("⛔ Tu ne peux pas t'exclure toi-même."); return; }
+  showConfirm(
+    `Exclure ${target?.username || 'ce membre'} ?`,
+    "Il sera immédiatement déconnecté, mais pourra se reconnecter tout de suite après — aucune sanction durable n'est appliquée.",
+    async () => {
+      if (!window.fbKickUser) return;
+      try {
+        await window.fbKickUser(uid);
+        showToast('👢 Membre exclu (déconnecté)');
+      } catch (e) {
+        console.error(e);
+        showToast("❌ Erreur lors de l'exclusion");
+      }
+    },
+    'Exclure', true
+  );
+}
+// ===== SANCTIONS : onglet "Bannissement" (liste des comptes sanctionnés + débannir) =====
+async function renderBansSection() {
+  const list = document.getElementById('bans-list');
+  const totalBadge = document.getElementById('bans-total-badge');
+  if (!list) return;
+  if (!allMembersCache) {
+    list.innerHTML = 'Chargement...';
+    try { await ensureMembersCacheLoaded(); }
+    catch (e) { console.error(e); list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray)">Erreur de chargement des membres.</div>'; return; }
+  }
+  const sanctioned = allMembersCache.filter(u => isCurrentlyBanned(u));
+  if (totalBadge) totalBadge.textContent = `— ${sanctioned.length} compte${sanctioned.length > 1 ? 's' : ''} sanctionné${sanctioned.length > 1 ? 's' : ''}`;
+  const bansBadge = document.getElementById('bans-badge');
+  if (bansBadge) { bansBadge.style.display = sanctioned.length ? '' : 'none'; bansBadge.textContent = sanctioned.length || ''; }
+  if (!sanctioned.length) {
+    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--gray)">Aucun compte banni actuellement. 🎉</div>`;
+    return;
+  }
+  list.innerHTML = sanctioned.map(u => renderBanItemHTML(u)).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [list] });
+}
+function renderBanItemHTML(u) {
+  const letter = (u.username || '?').trim().charAt(0).toUpperCase();
+  const isPerm = u.banStatus === 'banned';
+  const ms = banUntilMs(u);
+  return `<div class="member-item">
+    ${u.avatarURL ? `<img class="member-avatar" src="${escapeHTML(u.avatarURL)}" alt="">` : `<div class="member-avatar" style="background:${isPerm ? '#ff4040' : '#ffb020'}">${escapeHTML(letter)}</div>`}
+    <div class="member-info">
+      <div class="member-name">${escapeHTML(u.username || '(sans pseudo)')}</div>
+      <div class="member-meta">${isPerm ? '🔨 Banni définitivement' : `⏳ Ban temporaire — jusqu'au ${ms ? new Date(ms).toLocaleString('fr-FR') : '?'}`}</div>
+      ${u.banReason ? `<div class="member-meta">Raison : ${escapeHTML(u.banReason)}</div>` : ''}
+    </div>
+    <div onclick="event.stopPropagation()">
+      <button class="btn-primary" style="font-size:11px;padding:8px 14px" onclick="unbanMember('${u.id}')">Débannir</button>
+    </div>
+  </div>`;
 }
 // Réinitialise le compteur d'avertissements d'un membre (ex: après une discussion,
 // une sanction déjà appliquée manuellement, ou une erreur de détection).
@@ -7360,6 +7661,8 @@ function updateAdminMembersVisibility() {
   if (btn) btn.style.display = isAdmin() ? '' : 'none';
   const collabBtn = document.getElementById('sidebar-collab-btn');
   if (collabBtn) collabBtn.style.display = isAdmin() ? '' : 'none';
+  const bansBtn = document.getElementById('sidebar-bans-btn');
+  if (bansBtn) bansBtn.style.display = isAdmin() ? '' : 'none';
 }
 
 function showSection(id, el) {
@@ -10693,6 +10996,61 @@ select.authbox-input option {
             <button class="authbox-btn" style="flex:1" onclick="closePrompt()">Annuler</button>
             <button id="prompt-ok-btn" class="authbox-btn" style="flex:1;background:var(--lime);color:var(--dark)" onclick="promptOk()">Valider</button>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODALE DE SANCTION (ban définitif / ban temporaire) ===== -->
+<div class="modal-overlay" id="ban-action-modal" style="z-index:99999">
+  <div class="modal-box" style="max-width:420px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:36px 32px 28px;text-align:left">
+        <div class="authbox-content">
+          <div id="ban-modal-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:22px;text-transform:uppercase;margin-bottom:4px;text-align:center"></div>
+          <div style="font-size:13px;color:#999;margin-bottom:20px;text-align:center">Compte visé : <strong id="ban-modal-username" style="color:var(--white)"></strong></div>
+          <div id="ban-modal-duration-wrap" class="form-group" style="display:none;margin-bottom:14px">
+            <label class="form-label">Durée</label>
+            <select id="ban-modal-duration-select" class="form-select" onchange="toggleBanCustomDate()">
+              <option value="1h">1 heure</option>
+              <option value="24h" selected>24 heures</option>
+              <option value="7d">7 jours</option>
+              <option value="30d">30 jours</option>
+              <option value="custom">Date précise...</option>
+            </select>
+          </div>
+          <div id="ban-modal-custom-date-wrap" class="form-group" style="display:none;margin-bottom:14px">
+            <label class="form-label">Jusqu'à quelle date ?</label>
+            <input type="datetime-local" id="ban-modal-custom-date" class="form-input">
+          </div>
+          <div class="form-group" style="margin-bottom:22px">
+            <label class="form-label">Raison (visible par le membre)</label>
+            <textarea id="ban-modal-reason" class="form-textarea" style="min-height:70px" placeholder="Ex : propos haineux répétés dans les commentaires..."></textarea>
+          </div>
+          <div style="display:flex;gap:10px">
+            <button class="authbox-btn" style="flex:1" onclick="closeBanModal()">Annuler</button>
+            <button id="ban-modal-ok-btn" class="authbox-btn" style="flex:1;background:#ff4040" onclick="confirmBanAction()">Confirmer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ÉCRAN DE SANCTION (affiché au membre banni / suspendu lui-même) ===== -->
+<div class="modal-overlay" id="ban-screen-modal" style="z-index:999999">
+  <div class="modal-box" style="max-width:420px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:44px 36px 36px;text-align:center">
+        <div class="authbox-content">
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,60,60,0.12);border:1px solid rgba(255,60,60,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#ff6060" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
+          </div>
+          <div id="ban-screen-title" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;margin-bottom:10px;color:#ff6060"></div>
+          <div id="ban-screen-detail" style="font-size:13px;color:#bbb;margin-bottom:14px;line-height:1.6"></div>
+          <div id="ban-screen-reason" style="font-size:12.5px;color:#999;margin-bottom:26px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:left;display:none"></div>
+          <button class="authbox-btn" style="width:100%;background:var(--lime);color:var(--dark)" onclick="closeBanScreen()">J'ai compris</button>
         </div>
       </div>
     </div>
