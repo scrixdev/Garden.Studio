@@ -1518,19 +1518,45 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .announcement-item:last-child { margin-bottom: 0; }
 .announcement-item-body { min-width: 0; flex: 1; }
 .announcement-item-title { font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 4px; word-break: break-word; overflow-wrap: anywhere; }
-.announcement-item-detail { font-size: 12.5px; color: rgba(255,255,255,0.6); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; }
+.announcement-item-detail { font-size: 12.5px; color: rgba(255,255,255,0.6); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
+.announcement-item-detail.clampable { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.announcement-item-detail.clampable.is-expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
+.announcement-toggle-btn { display: inline-block; margin-top: 6px; background: none; border: none; padding: 0; color: var(--lime); font-size: 12px; font-weight: 700; cursor: pointer; font-family: 'Barlow', sans-serif; }
+.announcement-toggle-btn:hover { text-decoration: underline; }
 .announcement-item-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; }
 .announcement-item .btn-delete { flex-shrink: 0; }
-.game-list-item { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-.game-list-item:last-child { border-bottom: none; }
+.announcement-item-avatar {
+  width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
+  background: var(--dark3); display: flex; align-items: center; justify-content: center;
+  font-weight: 800; color: #fff; font-size: 15px;
+  border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.warning-badge-icon { display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; }
+.warning-badge-icon svg { width: 11px; height: 11px; flex-shrink: 0; }
+.game-list-item {
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; gap: 14px; padding: 14px 16px; margin-bottom: 12px;
+  background: var(--glass-highlight), rgba(255,255,255,0.055);
+  border: 1px solid rgba(255,255,255,0.14); border-radius: 16px;
+  backdrop-filter: blur(16px) saturate(160%); -webkit-backdrop-filter: blur(16px) saturate(160%);
+  box-shadow: var(--glass-shadow), 0 4px 18px rgba(0,0,0,0.22);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+.game-list-item:hover {
+  background: var(--glass-highlight), rgba(255,255,255,0.095);
+  border-color: rgba(255,255,255,0.26); transform: translateY(-2px);
+  box-shadow: var(--glass-shadow), 0 12px 30px rgba(0,0,0,0.32);
+}
+.game-list-item:last-child { margin-bottom: 0; }
 .game-list-thumb {
   width: 60px; height: 50px; display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0; overflow: hidden; border-radius: 8px;
+  flex-shrink: 0; overflow: hidden; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14); box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .game-list-thumb img, .game-list-thumb video { width: 100%; height: 100%; object-fit: cover; }
-.game-list-info { flex: 1; }
-.game-list-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
-.game-list-meta { font-size: 12px; color: var(--gray); }
+.game-list-info { flex: 1; min-width: 0; }
+.game-list-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.game-list-meta { font-size: 12px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .game-list-actions { display: flex; gap: 8px; }
 .cand-item {
   display: flex; align-items: center; gap: 16px; padding: 16px 18px; margin-bottom: 10px;
@@ -4068,7 +4094,7 @@ window.fbClearLoginHistory = async function(uid) {
             </div>
             <div style="margin-bottom:16px">
               <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Commentaire signalé</div>
-              <div id="rd-comment-text" style="font-size:13.5px;color:#fff;line-height:1.7;background:rgba(255,64,64,0.08);border:1px solid rgba(255,64,64,0.22);padding:14px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
+              <div id="rd-comment-text" style="font-size:13.5px;color:#fff;line-height:1.7;background:var(--glass-highlight), rgba(0,0,0,0.35);border:1px solid var(--glass-border);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:var(--glass-shadow);padding:14px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere"></div>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
               <div><div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:4px">Auteur du commentaire</div><div id="rd-author" style="font-size:14px;font-weight:600"></div></div>
@@ -4080,7 +4106,7 @@ window.fbClearLoginHistory = async function(uid) {
               <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:6px">Raison du signalement</div>
               <div id="rd-reason" style="font-size:13px;color:var(--gray);line-height:1.7;background:var(--glass-highlight), rgba(0,0,0,0.35);border:1px solid var(--glass-border);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:var(--glass-shadow);padding:14px;border-radius:10px"></div>
             </div>
-            <div id="rd-auto-notice" style="display:none;align-items:center;gap:8px;margin-bottom:16px;font-size:12.5px;color:#39FF14;background:rgba(57,255,20,0.08);border:1px solid rgba(57,255,20,0.22);padding:10px 14px;border-radius:10px">
+            <div id="rd-auto-notice" style="display:none;align-items:center;gap:8px;margin-bottom:16px;font-size:12.5px;color:#39FF14;background:var(--glass-highlight), rgba(0,0,0,0.35);border:1px solid var(--glass-border);backdrop-filter:blur(10px) saturate(150%);-webkit-backdrop-filter:blur(10px) saturate(150%);box-shadow:var(--glass-shadow);padding:10px 14px;border-radius:10px">
               <i data-lucide="check-circle" style="width:15px;height:15px;flex-shrink:0"></i>
               <span>Commentaire déjà supprimé automatiquement — il ne reste plus qu'à traiter ce signalement.</span>
             </div>
@@ -6008,6 +6034,7 @@ const AUTO_ANNOUNCEMENT_LABELS = {
 };
 // Types d'avertissements personnels : stockés dans users/{uid}/notifications (pas dans
 // le document partagé site/notifications), donc traités à part dans le panel admin.
+const WARNING_TRIANGLE_ICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 640"><path fill="currentColor" d="M320 64C334.7 64 348.2 72.1 355.2 85L571.2 485C577.9 497.4 577.6 512.4 570.4 524.5C563.2 536.6 550.1 544 536 544L104 544C89.9 544 76.8 536.6 69.6 524.5C62.4 512.4 62.1 497.4 68.8 485L284.8 85C291.8 72.1 305.3 64 320 64zM320 416C302.3 416 288 430.3 288 448C288 465.7 302.3 480 320 480C337.7 480 352 465.7 352 448C352 430.3 337.7 416 320 416zM320 224C301.8 224 287.3 239.5 288.6 257.7L296 361.7C296.9 374.2 307.4 384 319.9 384C332.5 384 342.9 374.3 343.8 361.7L351.2 257.7C352.5 239.5 338.1 224 319.8 224z"/></svg>';
 const WARNING_TYPES = ['warning-harcelement', 'warning-insulte'];
 // Cache des avertissements de TOUS les comptes, chargé à la demande (dès qu'on ouvre
 // l'onglet Annonces en admin) pour éviter une lecture Firestore à chaque frappe/rendu.
@@ -6037,24 +6064,44 @@ async function renderAnnouncementsHistory() {
     .filter((n, i, arr) => arr.findIndex(x => x.id === n.id) === i) // dédoublonne (ex: ton propre avertissement présent des 2 côtés)
     .sort((a, b) => new Date(b.date) - new Date(a.date));
   if (!anns.length) { list.innerHTML = 'Aucune annonce envoyée pour l\'instant.'; return; }
+  // Pour afficher la pp de l'auteur sur les avertissements, on a besoin du cache membres.
+  const hasWarnings = anns.some(n => WARNING_TYPES.includes(n.type));
+  if (hasWarnings) { try { await ensureMembersCacheLoaded(); } catch (e) { console.warn('Membres indisponibles:', e); } }
   list.innerHTML = anns.map(n => {
     const pollTag = n.poll ? '<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(124,92,255,0.15);color:#a78bfa;font-size:10.5px;font-weight:700;vertical-align:middle">🗳️ sondage</span>' : '';
     const auto = AUTO_ANNOUNCEMENT_LABELS[n.type];
     const autoTag = auto ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:${auto.color}22;color:${auto.color};font-size:10.5px;font-weight:700;vertical-align:middle">${auto.label}</span>` : '';
     const isWarning = WARNING_TYPES.includes(n.type);
-    const targetTag = isWarning && n.fromUsername ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--gray);font-size:10.5px;font-weight:700;vertical-align:middle">👤 ${escapeHTML(n.fromUsername)}</span>` : '';
+    const targetUser = isWarning ? allMembersCache?.find(u => u.id === n.uid) : null;
+    const targetTag = isWarning && n.fromUsername ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--gray);font-size:10.5px;font-weight:700;vertical-align:middle">${escapeHTML(n.fromUsername)}</span>` : '';
     const deleteAction = isWarning ? `confirmDeleteWarningNotif('${n.uid}','${n.id}')` : `confirmDeleteAnnouncement('${n.id}')`;
+    const avatarHTML = isWarning
+      ? (targetUser?.avatarURL
+          ? `<img class="announcement-item-avatar" src="${targetUser.avatarURL}" alt="">`
+          : `<div class="announcement-item-avatar">${escapeHTML((n.fromUsername || '?').trim().charAt(0).toUpperCase())}</div>`)
+      : '';
+    const detailText = n.detail || '';
+    const isLong = detailText.length > 220 || (detailText.match(/\n/g) || []).length > 3;
+    const detailHTML = isLong
+      ? `<div class="announcement-item-detail clampable">${escapeHTML(detailText)}</div><button class="announcement-toggle-btn" onclick="toggleAnnouncementText(this)">Voir plus</button>`
+      : `<div class="announcement-item-detail">${escapeHTML(detailText)}</div>`;
     return `
     <div class="announcement-item">
+      ${avatarHTML}
       <div class="announcement-item-body">
         <div class="announcement-item-title">${escapeHTML(n.title)}${pollTag}${autoTag}${targetTag}</div>
-        <div class="announcement-item-detail">${escapeHTML(n.detail)}</div>
+        ${detailHTML}
         <div class="announcement-item-time">${formatNotifTime(n.date)}</div>
       </div>
       <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
     </div>`;
   }).join('');
   if (window.lucide) lucide.createIcons({ nodes: [list] });
+}
+function toggleAnnouncementText(btn) {
+  const detail = btn.previousElementSibling;
+  const expanded = detail.classList.toggle('is-expanded');
+  btn.textContent = expanded ? 'Voir moins' : 'Voir plus';
 }
 function confirmDeleteAnnouncement(id) {
   showConfirm('Supprimer cette annonce ?', 'Cette action est irréversible.', async () => {
@@ -7089,7 +7136,7 @@ function renderMemberItemHTML(u) {
   // avec le nombre d'avertissements (orange à partir de 1, rouge dès le 2e — proche d'une sanction).
   const warnColor = warningCount >= 2 ? '#ff4040' : '#ffb020';
   const warningBadge = warningCount > 0
-    ? `<span class="account-role-badge" style="background:${warnColor}22;color:${warnColor};margin-left:8px;cursor:pointer" title="Cliquer pour réinitialiser" onclick="event.stopPropagation();resetMemberWarnings('${u.id}')">⚠️ ${warningCount} avertissement${warningCount > 1 ? 's' : ''}</span>`
+    ? `<span class="account-role-badge warning-badge-icon" style="background:${warnColor}22;color:${warnColor};margin-left:8px;cursor:pointer" title="${warningCount} avertissement${warningCount > 1 ? 's' : ''} — cliquer pour réinitialiser" onclick="event.stopPropagation();resetMemberWarnings('${u.id}')">${WARNING_TRIANGLE_ICON}${warningCount}</span>`
     : '';
   return `<div class="member-item" style="cursor:pointer" onclick="openTeamMemberModal('${u.id}')">
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
