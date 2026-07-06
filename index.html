@@ -1538,6 +1538,26 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .announcement-toggle-btn:hover { text-decoration: underline; }
 .announcement-item-time { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 6px; }
 .announcement-item .btn-delete { flex-shrink: 0; }
+.announcement-item-actions { display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; }
+.announcement-item-thumbs { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.announcement-thumb {
+  position: relative; width: 44px; height: 44px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+  border: 1px solid rgba(255,255,255,0.18); cursor: zoom-in; background: rgba(255,255,255,0.05);
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+.announcement-thumb:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.4); }
+.announcement-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.announcement-thumb-more {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  background: rgba(4,4,8,0.6); backdrop-filter: blur(2px); color: #fff; font-weight: 800; font-size: 13px;
+}
+.btn-edit-ann {
+  flex-shrink: 0; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.06);
+  color: var(--white); border-radius: 10px; padding: 8px 12px; font-size: 11px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s ease, border-color 0.15s ease;
+}
+.btn-edit-ann:hover { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); }
+.btn-edit-ann svg, .btn-edit-ann i { width: 13px; height: 13px; }
 .announcement-item-avatar {
   width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; object-fit: cover;
   background: var(--dark3); display: flex; align-items: center; justify-content: center;
@@ -4163,7 +4183,7 @@ window.fbClearLoginHistory = async function(uid) {
         <div class="admin-section-title">Annonces</div>
         <div class="admin-section-sub">Envoie un message libre à tous les joueurs (maintenance, nouveauté à venir, info générale...) — indépendant des fiches jeux.</div>
         <div class="admin-card">
-          <div class="admin-card-header"><span class="admin-card-title">Nouvelle annonce</span></div>
+          <div class="admin-card-header"><span class="admin-card-title" id="ann-form-title">Nouvelle annonce</span></div>
           <div class="form-group"><label class="form-label">Titre</label><input type="text" class="form-input" id="ann-title" placeholder="ex: Maintenance prévue" maxlength="80"></div>
           <div class="form-group"><label class="form-label">Message</label><textarea class="form-textarea" style="min-height:90px" id="ann-detail" placeholder="ex: Le site sera mis à jour le 15 août, une courte coupure est possible."></textarea></div>
           <div class="form-group">
@@ -4191,7 +4211,10 @@ window.fbClearLoginHistory = async function(uid) {
             <button type="button" class="btn-ghost" style="font-size:12px" onclick="addPollOption()"><i data-lucide="plus"></i> Ajouter une option</button>
           </div>
           <div id="ann-error" style="display:none;color:#ff6b6b;font-size:12px;margin-bottom:10px"></div>
-          <button class="btn-primary" style="font-size:12px" onclick="sendAnnouncement()"><i data-lucide="send"></i> Envoyer aux joueurs</button>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn-primary" style="font-size:12px" id="ann-submit-btn" onclick="sendAnnouncement()"><i data-lucide="send"></i> Envoyer aux joueurs</button>
+            <button class="btn-outline" style="font-size:12px;display:none" id="ann-cancel-edit-btn" onclick="cancelEditAnnouncement()"><i data-lucide="x"></i> Annuler la modification</button>
+          </div>
         </div>
         <div class="admin-card">
           <div class="admin-card-header"><span class="admin-card-title">Annonces envoyées</span></div>
@@ -5987,6 +6010,8 @@ async function publishPersonalNotification(type, title, detail, targetUid, gameN
 // ----- Builder du sondage (panel admin) -----
 let pollOptionCount = 0;
 let pollBuilderEnabled = false;
+// Id de l'annonce en cours de modification (null = mode création classique).
+let editingAnnouncementId = null;
 const POLL_DEFAULT_COLORS = ['#7c5cff', '#2f7dfa', '#39FF14', '#ff5ba7', '#ffb020', '#ff5252'];
 function togglePollBuilder(show) {
   pollBuilderEnabled = !!show;
@@ -6059,20 +6084,80 @@ async function sendAnnouncement() {
       options: rows.map((o, idx) => ({ id: 'opt' + idx, text: o.text, color: o.color }))
     };
   }
-  showToast('Envoi en cours...');
-  const ok = await publishNotification('announcement', title, detail, null, null, extra);
+  const wasEditing = !!editingAnnouncementId;
+  showToast(wasEditing ? 'Mise à jour en cours...' : 'Envoi en cours...');
+  const ok = wasEditing
+    ? await updateAnnouncement(editingAnnouncementId, title, detail, extra)
+    : await publishNotification('announcement', title, detail, null, null, extra);
+  resetAnnouncementForm();
+  if (ok) {
+    showToast(wasEditing ? '✅ Annonce mise à jour pour tout le monde !' : '✅ Annonce envoyée aux joueurs !');
+    logChange(wasEditing ? 'Annonce modifiée : "' + title + '"' : 'Annonce envoyée : "' + title + '"');
+  } else {
+    showToast(wasEditing ? '❌ Erreur : la mise à jour n\'a pas pu être sauvegardée. Réessaie.' : '❌ Erreur : l\'annonce n\'a pas pu être sauvegardée. Réessaie.');
+  }
+  renderAnnouncementsHistory();
+}
+// Met à jour une annonce EXISTANTE en place (même id/date/auteur), pour tout le monde :
+// le document site/notifications est partagé, donc dès que saveNotifications() écrit sur
+// Firestore, tous les clients reçoivent la version modifiée via le listener temps réel.
+async function updateAnnouncement(id, title, detail, extra) {
+  const idx = notifications.findIndex(n => n.id === id);
+  if (idx === -1) return false;
+  const updated = Object.assign({}, notifications[idx], { title, detail });
+  // On repart propre sur imgs/poll : si l'admin a retiré toutes les images ou le sondage
+  // pendant l'édition, il ne faut pas que les anciennes valeurs traînent.
+  delete updated.imgs; delete updated.img; delete updated.poll;
+  Object.assign(updated, extra || {});
+  notifications[idx] = updated;
+  renderNotifications();
+  try { await saveNotifications(); return true; } catch (e) { console.warn('Mise à jour annonce non sauvegardée', e); return false; }
+}
+// Charge une annonce existante dans le formulaire pour modification (titre, message,
+// images, sondage). Réutilise exactement le même formulaire que la création.
+function editAnnouncement(id) {
+  const n = notifications.find(x => x.id === id);
+  if (!n || n.type !== 'announcement') return;
+  editingAnnouncementId = id;
+  document.getElementById('ann-title').value = n.title || '';
+  document.getElementById('ann-detail').value = n.detail || '';
+  tempImgs['ann-imgs'] = (Array.isArray(n.imgs) && n.imgs.length) ? [...n.imgs] : (n.img ? [n.img] : []);
+  renderAnnImgsPreview();
+  if (n.poll && Array.isArray(n.poll.options) && n.poll.options.length) {
+    pollBuilderEnabled = true;
+    document.getElementById('ann-poll-toggle-btn').classList.add('active');
+    document.getElementById('ann-poll-builder').style.display = 'block';
+    document.getElementById('ann-poll-options').innerHTML = '';
+    pollOptionCount = 0;
+    n.poll.options.forEach(o => addPollOption(o.text, o.color));
+  } else {
+    resetPollBuilder();
+  }
+  setAnnouncementFormEditMode(true);
+  document.getElementById('section-announcements')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function cancelEditAnnouncement() {
+  resetAnnouncementForm();
+  showToast('Modification annulée');
+}
+// Réinitialise le formulaire "Annonces" et le fait sortir du mode édition.
+function resetAnnouncementForm() {
+  editingAnnouncementId = null;
   document.getElementById('ann-title').value = '';
   document.getElementById('ann-detail').value = '';
   tempImgs['ann-imgs'] = [];
   renderAnnImgsPreview();
   resetPollBuilder();
-  if (ok) {
-    showToast('✅ Annonce envoyée aux joueurs !');
-    logChange('Annonce envoyée : "' + title + '"');
-  } else {
-    showToast('❌ Erreur : l\'annonce n\'a pas pu être sauvegardée. Réessaie.');
-  }
-  renderAnnouncementsHistory();
+  setAnnouncementFormEditMode(false);
+}
+function setAnnouncementFormEditMode(edit) {
+  const titleEl = document.getElementById('ann-form-title');
+  const submitBtn = document.getElementById('ann-submit-btn');
+  const cancelBtn = document.getElementById('ann-cancel-edit-btn');
+  if (titleEl) titleEl.textContent = edit ? 'Modifier l\'annonce' : 'Nouvelle annonce';
+  if (submitBtn) submitBtn.innerHTML = edit ? '<i data-lucide="check"></i> Enregistrer les modifications' : '<i data-lucide="send"></i> Envoyer aux joueurs';
+  if (cancelBtn) cancelBtn.style.display = edit ? 'inline-flex' : 'none';
+  if (window.lucide && submitBtn) lucide.createIcons({ nodes: [submitBtn] });
 }
 // Types d'annonces "auto" générées par les fiches jeux / le hero (bannières).
 // On les affiche dans le panel admin à côté des annonces manuelles, avec un badge dédié.
@@ -6135,6 +6220,19 @@ async function renderAnnouncementsHistory() {
           : `<div class="announcement-item-avatar">${escapeHTML((n.fromUsername || '?').trim().charAt(0).toUpperCase())}</div>`)
       : '';
     const detailText = n.detail || '';
+    // Mini-galerie de vignettes : montre qu'une (ou plusieurs) image est attachée à
+    // l'annonce, directement dans la liste admin (sinon invisible sans ouvrir l'annonce).
+    const imgs = (Array.isArray(n.imgs) && n.imgs.length) ? n.imgs : (n.img ? [n.img] : []);
+    const MAX_THUMBS = 4;
+    const shownThumbs = imgs.slice(0, MAX_THUMBS);
+    const extraCount = imgs.length - shownThumbs.length;
+    const thumbsHTML = imgs.length ? `<div class="announcement-item-thumbs">${shownThumbs.map((url, i) => {
+      const isLast = i === shownThumbs.length - 1 && extraCount > 0;
+      return `<div class="announcement-thumb" data-lightbox-url="${escapeHTML(url)}"><img src="${escapeHTML(url)}" alt="">${isLast ? `<div class="announcement-thumb-more">+${extraCount}</div>` : ''}</div>`;
+    }).join('')}</div>` : '';
+    // Seules les annonces manuelles (pas les auto game/hero, pas les avertissements) sont éditables.
+    const isEditable = n.type === 'announcement';
+    const editBtn = isEditable ? `<button class="btn-edit-ann" onclick="editAnnouncement('${n.id}')"><i data-lucide="pencil"></i> Modifier</button>` : '';
     return `
     <div class="announcement-item">
       ${avatarHTML}
@@ -6142,9 +6240,13 @@ async function renderAnnouncementsHistory() {
         <div class="announcement-item-title"><span class="announcement-item-title-text">${escapeHTML(n.title)}</span>${pollTag}${autoTag}${targetTag}</div>
         <div class="announcement-item-detail clampable">${escapeHTML(detailText)}</div>
         <button class="announcement-toggle-btn" style="display:none" onclick="toggleAnnouncementText(this)">Voir plus</button>
+        ${thumbsHTML}
         <div class="announcement-item-time">${formatNotifTime(n.date)}</div>
       </div>
-      <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
+      <div class="announcement-item-actions">
+        ${editBtn}
+        <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
+      </div>
     </div>`;
   }).join('');
   // Le bouton "Voir plus" n'a de sens que si le texte est réellement tronqué visuellement
