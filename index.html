@@ -5357,7 +5357,7 @@ function updatePinHomeButtonUI() {
   label.textContent = pinned ? `Épinglé : ${name}` : `Épingler ${name}`;
 }
 function toggleMyListPinned() {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   const tabId = currentLibraryTab;
   const meta = libraryTabOptions().find(o => o.id === tabId);
   const name = meta ? meta.label : 'Cette liste';
@@ -5383,9 +5383,9 @@ function toggleMyListPinned() {
     showToast("Ajoutée à l'accueil. Elle apparaît sur ta page d'accueil.");
   }
 }
-function requireAccount() {
+function requireAccount(message) {
   if (currentUser) return true;
-  showToast('Connecte-toi pour utiliser My List.');
+  showToast(message || 'Connecte-toi pour continuer.');
   openSignIn();
   return false;
 }
@@ -5404,7 +5404,7 @@ function toggleArrayValue(arr, value) {
 }
 function toggleMyList(index, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   const key = gameKey(games[index]);
   toggleArrayValue(userLibrary.list, key);
   saveUserLibrary();
@@ -5417,7 +5417,7 @@ function toggleMyList(index, ev) {
 let _libraryPickerIndex = -1;
 function openLibraryPicker(index, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   _libraryPickerIndex = index;
   renderLibraryPickerList();
   document.getElementById('library-picker-modal').classList.add('open');
@@ -5664,7 +5664,7 @@ function toggleCommentMenu(ev, commentId) {
   if (target && !wasOpen) target.classList.add('open');
 }
 async function toggleCommentVote(commentId, type) {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour réagir aux commentaires.')) return;
   if (!currentCommentsGameId || !window.fbToggleCommentReaction) return;
   try {
     await window.fbToggleCommentReaction(currentCommentsGameId, commentId, currentUser.uid, type);
@@ -5677,7 +5677,7 @@ async function toggleCommentVote(commentId, type) {
 // Envoie le commentaire signalé dans la collection "reports", consultable et supprimable
 // depuis le panel admin (section Signalements).
 function reportComment(commentId) {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour signaler un commentaire.')) return;
   const c = lastRenderedComments.find(x => x.id === commentId);
   if (!c) return;
   document.querySelectorAll('.comment-menu-dropdown.open').forEach(el => el.classList.remove('open'));
@@ -5709,7 +5709,7 @@ function reportComment(commentId) {
 function startReplyToComment(commentId) {
   const c = lastRenderedComments.find(x => x.id === commentId);
   if (!c) return;
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour répondre à un commentaire.')) return;
   replyingToComment = { id: c.id, username: c.username || 'Utilisateur', text: c.text || '' };
   const bar = document.getElementById('comment-reply-preview');
   const nameEl = document.getElementById('comment-reply-preview-name');
@@ -5730,7 +5730,7 @@ function handleCommentKeydown(ev) {
   if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); postGameComment(); }
 }
 async function postGameComment() {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour commenter.')) return;
   // Sécurité anti-contournement : si les mots bannis (chargés depuis Firestore) ne sont
   // pas encore arrivés, on refuse de poster plutôt que de risquer un commentaire non
   // modéré à cause d'un timing de chargement (ex: compte qui vient de se connecter).
@@ -5851,7 +5851,7 @@ async function confirmDeleteGameComment(commentId) {
 let _likeToggleInFlight = {};
 async function toggleVote(index, type, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour réagir à ce jeu.')) return;
   const g = games[index];
   if (!g || !window.fbToggleGameLike) return;
   const gid = gameCommentsId(g);
@@ -5915,7 +5915,7 @@ function refreshModalRatingUI(index) {
 const LIST_COLORS = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0a84ff','#5e5ce6','#af52de','#ff2d78'];
 let selectedNewListColorIdx = 0;
 function createFavoriteCategory() {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   showPrompt('Nouvelle catégorie', 'Nom de la nouvelle catégorie :', 'Mes favoris', (name) => {
     const cat = { id: 'fav-' + Date.now(), name: name.trim(), games: [], color: LIST_COLORS[0] };
     userLibrary.categories.push(cat);
@@ -5924,7 +5924,7 @@ function createFavoriteCategory() {
   });
 }
 function renameFavoriteCategory() {
-  if (!requireAccount() || !currentLibraryTab.startsWith('cat:')) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.') || !currentLibraryTab.startsWith('cat:')) return;
   const id = currentLibraryTab.slice(4);
   const cat = userLibrary.categories.find(c => c.id === id);
   if (!cat) return;
@@ -5934,14 +5934,14 @@ function renameFavoriteCategory() {
   });
 }
 function deleteFavoriteCategory() {
-  if (!requireAccount() || !currentLibraryTab.startsWith('cat:')) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.') || !currentLibraryTab.startsWith('cat:')) return;
   deleteListFromManage(currentLibraryTab.slice(4));
 }
 // ===== ORGANISER DANS MA LISTE (modal remplaçant la croix sur les cartes My List) =====
 let _organizeIndex = -1;
 function openOrganizeListModal(index, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   _organizeIndex = index;
   renderOrganizeListModal();
   document.getElementById('organize-list-modal').classList.add('open');
@@ -6098,7 +6098,7 @@ function renderNewListColors() {
   wrap.innerHTML = LIST_COLORS.map((c, i) => `<button type="button" class="color-swatch ${i === selectedNewListColorIdx ? 'selected' : ''}" style="background:${c}" onclick="selectNewListColor(${i})"></button>`).join('');
 }
 function openManageLists() {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   selectedNewListColorIdx = 0;
   document.getElementById('new-list-name').value = '';
   renderNewListColors();
@@ -6124,7 +6124,7 @@ function renderManageListsModal() {
   if (window.lucide) lucide.createIcons({ nodes: [wrap] });
 }
 function addNewList() {
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour utiliser My List.')) return;
   const input = document.getElementById('new-list-name');
   const name = input.value.trim();
   if (!name) { showToast('Merci de donner un nom à la liste'); return; }
@@ -6645,7 +6645,7 @@ function renderAnnPollHTML(n) {
 }
 async function voteAnnPoll(notifId, optionId, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour voter.')) return;
   const n = notifications.find(x => x.id === notifId);
   if (!n || !n.poll || !window.fbSetPollVote || !window.fbDeletePollVote) return;
   const uid = currentUser.uid;
@@ -6840,7 +6840,7 @@ function rankWithFallback(indexedList, scoreFn) {
 }
 async function setUserRating(index, value, ev) {
   if (ev) ev.stopPropagation();
-  if (!requireAccount()) return;
+  if (!requireAccount('Connecte-toi pour noter ce jeu.')) return;
   const g = games[index];
   if (!g || !window.fbSetGameRating || !window.fbDeleteGameRating) return;
   const gid = gameCommentsId(g);
