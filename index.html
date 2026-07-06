@@ -2124,6 +2124,23 @@ onSnapshot(doc(db, 'site', 'notifications'), (snap) => {
   _gsMarkFirstSnapshotDone();
 }, (e) => { console.warn('❌ Erreur temps réel (notifications):', e); _gsMarkFirstSnapshotDone(); });
 
+// Votes de sondage (collection publique dédiée "pollVotes", 1 document par utilisateur
+// par sondage) : contrairement à site/notifications (annonces, réservé aux admins en
+// écriture), chacun peut écrire SON PROPRE vote ici, donc ça marche pour un membre
+// normal — avant, le vote était stocké dans site/notifications et ne s'enregistrait
+// donc jamais pour quelqu'un qui n'est pas admin.
+onSnapshot(collection(db, 'pollVotes'), (snap) => {
+  const byNotif = {};
+  snap.forEach(d => {
+    const v = d.data();
+    if (!v.notifId) return;
+    (byNotif[v.notifId] || (byNotif[v.notifId] = [])).push({ uid: v.uid, optionId: v.optionId });
+  });
+  if (typeof window._gsSetPollVotes === 'function') window._gsSetPollVotes(byNotif);
+  if (typeof window.renderAnnouncementsFeed === 'function') window.renderAnnouncementsFeed();
+  _gsMarkFirstSnapshotDone();
+}, (e) => { console.warn('❌ Erreur temps réel (pollVotes):', e); _gsMarkFirstSnapshotDone(); });
+
 // Comptes utilisateurs (users/{uid}) : en temps réel aussi, sinon un nouveau compte créé,
 // un rôle attribué ou une photo de profil changée n'apparaît (page Équipe, panel admin,
 // compteur du dashboard) qu'après un rafraîchissement manuel de la page par les autres.
@@ -2240,6 +2257,25 @@ window.fbToggleGameFavorite = async function(gameId, uid) {
   return true;
 };
 
+// ===== NOTES DE JEUX (Firestore: games/{gameId}/ratings/{uid}) =====
+// Un document par utilisateur (id = son UID Firebase) : chaque membre écrit directement
+// SA PROPRE note, sans avoir besoin des droits admin. Avant ce système, la note était
+// stockée dans site/games (le document listant tous les jeux), réservé en écriture aux
+// admins par les règles Firestore — la note d'un membre normal ne s'enregistrait donc
+// jamais (échec silencieux). Lecture publique pour calculer la moyenne affichée à tous.
+window.fbSetGameRating = async function(gameId, uid, value) {
+  const ref = doc(db, 'games', gameId, 'ratings', uid);
+  await setDoc(ref, { uid: uid, value: value, ratedAt: serverTimestamp() });
+};
+window.fbDeleteGameRating = async function(gameId, uid) {
+  await deleteDoc(doc(db, 'games', gameId, 'ratings', uid));
+};
+window.fbListenGameRatings = function(gameId, callback) {
+  return onSnapshot(collection(db, 'games', gameId, 'ratings'), (snap) => {
+    callback(snap.docs.map(d => ({ uid: d.id, ...d.data() })));
+  }, (err) => { console.error('Erreur écoute notes:', err); callback([]); });
+};
+
 // ===== SAVE =====
 window.fbSaveData = async (products, games) => {
   console.log('🔥 fbSaveData → envoi Firestore:', { products: products.length, games: games.length });
@@ -2274,6 +2310,18 @@ window.fbSaveFooter       = async (d) => await fsSet('site/footer', d);
 window.fbSaveHeroes       = async (d) => await fsSet('site/heroes', { list: d });
 window.fbSaveSettings     = async (d) => await fsSet('site/settings', d);
 window.fbSaveNotifications = async (d) => await fsSet('site/notifications', { list: d });
+
+// ===== VOTES DE SONDAGE (Firestore: pollVotes/{notifId}_{uid}) =====
+// Collection publique dédiée, séparée de site/notifications (qui reste, lui, réservé
+// en écriture aux admins). L'ID du document combine le sondage et le votant, donc
+// chaque utilisateur ne peut avoir qu'UN SEUL vote par sondage, et uniquement le sien.
+window.fbSetPollVote = async function(notifId, uid, optionId) {
+  const ref = doc(db, 'pollVotes', notifId + '_' + uid);
+  await setDoc(ref, { notifId, uid, optionId, votedAt: serverTimestamp() });
+};
+window.fbDeletePollVote = async function(notifId, uid) {
+  await deleteDoc(doc(db, 'pollVotes', notifId + '_' + uid));
+};
 
 // ===== AUTH =====
 window.fbRegister = async (email, pwd, username) => {
@@ -4102,6 +4150,11 @@ function normalizeGame(g, index) {
     // en temps réel de la sous-collection Firestore games/{gameId}/likes (voir gameLikeCount).
     likes: Array.isArray(g.likes) ? g.likes : [],
     likesAt: (g.likesAt && typeof g.likesAt === 'object') ? g.likesAt : {},
+    // ratings/ratingsAt : anciens champs, conservés uniquement pour ne pas casser d'anciennes
+    // données déjà en base. Ils ne sont plus lus nulle part : les notes viennent désormais
+    // en temps réel de la sous-collection Firestore games/{gameId}/ratings (voir gameRatingAverage).
+    // Avant ce changement, une note posée par un membre normal ne s'enregistrait jamais :
+    // elle était stockée dans site/games, un document réservé en écriture aux admins.
     ratings: (g.ratings && typeof g.ratings === 'object') ? g.ratings : {},
     ratingsAt: (g.ratingsAt && typeof g.ratingsAt === 'object') ? g.ratingsAt : {},
     plays: Number(g.plays) || 0,
@@ -4671,10 +4724,17 @@ let personalNotifications = [];
 let currentHeroSlide = 0;
 let currentLibraryTab = 'all';
 let userLibrary = createEmptyLibrary();
-// ===== CACHE DES LIKES (vrai système temps réel : games/{gameId}/likes/{email}) =====
-// gameLikesCache[gameId] = tableau des emails ayant liké ce jeu (source de vérité = Firestore).
+// ===== CACHE DES VOTES DE SONDAGE (vrai système temps réel : pollVotes/{notifId}_{uid}) =====
+// pollVotesCache[notifId] = tableau de { uid, optionId } (source de vérité = Firestore).
+let pollVotesCache = {};
+window._gsSetPollVotes = (byNotif) => { pollVotesCache = byNotif || {}; };
+// gameLikesCache[gameId] = tableau des UID ayant liké ce jeu (source de vérité = Firestore).
 let gameLikesCache = {};
 let gameLikesUnsubs = {};
+// ===== CACHE DES NOTES (vrai système temps réel : games/{gameId}/ratings/{uid}) =====
+// gameRatingsCache[gameId] = tableau de { uid, value, ratedAt } (source de vérité = Firestore).
+let gameRatingsCache = {};
+let gameRatingsUnsubs = {};
 let _heroAutoplayTimer = null;
 let _heroPaused = false;
 
@@ -4691,6 +4751,7 @@ window._gsSetGames = (data) => {
   window._games_count = games.length;
   console.log('📥 games chargés:', games.length);
   subscribeAllGameLikes();
+  subscribeAllGameRatings();
 };
 // S'abonne (une seule fois par jeu) à sa sous-collection de likes en temps réel.
 // C'est le vrai système : le compteur et l'état "j'ai liké" viennent directement de
@@ -4713,6 +4774,25 @@ function subscribeAllGameLikes() {
 }
 function gameLikeCount(g) { return (gameLikesCache[gameCommentsId(g)] || []).length; }
 function userLikedGame(g) { return !!(currentUser && (gameLikesCache[gameCommentsId(g)] || []).includes(currentUser.uid)); }
+// S'abonne (une seule fois par jeu) à sa sous-collection de notes en temps réel.
+// C'est le vrai système : la moyenne et "ma note" viennent directement de Firestore,
+// plus jamais du tableau games[] (qui n'est modifiable que par les admins).
+function subscribeAllGameRatings() {
+  if (typeof window.fbListenGameRatings !== 'function') return;
+  games.forEach(g => {
+    const gid = gameCommentsId(g);
+    if (gameRatingsUnsubs[gid]) return; // déjà abonné
+    gameRatingsUnsubs[gid] = window.fbListenGameRatings(gid, (ratings) => {
+      gameRatingsCache[gid] = ratings;
+      renderGamesOnSite();
+      const modal = document.getElementById('game-modal');
+      if (modal && modal.classList.contains('open')) {
+        const i = parseInt(modal.dataset.index, 10);
+        if (!isNaN(i) && games[i] && gameCommentsId(games[i]) === gid) refreshModalRatingUI(i);
+      }
+    });
+  });
+}
 window._gsSetHeroSlides = (data) => {
   if (!data || !data.length) return;
   heroSlides.length = 0;
@@ -5429,6 +5509,18 @@ function refreshModalLikeUI(index) {
     likeBtn.innerHTML = `${likeIconHTML()} ${gameLikeCount(g)}`;
   }
 }
+// Ne rafraîchit que le bloc "note" de la modale (moyenne + étoiles perso), sans tout
+// réouvrir/réanimer comme openGameModal(index) le ferait — appelé par le listener
+// temps réel de games/{gameId}/ratings à chaque nouvelle note (la sienne ou celle d'un autre).
+function refreshModalRatingUI(index) {
+  const g = games[index];
+  if (!g) return;
+  const realRating = getGameRating(g);
+  const metaPill = document.querySelector('#modal-meta .modal-meta-pill.rating');
+  if (metaPill) metaPill.innerHTML = realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>';
+  const ratingPicker = document.getElementById('modal-rating-picker');
+  if (ratingPicker) ratingPicker.innerHTML = `<div class="modal-meta-label" style="margin-bottom:8px">Ta note</div>${ratingPickerHTML(g, index, 28)}`;
+}
 const LIST_COLORS = ['#ff3b30','#ff9500','#ffcc00','#34c759','#0a84ff','#5e5ce6','#af52de','#ff2d78'];
 let selectedNewListColorIdx = 0;
 function createFavoriteCategory() {
@@ -5861,8 +5953,9 @@ async function sendAnnouncement() {
       return;
     }
     extra.poll = {
-      options: rows.map((o, idx) => ({ id: 'opt' + idx, text: o.text, color: o.color })),
-      votes: {}
+      // Les votes ne vivent plus ici (ce document est admin-only en écriture) mais dans
+      // la collection publique "pollVotes", où chaque membre écrit son propre vote.
+      options: rows.map((o, idx) => ({ id: 'opt' + idx, text: o.text, color: o.color }))
     };
   }
   showToast('Envoi en cours...');
@@ -6006,17 +6099,16 @@ function toggleAnnBody(id) {
 }
 function renderAnnVoteBadgeHTML(n) {
   if (!n.poll) return '';
-  const votes = n.poll.votes || {};
-  const total = Object.keys(votes).length;
+  const total = (pollVotesCache[n.id] || []).length;
   return `<div class="ann-poll-total">${total.toLocaleString('fr-FR')}<i data-lucide="thumbs-up"></i><i data-lucide="thumbs-down"></i></div>`;
 }
 function renderAnnPollHTML(n) {
-  const votes = n.poll.votes || {};
-  const uid = currentUser?.email || null;
-  const myVote = uid ? votes[uid] : null;
+  const votes = pollVotesCache[n.id] || [];
+  const uid = currentUser?.uid || null;
+  const myVote = uid ? (votes.find(v => v.uid === uid)?.optionId || null) : null;
   const counts = {};
   n.poll.options.forEach(o => counts[o.id] = 0);
-  Object.values(votes).forEach(optId => { if (counts.hasOwnProperty(optId)) counts[optId]++; });
+  votes.forEach(v => { if (counts.hasOwnProperty(v.optionId)) counts[v.optionId]++; });
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   const fallbackColor = n.poll.color || '#7c5cff';
   const hasVoted = !!myVote;
@@ -6041,14 +6133,19 @@ async function voteAnnPoll(notifId, optionId, ev) {
   if (ev) ev.stopPropagation();
   if (!requireAccount()) return;
   const n = notifications.find(x => x.id === notifId);
-  if (!n || !n.poll) return;
-  if (!n.poll.votes || typeof n.poll.votes !== 'object') n.poll.votes = {};
-  const uid = currentUser.email;
-  // Un clic sur l'option déjà choisie retire le vote, sinon on (re)vote pour cette option
-  if (n.poll.votes[uid] === optionId) delete n.poll.votes[uid];
-  else n.poll.votes[uid] = optionId;
-  renderAnnouncementsFeed();
-  try { await saveNotifications(); } catch (e) { console.warn('Vote non sauvegardé', e); }
+  if (!n || !n.poll || !window.fbSetPollVote || !window.fbDeletePollVote) return;
+  const uid = currentUser.uid;
+  const myVote = (pollVotesCache[notifId] || []).find(v => v.uid === uid)?.optionId || null;
+  try {
+    // Un clic sur l'option déjà choisie retire le vote, sinon on (re)vote pour cette option
+    if (myVote === optionId) await window.fbDeletePollVote(notifId, uid);
+    else await window.fbSetPollVote(notifId, uid, optionId);
+    // Le listener temps réel (pollVotes) mettra pollVotesCache à jour et rafraîchira
+    // l'affichage tout seul ; pas besoin de rendu optimiste ici.
+  } catch (e) {
+    console.warn('Vote non sauvegardé', e);
+    showToast('❌ Erreur lors du vote');
+  }
 }
 function renderAnnGalleryHTML(n) {
   const imgs = (Array.isArray(n.imgs) && n.imgs.length) ? n.imgs : (n.img ? [n.img] : []);
@@ -6188,16 +6285,18 @@ function setTab(id) {
 }
 
 // ===== RENDER: GAMES PAGE =====
-// ===== VOTES (Like/Dislike) -> NOTE =====
+// ===== NOTES (⭐ 1-5) : vrai système temps réel, games/{gameId}/ratings/{uid} =====
 function getGameRating(g) {
-  // Vraie note = moyenne des votes des utilisateurs (1 à 5 étoiles). Pas de note tant qu'il n'y a pas de votes.
-  const ratings = g.ratings && typeof g.ratings === 'object' ? Object.values(g.ratings).filter(v => v > 0) : [];
+  // Vraie note = moyenne des notes des utilisateurs. Pas de note tant qu'il n'y a pas de votes.
+  const ratings = (gameRatingsCache[gameCommentsId(g)] || []).map(r => r.value).filter(v => v > 0);
   if (!ratings.length) return 0;
   return ratings.reduce((a, b) => a + b, 0) / ratings.length;
 }
+function gameRatingCount(g) { return (gameRatingsCache[gameCommentsId(g)] || []).filter(r => r.value > 0).length; }
 function userRatingOn(g) {
-  if (!currentUser || !g || !g.ratings) return 0;
-  return g.ratings[currentUser.email] || 0;
+  if (!currentUser || !g) return 0;
+  const mine = (gameRatingsCache[gameCommentsId(g)] || []).find(r => r.uid === currentUser.uid);
+  return mine ? mine.value : 0;
 }
 // ===== SCORE "JEUX POPULAIRES" : likes + note + vues, combinés =====
 function popularityScore(g) {
@@ -6213,8 +6312,10 @@ function recentActivityCount(g, days) {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   // Les likes sont désormais dans Firestore (games/{id}/likes), sans horodatage exposé
   // côté client ; seule leur quantité totale contribue déjà au score de popularité.
-  const dates = (g.ratingsAt ? Object.values(g.ratingsAt) : []);
-  return dates.filter(d => { const t = Date.parse(d); return !isNaN(t) && t >= cutoff; }).length;
+  const dates = (gameRatingsCache[gameCommentsId(g)] || [])
+    .map(r => r.ratedAt && r.ratedAt.toDate ? r.ratedAt.toDate().getTime() : null)
+    .filter(t => t !== null);
+  return dates.filter(t => t >= cutoff).length;
 }
 // Trie une liste par score, met les jeux sans activité (score 0) derrière, triés par date de publication
 function rankWithFallback(indexedList, scoreFn) {
@@ -6223,21 +6324,24 @@ function rankWithFallback(indexedList, scoreFn) {
   const inactive = scored.filter(x => x._score <= 0).sort((a, b) => b.i - a.i); // plus récents en dernier recours
   return active.concat(inactive);
 }
-function setUserRating(index, value, ev) {
+async function setUserRating(index, value, ev) {
   if (ev) ev.stopPropagation();
   if (!requireAccount()) return;
   const g = games[index];
-  if (!g) return;
-  if (!g.ratings || typeof g.ratings !== 'object') g.ratings = {};
-  if (!g.ratingsAt || typeof g.ratingsAt !== 'object') g.ratingsAt = {};
-  const uid = currentUser.email;
-  const removed = g.ratings[uid] === value;
-  if (removed) { delete g.ratings[uid]; delete g.ratingsAt[uid]; }
-  else { g.ratings[uid] = value; g.ratingsAt[uid] = new Date().toISOString(); }
-  renderGamesOnSite(); renderMyListPage();
-  if (document.getElementById('game-modal').classList.contains('open')) openGameModal(index);
-  saveData().catch(e => console.error('Erreur sauvegarde note:', e));
-  showToast(removed ? 'Note retirée.' : 'Note enregistrée : ' + value + '/5.');
+  if (!g || !window.fbSetGameRating || !window.fbDeleteGameRating) return;
+  const gid = gameCommentsId(g);
+  const uid = currentUser.uid;
+  const removed = userRatingOn(g) === value;
+  try {
+    if (removed) await window.fbDeleteGameRating(gid, uid);
+    else await window.fbSetGameRating(gid, uid, value);
+    showToast(removed ? 'Note retirée.' : 'Note enregistrée : ' + value + '/5.');
+  } catch (e) {
+    console.error('Erreur sauvegarde note:', e);
+    showToast('❌ Erreur lors de l\'enregistrement de la note');
+  }
+  // Le listener temps réel (subscribeAllGameRatings) mettra gameRatingsCache à jour et
+  // rafraîchira l'affichage tout seul ; pas besoin de rendu optimiste ici.
 }
 function likeIconHTML() {
   return `<svg viewBox="0 -0.5 21 21" xmlns="http://www.w3.org/2000/svg" fill="currentColor" style="width:1em;height:1em;display:inline-block;vertical-align:middle"><path d="M0,20 L4.200006,20 L4.200006,8 L0,8 L0,20 Z M20.924431,11.355 L19.100579,17.89 C18.799228,19.131 17.638976,20 16.302324,20 L6.300009,20 L6.300009,8.021 L8.104962,1.825 C8.274012,0.775 9.223214,0 10.339366,0 C11.587817,0 12.600019,0.964 12.600019,2.153 L12.600019,8 L18.126177,8 C19.97313,8 21.340232,9.641 20.924431,11.355 Z"></path></svg>`;
@@ -6439,7 +6543,7 @@ function openGameModalDirect(i) {
   document.getElementById('modal-badges').innerHTML = `<span class="badge">${gameStatusLabel(g.status)}</span>`;
   document.getElementById('modal-byline').textContent = `By ${g.dev || 'Garden Studio'}${g.date ? ' · ' + g.date : ''}`;
   const realRating = getGameRating(g);
-  const ratingCount = g.ratings ? Object.keys(g.ratings).length : 0;
+  const ratingCount = gameRatingCount(g);
   document.getElementById('modal-meta').innerHTML = `
     <span class="modal-meta-pill rating">${realRating ? starsHTML(realRating, 16) : '<span style="color:rgba(255,255,255,0.5)">Pas encore noté</span>'}</span>
     <span class="modal-meta-pill" style="display:inline-flex;align-items:center;gap:5px"><i data-lucide="eye" style="width:14px;height:14px"></i>${Number(g.plays || 0).toLocaleString('fr-FR')}</span>`;
