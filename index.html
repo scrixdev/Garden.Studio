@@ -1510,6 +1510,41 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .sanction-btn:hover { background: rgba(255,176,32,0.18); border-color: rgba(255,176,32,0.4); color: #ffb020; transform: translateY(-1px); }
 .sanction-btn:active { transform: scale(0.92); }
 .sanction-btn-danger:hover { background: rgba(255,64,64,0.18); border-color: rgba(255,64,64,0.4); color: #ff4040; }
+/* ===== Panel de modération (style "vue du modérateur" Discord) ===== */
+.mod-panel-trigger { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,176,32,0.12); border: 1px solid rgba(255,176,32,0.35); color: #ffb020; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s; flex-shrink: 0; }
+.mod-panel-trigger svg { width: 16px; height: 16px; }
+.mod-panel-trigger:hover { background: rgba(255,176,32,0.22); transform: translateY(-1px); }
+.comment-avatar.mod-clickable, .comment-author.mod-clickable { cursor: pointer; }
+.comment-avatar.mod-clickable:hover { outline: 2px solid rgba(255,176,32,0.55); outline-offset: 2px; border-radius: 50%; }
+.comment-author.mod-clickable:hover { color: #ffb020; text-decoration: underline; }
+.mod-panel-sanctions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.mod-panel-sanction-btn { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: 8px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: var(--white); font-size: 12.5px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.mod-panel-sanction-btn svg { width: 14px; height: 14px; }
+.mod-panel-sanction-btn:hover { background: rgba(255,176,32,0.16); border-color: rgba(255,176,32,0.4); color: #ffb020; }
+.mod-panel-sanction-btn.danger:hover { background: rgba(255,64,64,0.16); border-color: rgba(255,64,64,0.4); color: #ff4040; }
+.mod-panel-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 16px; }
+.mod-panel-stat { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 10px 8px; text-align: center; }
+.mod-panel-stat-value { font-size: 18px; font-weight: 800; color: var(--white); }
+.mod-panel-stat-label { font-size: 10.5px; color: var(--gray); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.03em; }
+.mod-panel-tabs { display: flex; gap: 4px; margin-top: 18px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.mod-panel-tab { padding: 10px 14px; font-size: 12.5px; font-weight: 600; color: var(--gray); cursor: pointer; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 6px; }
+.mod-panel-tab svg { width: 14px; height: 14px; }
+.mod-panel-tab.active { color: var(--white); border-bottom-color: #ffb020; }
+.mod-panel-tab-content { display: none; max-height: 340px; overflow-y: auto; padding: 14px 2px 4px; }
+.mod-panel-tab-content.active { display: block; }
+.mod-panel-comment-item { padding: 10px 12px; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 8px; }
+.mod-panel-comment-game { font-size: 11px; color: #ffb020; font-weight: 700; margin-bottom: 3px; }
+.mod-panel-comment-text { font-size: 13px; line-height: 1.5; color: var(--white); }
+.mod-panel-comment-date { font-size: 11px; color: var(--gray); margin-top: 4px; }
+.mod-panel-comment-actions { margin-top: 6px; }
+.mod-panel-game-chip { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 10px; background: rgba(255,255,255,0.04); margin-bottom: 6px; font-size: 13px; }
+.mod-panel-game-chip img { width: 32px; height: 32px; border-radius: 6px; object-fit: cover; flex-shrink: 0; }
+.mod-panel-warning-item { padding: 10px 12px; border-radius: 10px; background: rgba(255,176,32,0.08); border: 1px solid rgba(255,176,32,0.2); margin-bottom: 8px; }
+.mod-panel-warning-title { font-size: 13px; font-weight: 700; color: #ffb020; }
+.mod-panel-warning-detail { font-size: 12.5px; color: var(--white); margin-top: 3px; line-height: 1.5; }
+.mod-panel-warning-date { font-size: 11px; color: var(--gray); margin-top: 4px; }
+.mod-panel-empty { text-align: center; padding: 30px 10px; color: var(--gray); font-size: 13px; }
+.mod-panel-loading { text-align: center; padding: 30px 10px; color: var(--gray); font-size: 13px; }
 .announcement-item {
   position: relative; overflow: hidden;
   display: flex; align-items: flex-start; justify-content: space-between; gap: 14px;
@@ -2381,6 +2416,13 @@ window.fbListenGameComments = function(gameId, callback) {
   return onSnapshot(q, (snap) => {
     callback(snap.docs.map(d => ({ id: d.id, ...d.data() })));
   }, (err) => { console.error('Erreur écoute commentaires:', err); callback([]); });
+};
+// Lecture ponctuelle (sans écoute temps réel) de tous les commentaires d'un jeu — utilisé
+// par le panel de modération (vue "Discord-like" d'un membre) pour retrouver tout ce qu'un
+// membre donné a posté, jeu par jeu.
+window.fbGetGameComments = async function(gameId) {
+  const snap = await getDocs(collection(db, 'games', gameId, 'comments'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
 };
 
 // ===== LIKES / DISLIKES DE COMMENTAIRES (champs likes[]/dislikes[] sur le doc commentaire) =====
@@ -5408,11 +5450,18 @@ function commentItemHTML(c, isReply) {
   const dislikes = c.dislikes || [];
   const liked = uid && likes.includes(uid);
   const disliked = uid && dislikes.includes(uid);
+  // Un admin peut cliquer sur l'avatar/pseudo de l'auteur pour ouvrir directement le panel
+  // de modération sur ce membre (sauf sur son propre commentaire, inutile).
+  const canModView = isAdmin() && c.uid && uid !== c.uid;
+  const modAvatarClass = canModView ? ' mod-clickable' : '';
+  const modAvatarAttrs = canModView ? ` onclick="event.stopPropagation();openModPanel('${c.uid}')" title="Voir la vue du modérateur"` : '';
+  const modAuthorClass = canModView ? ' mod-clickable' : '';
+  const modAuthorAttrs = canModView ? ` onclick="event.stopPropagation();openModPanel('${c.uid}')" title="Voir la vue du modérateur"` : '';
   return `<div class="comment-item${isReply ? ' is-reply' : ''}">
-      <div class="comment-avatar">${navAvatarHTML(c.avatarURL, c.username, isReply ? 28 : 34)}</div>
+      <div class="comment-avatar${modAvatarClass}"${modAvatarAttrs}>${navAvatarHTML(c.avatarURL, c.username, isReply ? 28 : 34)}</div>
       <div class="comment-body">
         <div class="comment-header">
-          <span class="comment-author">${authorName}</span>
+          <span class="comment-author${modAuthorClass}"${modAuthorAttrs}>${authorName}</span>
           <span class="comment-date">${formatCommentDate(c.createdAt)}</span>
         </div>
         ${quote}
@@ -7416,6 +7465,7 @@ function renderMemberItemHTML(u) {
   const isSelf = !!(currentUser && currentUser.uid === u.id);
   const sanctionButtons = (owner || isSelf) ? '' : `
     <div class="member-sanction-slot" onclick="event.stopPropagation()">
+      <button class="sanction-btn" title="Vue du modérateur (commentaires, jeux aimés, notes, avertissements)" onclick="openModPanel('${u.id}')"><i data-lucide="shield"></i></button>
       ${isCurrentlyBanned(u) ? `<button class="sanction-btn" title="Débannir" onclick="unbanMember('${u.id}')"><i data-lucide="check"></i></button>` : ''}
       <button class="sanction-btn" title="Exclure (déconnexion immédiate, sans sanction durable)" onclick="openKickConfirm('${u.id}')"><i data-lucide="log-out"></i></button>
       <button class="sanction-btn" title="Ban temporaire" onclick="openBanModal('${u.id}','timeout')"><i data-lucide="clock"></i></button>
@@ -10478,6 +10528,7 @@ function openTeamMemberModal(id) {
     skillsWrap.style.display = '';
     document.getElementById('tm-skills').innerHTML = skills.map(s => `<span class="tag-chip static">${escapeHTML(s)}</span>`).join('');
   } else skillsWrap.style.display = 'none';
+  updateTeamModalModBtn(g.id);
   document.getElementById('team-member-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   if (window.lucide) lucide.createIcons({ nodes: [document.getElementById('team-member-modal')] });
@@ -10488,6 +10539,190 @@ function closeTeamMemberModal(e) {
 function closeTeamMemberModalDirect() {
   document.getElementById('team-member-modal').classList.remove('open');
   document.body.style.overflow = '';
+}
+// Bouton "vue modérateur" affiché dans le modal de profil, uniquement pour un admin qui
+// regarde un AUTRE compte (jamais sur son propre profil, jamais utile de toute façon).
+function updateTeamModalModBtn(uid) {
+  const btn = document.getElementById('tm-mod-btn');
+  if (!btn) return;
+  const show = isAdmin() && (!currentUser || currentUser.uid !== uid);
+  btn.style.display = show ? 'flex' : 'none';
+  btn.onclick = show ? () => openModPanel(uid) : null;
+}
+
+// ===== PANEL DE MODÉRATION (vue "Discord-like" d'un membre, réservée aux admins) =====
+// Reprend le principe du "Vue du modérateur" de Discord : un petit bouton apparaît sur la
+// pp d'un membre (page Équipe/Gamers, commentaires...) quand on est admin, et ouvre un
+// panel avec les sanctions (ban/timeout/exclusion) + tout ce que ce membre a posté sur le
+// site (commentaires, jeux aimés, notes données, avertissements reçus).
+let _mpTargetUid = null;
+let _mpData = null; // { comments, likedGames, ratedGames, warnings }
+function openModPanel(uid, ev) {
+  if (ev) ev.stopPropagation();
+  if (!isAdmin()) return;
+  if (currentUser && currentUser.uid === uid) { showToast('ℹ️ Tu ne peux pas ouvrir le panel de modération sur ton propre compte.'); return; }
+  _mpTargetUid = uid;
+  _mpData = null;
+  document.getElementById('mod-panel-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  switchModPanelTab('comments', true);
+  renderModPanelHeader();
+  loadModPanelData(uid);
+  if (window.lucide) lucide.createIcons({ nodes: [document.getElementById('mod-panel-modal')] });
+}
+function closeModPanel(e) {
+  if (e.target === document.getElementById('mod-panel-modal')) closeModPanelDirect();
+}
+function closeModPanelDirect() {
+  document.getElementById('mod-panel-modal').classList.remove('open');
+  document.body.style.overflow = '';
+  _mpTargetUid = null;
+  _mpData = null;
+}
+async function renderModPanelHeader() {
+  const uid = _mpTargetUid;
+  if (!uid) return;
+  try { await ensureMembersCacheLoaded(); } catch (e) { console.warn('Membres indisponibles:', e); }
+  const u = (allMembersCache || []).find(x => x.id === uid) || (teamStaffCache || []).find(x => x.id === uid);
+  if (!u) { showToast('❌ Membre introuvable.'); closeModPanelDirect(); return; }
+  const role = getEffectiveRole(u.id, u.role);
+  const rs = roleBadgeStyle(role);
+  const letter = (u.username || '?').trim().charAt(0).toUpperCase();
+  document.getElementById('mp-avatar-wrap').innerHTML = u.avatarURL
+    ? `<img class="account-avatar-lg" style="width:64px;height:64px;border-width:3px;margin:0" src="${escapeHTML(u.avatarURL)}" alt="">`
+    : `<div class="account-avatar-lg-fallback" style="width:64px;height:64px;border-width:3px;margin:0;font-size:24px;background:${rs.color}">${escapeHTML(letter)}</div>`;
+  document.getElementById('mp-name').innerHTML = `<span class="verified-name">${escapeHTML(u.displayName || u.username || 'Membre')}${hasVerifiedBadge(role) ? verifiedBadgeHTML() : ''}</span>`;
+  document.getElementById('mp-username').textContent = '@' + (u.username || '—') + ' · ID: ' + u.id;
+  const roleBadge = document.getElementById('mp-role-badge');
+  roleBadge.textContent = role;
+  roleBadge.style.background = rs.bg;
+  roleBadge.style.color = rs.color;
+  const banBadge = document.getElementById('mp-ban-badge');
+  const banStatus = u.banStatus || 'none';
+  const banMs = banUntilMs(u);
+  if (banStatus === 'banned') {
+    banBadge.style.display = '';
+    banBadge.style.background = '#ff404022'; banBadge.style.color = '#ff4040';
+    banBadge.title = u.banReason || '';
+    banBadge.textContent = '🔨 Banni définitivement';
+  } else if (banStatus === 'timeout' && banMs !== null && banMs > Date.now()) {
+    banBadge.style.display = '';
+    banBadge.style.background = '#ffb02022'; banBadge.style.color = '#ffb020';
+    banBadge.title = u.banReason || '';
+    banBadge.textContent = "⏳ Ban jusqu'au " + new Date(banMs).toLocaleString('fr-FR');
+  } else {
+    banBadge.style.display = 'none';
+  }
+  document.getElementById('mp-stat-warnings').textContent = u.warningCount || 0;
+  // Sanctions : mêmes règles que dans le panel admin (impossible sur le Owner ou soi-même).
+  const owner = isOwnerUid(u.id);
+  const isSelf = !!(currentUser && currentUser.uid === u.id);
+  const sanctionsWrap = document.getElementById('mp-sanctions');
+  if (owner || isSelf) {
+    sanctionsWrap.innerHTML = owner ? `<span style="font-size:12px;color:var(--gray)">🔒 Ce compte est le Owner — aucune sanction possible.</span>` : '';
+  } else {
+    sanctionsWrap.innerHTML = `
+      ${isCurrentlyBanned(u) ? `<button class="mod-panel-sanction-btn" onclick="unbanMember('${u.id}')"><i data-lucide="check"></i> Débannir</button>` : ''}
+      <button class="mod-panel-sanction-btn" onclick="openKickConfirm('${u.id}')"><i data-lucide="log-out"></i> Exclure</button>
+      <button class="mod-panel-sanction-btn" onclick="openBanModal('${u.id}','timeout')"><i data-lucide="clock"></i> Ban temporaire</button>
+      <button class="mod-panel-sanction-btn danger" onclick="openBanModal('${u.id}','banned')"><i data-lucide="ban"></i> Bannir définitivement</button>
+      ${(u.warningCount || 0) > 0 ? `<button class="mod-panel-sanction-btn" onclick="resetMemberWarnings('${u.id}')"><i data-lucide="rotate-ccw"></i> Réinitialiser avertissements</button>` : ''}
+    `;
+  }
+  if (window.lucide) lucide.createIcons({ nodes: [sanctionsWrap] });
+}
+// Va chercher, pour le membre visé, tous ses commentaires (jeu par jeu — read:true, pas
+// besoin de collection group), les jeux qu'il a aimés/notés (déjà en cache mémoire via
+// gameLikesCache/gameRatingsCache, chargés pour tout le monde dès l'ouverture du site), et
+// ses avertissements de modération (users/{uid}/notifications, lisible par un admin).
+async function loadModPanelData(uid) {
+  ['comments', 'likes', 'ratings', 'warnings'].forEach(t => {
+    document.getElementById('mp-tab-' + t).innerHTML = `<div class="mod-panel-loading">Chargement...</div>`;
+  });
+  const likedGames = [];
+  const ratedGames = [];
+  games.forEach(g => {
+    const gid = gameCommentsId(g);
+    if ((gameLikesCache[gid] || []).includes(uid)) likedGames.push(g);
+    const r = (gameRatingsCache[gid] || []).find(x => x.uid === uid);
+    if (r) ratedGames.push({ game: g, value: r.value });
+  });
+  let comments = [];
+  try {
+    const perGame = await Promise.all(games.map(async g => {
+      if (!window.fbGetGameComments) return [];
+      const gid = gameCommentsId(g);
+      const all = await window.fbGetGameComments(gid);
+      return all.filter(c => c.uid === uid).map(c => ({ ...c, gameId: gid, gameName: g.name }));
+    }));
+    comments = perGame.flat().sort((a, b) => commentTsMillis(b.createdAt) - commentTsMillis(a.createdAt));
+  } catch (e) { console.error('Erreur chargement commentaires (modération):', e); }
+  let warnings = [];
+  try {
+    if (window.fbGetPersonalNotifications) {
+      const all = await window.fbGetPersonalNotifications(uid);
+      warnings = all.filter(n => WARNING_TYPES.includes(n.type)).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    }
+  } catch (e) { console.error('Erreur chargement avertissements (modération):', e); }
+  if (_mpTargetUid !== uid) return; // le panel a changé de cible entre-temps
+  _mpData = { comments, likedGames, ratedGames, warnings };
+  document.getElementById('mp-stat-comments').textContent = comments.length;
+  document.getElementById('mp-stat-likes').textContent = likedGames.length;
+  document.getElementById('mp-stat-ratings').textContent = ratedGames.length;
+  renderModPanelTabContent();
+}
+function switchModPanelTab(tab, silent) {
+  document.querySelectorAll('.mod-panel-tab').forEach(el => el.classList.toggle('active', el.dataset.mpTab === tab));
+  document.querySelectorAll('.mod-panel-tab-content').forEach(el => el.classList.toggle('active', el.id === 'mp-tab-' + tab));
+  if (!silent) renderModPanelTabContent();
+}
+function renderModPanelTabContent() {
+  if (!_mpData) return;
+  const uid = _mpTargetUid;
+  const commentsEl = document.getElementById('mp-tab-comments');
+  commentsEl.innerHTML = _mpData.comments.length
+    ? _mpData.comments.map(c => `
+      <div class="mod-panel-comment-item">
+        <div class="mod-panel-comment-game">${escapeHTML(c.gameName || '')}</div>
+        <div class="mod-panel-comment-text">${escapeHTML(c.text || '')}</div>
+        <div class="mod-panel-comment-date">${formatCommentDate(c.createdAt)}</div>
+        <div class="mod-panel-comment-actions"><button class="mod-panel-sanction-btn danger" onclick="modPanelDeleteComment('${c.gameId}','${c.id}')"><i data-lucide="trash-2"></i> Supprimer</button></div>
+      </div>`).join('')
+    : `<div class="mod-panel-empty">Aucun commentaire posté.</div>`;
+  const likesEl = document.getElementById('mp-tab-likes');
+  likesEl.innerHTML = _mpData.likedGames.length
+    ? _mpData.likedGames.map(g => `<div class="mod-panel-game-chip">${g.img ? `<img src="${escapeHTML(g.img)}" alt="">` : ''}<span>${escapeHTML(g.name || '')}</span></div>`).join('')
+    : `<div class="mod-panel-empty">Aucun jeu aimé.</div>`;
+  const ratingsEl = document.getElementById('mp-tab-ratings');
+  ratingsEl.innerHTML = _mpData.ratedGames.length
+    ? _mpData.ratedGames.map(r => `<div class="mod-panel-game-chip">${r.game.img ? `<img src="${escapeHTML(r.game.img)}" alt="">` : ''}<span style="flex:1">${escapeHTML(r.game.name || '')}</span><span style="color:#ffb020">${starsHTML(r.value, 13)}</span></div>`).join('')
+    : `<div class="mod-panel-empty">Aucune note donnée.</div>`;
+  const warningsEl = document.getElementById('mp-tab-warnings');
+  warningsEl.innerHTML = _mpData.warnings.length
+    ? _mpData.warnings.map(n => `
+      <div class="mod-panel-warning-item">
+        <div class="mod-panel-warning-title">${escapeHTML(n.title || 'Avertissement')}</div>
+        ${n.detail ? `<div class="mod-panel-warning-detail">${escapeHTML(n.detail)}</div>` : ''}
+        <div class="mod-panel-warning-date">${formatNotifTime(n.date)}</div>
+        <div class="mod-panel-comment-actions"><button class="mod-panel-sanction-btn danger" onclick="confirmDeleteWarningNotif('${uid}','${n.id}')"><i data-lucide="trash-2"></i> Supprimer</button></div>
+      </div>`).join('')
+    : `<div class="mod-panel-empty">Aucun avertissement reçu. 🎉</div>`;
+  if (window.lucide) lucide.createIcons({ nodes: [document.getElementById('mod-panel-modal')] });
+}
+async function modPanelDeleteComment(gameId, commentId) {
+  if (!isAdmin() || !window.fbDeleteGameComment) return;
+  showConfirm('Supprimer ce commentaire ?', 'Cette action est irréversible.', async () => {
+    try {
+      await window.fbDeleteGameComment(gameId, commentId);
+      if (_mpData) _mpData.comments = _mpData.comments.filter(c => c.id !== commentId);
+      document.getElementById('mp-stat-comments').textContent = _mpData ? _mpData.comments.length : 0;
+      renderModPanelTabContent();
+      showToast('✅ Commentaire supprimé');
+    } catch (e) {
+      console.error(e);
+      showToast('❌ Erreur lors de la suppression');
+    }
+  });
 }
 
 // ===== PRODUCT MODAL =====
@@ -10915,6 +11150,9 @@ select.authbox-input option {
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
             <div class="account-username" id="tm-name" style="font-size:22px"></div>
             <span class="account-role-badge" id="tm-role-badge" style="margin-top:0"></span>
+            <button class="mod-panel-trigger" id="tm-mod-btn" style="display:none" title="Vue du modérateur">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+            </button>
           </div>
           <div class="account-email" id="tm-username" style="margin-top:3px;font-size:14px"></div>
           <div class="profile-meta-line" id="tm-meta" style="display:none;margin-top:4px;font-size:13.5px"></div>
@@ -10933,7 +11171,44 @@ select.authbox-input option {
   </div>
 </div>
 
-
+<!-- ===== PANEL DE MODÉRATION (vue "Discord-like" admin sur un membre) ===== -->
+<div class="modal-overlay" id="mod-panel-modal" onclick="closeModPanel(event)">
+  <div class="modal-box" style="max-width:640px;padding:0;overflow:hidden">
+    <button class="modal-close" onclick="closeModPanelDirect()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div style="padding:26px;max-height:82vh;overflow-y:auto">
+      <div style="display:flex;align-items:center;gap:14px">
+        <div id="mp-avatar-wrap"></div>
+        <div style="min-width:0">
+          <div class="account-username" id="mp-name" style="font-size:19px"></div>
+          <div class="account-email" id="mp-username" style="font-size:13px;margin-top:2px"></div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap">
+            <span class="account-role-badge" id="mp-role-badge"></span>
+            <span class="account-role-badge" id="mp-ban-badge" style="display:none"></span>
+          </div>
+        </div>
+      </div>
+      <div class="mod-panel-stats">
+        <div class="mod-panel-stat"><div class="mod-panel-stat-value" id="mp-stat-comments">—</div><div class="mod-panel-stat-label">Commentaires</div></div>
+        <div class="mod-panel-stat"><div class="mod-panel-stat-value" id="mp-stat-likes">—</div><div class="mod-panel-stat-label">Jeux aimés</div></div>
+        <div class="mod-panel-stat"><div class="mod-panel-stat-value" id="mp-stat-ratings">—</div><div class="mod-panel-stat-label">Notes données</div></div>
+        <div class="mod-panel-stat"><div class="mod-panel-stat-value" id="mp-stat-warnings">—</div><div class="mod-panel-stat-label">Avertissements</div></div>
+      </div>
+      <div class="mod-panel-sanctions" id="mp-sanctions"></div>
+      <div class="mod-panel-tabs">
+        <div class="mod-panel-tab active" data-mp-tab="comments" onclick="switchModPanelTab('comments')"><i data-lucide="message-square"></i> Commentaires</div>
+        <div class="mod-panel-tab" data-mp-tab="likes" onclick="switchModPanelTab('likes')"><i data-lucide="heart"></i> Jeux aimés</div>
+        <div class="mod-panel-tab" data-mp-tab="ratings" onclick="switchModPanelTab('ratings')"><i data-lucide="star"></i> Notes</div>
+        <div class="mod-panel-tab" data-mp-tab="warnings" onclick="switchModPanelTab('warnings')"><i data-lucide="triangle-alert"></i> Avertissements</div>
+      </div>
+      <div class="mod-panel-tab-content active" id="mp-tab-comments"></div>
+      <div class="mod-panel-tab-content" id="mp-tab-likes"></div>
+      <div class="mod-panel-tab-content" id="mp-tab-ratings"></div>
+      <div class="mod-panel-tab-content" id="mp-tab-warnings"></div>
+    </div>
+  </div>
+</div>
 
 <!-- ===== PRODUCT INSPECT MODAL ===== -->
 <div class="modal-overlay" id="product-modal" onclick="closeProductModal(event)">
