@@ -1522,9 +1522,9 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 .sanction-btn:active { transform: scale(0.92); }
 .sanction-btn-danger:hover { background: rgba(255,64,64,0.18); border-color: rgba(255,64,64,0.4); color: #ff4040; }
 /* ===== Panel de modération (style "vue du modérateur" Discord) ===== */
-.mod-panel-trigger { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,176,32,0.12); border: 1px solid rgba(255,176,32,0.35); color: #ffb020; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s; flex-shrink: 0; }
+.mod-panel-trigger { width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22); color: var(--white); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.15s, transform 0.1s, border-color 0.15s; flex-shrink: 0; }
 .mod-panel-trigger svg { width: 16px; height: 16px; }
-.mod-panel-trigger:hover { background: rgba(255,176,32,0.22); transform: translateY(-1px); }
+.mod-panel-trigger:hover { background: rgba(255,255,255,0.22); border-color: rgba(255,255,255,0.4); transform: translateY(-1px); }
 .comment-avatar.mod-clickable, .comment-author.mod-clickable { cursor: pointer; }
 .comment-avatar.mod-clickable:hover { outline: 2px solid rgba(255,176,32,0.55); outline-offset: 2px; border-radius: 50%; }
 .comment-author.mod-clickable:hover { color: #ffb020; text-decoration: underline; }
@@ -11207,7 +11207,7 @@ select.authbox-input option {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <button class="mod-panel-trigger" id="tm-mod-btn" style="display:none" title="Vue du modérateur">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path fill="none" d="M0 0h24v24H0z"></path><path fill-rule="nonzero" d="M7.05 13.406l3.534 3.536-1.413 1.414 1.415 1.415-1.414 1.414-2.475-2.475-2.829 2.829-1.414-1.414 2.829-2.83-2.475-2.474 1.414-1.414 1.414 1.413 1.413-1.414zM3 3l3.546.003 11.817 11.818 1.415-1.414 1.414 1.414-2.474 2.475 2.828 2.829-1.414 1.414-2.829-2.829-2.475 2.475-1.414-1.414 1.414-1.415L3.003 6.531 3 3zm14.457 0L21 3.003l.002 3.523-4.053 4.052-3.536-3.535L17.457 3z"></path></svg>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M0 0h24v24H0z" fill="none"/><path d="m7.048 13.406l3.535 3.536l-1.413 1.414l1.415 1.415l-1.414 1.414l-2.475-2.475l-2.829 2.829l-1.414-1.414l2.829-2.83l-2.475-2.474l1.414-1.414l1.414 1.413zM3 3l3.546.003l11.817 11.818l1.415-1.414l1.415 1.414l-2.475 2.475l2.828 2.829l-1.414 1.414l-2.829-2.829l-2.474 2.475l-1.415-1.414l1.414-1.415L3.002 6.531zm14.457 0L21 3.003l.002 3.523l-4.053 4.052l-3.536-3.535z"/></svg>
     </button>
     <div id="tm-banner" class="account-banner" style="border-radius:0"></div>
     <div style="padding:0 26px 26px">
