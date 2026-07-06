@@ -1932,6 +1932,7 @@ onAuthStateChanged(auth, async (user) => {
       // une pendant que le membre est connecté ailleurs).
       if (_unsubPersonalNotifs) { _unsubPersonalNotifs(); _unsubPersonalNotifs = null; }
       personalNotifications = [];
+      let personalNotifsFirstSnapshot = true;
       try {
         if (window.fbGetPersonalNotifications) {
           personalNotifications = await window.fbGetPersonalNotifications(user.uid);
@@ -1940,6 +1941,17 @@ onAuthStateChanged(auth, async (user) => {
         }
       } catch (e) { console.error('Erreur chargement notifications personnelles:', e); }
       _unsubPersonalNotifs = onSnapshot(collection(db, 'users', user.uid, 'notifications'), (snap) => {
+        // On ne push-notifie jamais au tout premier instantané (ce serait juste l'historique
+        // déjà connu qui se recharge), seulement les avertissements qui arrivent APRÈS.
+        if (!personalNotifsFirstSnapshot) {
+          snap.docChanges().forEach(change => {
+            if (change.type === 'added') {
+              const n = change.doc.data();
+              sendPushNotification(n.title || '⚠️ Nouvel avertissement', n.detail || '');
+            }
+          });
+        }
+        personalNotifsFirstSnapshot = false;
         personalNotifications = snap.docs.map(d => d.data());
         mergePersonalNotifications();
         if (typeof window.renderNotifications === 'function') window.renderNotifications();
@@ -2175,9 +2187,24 @@ onSnapshot(doc(db, 'site', 'settings'), (snap) => {
   _gsMarkFirstSnapshotDone();
 }, (e) => { console.warn('❌ Erreur temps réel (settings):', e); _gsMarkFirstSnapshotDone(); });
 
+// Sert à ne push-notifier que les VRAIES nouvelles annonces (arrivées après le premier
+// instantané), jamais tout l'historique déjà connu au chargement de la page.
+let _publicNotifIdsSeen = null;
 onSnapshot(doc(db, 'site', 'notifications'), (snap) => {
   const n = snap.exists() ? snap.data() : null;
   if (n?.list && typeof window._gsSetNotifications === 'function') {
+    if (_publicNotifIdsSeen === null) {
+      _publicNotifIdsSeen = new Set(n.list.map(item => item.id));
+    } else {
+      n.list.forEach(item => {
+        if (!_publicNotifIdsSeen.has(item.id)) {
+          _publicNotifIdsSeen.add(item.id);
+          if (notifIsForCurrentUser(item) && notifAllowed(item)) {
+            sendPushNotification(item.title || 'Nouvelle annonce', item.detail || '');
+          }
+        }
+      });
+    }
     window._gsSetNotifications(n.list);
     if (typeof window.renderNotifications === 'function') window.renderNotifications();
   }
@@ -5890,6 +5917,20 @@ function formatNotifTime(value) {
   return d.toLocaleDateString('fr-FR') + ' · ' + d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 async function saveNotifications() { if (window.fbSaveNotifications) await window.fbSaveNotifications(notifications.slice(0, 60)); }
+// Déclenche une vraie notification navigateur (popup système), uniquement si l'utilisateur
+// a explicitement activé l'option ET donné la permission au navigateur. Fonctionne même
+// onglet en arrière-plan, mais jamais si le site est complètement fermé (ça, ça demanderait
+// un vrai service worker + push serveur, hors scope ici).
+function sendPushNotification(title, body) {
+  if (!currentUser || !currentUserProfile) return;
+  if (currentUserProfile.notifPrefs?.push !== true) return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const iconEl = document.querySelector('link[rel="icon"]');
+    const notif = new Notification(title, { body: body || '', icon: iconEl ? iconEl.href : undefined });
+    notif.onclick = () => { window.focus(); notif.close(); };
+  } catch (e) { console.warn('Erreur notification push:', e); }
+}
 function notifAllowed(n) {
   if (!currentUser || !currentUserProfile) return true;
   const prefs = currentUserProfile.notifPrefs || {};
@@ -9416,6 +9457,21 @@ function renderSettingsPage() {
               <button type="button" class="toggle ${notifPrefs.games !== false ? 'on' : ''}" onclick="toggleSettingsNotifPref('games',this)"></button>
             </div>
           </div>
+          <div class="glass-card settings-section">
+            <div class="settings-section-head">
+              <i data-lucide="monitor-smartphone"></i>
+              <div>
+                <div class="settings-section-title">Notifications push</div>
+                <div class="settings-section-sub">Reçois une alerte de ton navigateur (avertissement, nouvelle annonce) même si l'onglet est en arrière-plan.</div>
+              </div>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-label">Activer les notifications push</span>
+              <button type="button" class="toggle ${notifPrefs.push === true ? 'on' : ''}" id="settings-push-toggle" onclick="toggleSettingsPush(this)" ${typeof Notification === 'undefined' ? 'disabled style="opacity:0.4;cursor:not-allowed"' : ''}></button>
+            </div>
+            <div id="settings-push-note" style="font-size:11.5px;color:var(--gray);margin-top:10px;display:${(typeof Notification !== 'undefined' && Notification.permission === 'denied') ? 'block' : 'none'}">🚫 Bloquées dans ton navigateur — débloque-les manuellement dans ses réglages pour les réactiver ici.</div>
+            ${typeof Notification === 'undefined' ? '<div style="font-size:11.5px;color:var(--gray);margin-top:10px">Ton navigateur ne supporte pas les notifications push.</div>' : ''}
+          </div>
         </div>
 
         <!-- ===== TAB: CONFIDENTIALITÉ ===== -->
@@ -9783,6 +9839,40 @@ async function saveSettingsAll() {
     showToast('✅ Tout a été enregistré');
   } catch (e) {
     console.error(e);
+    showToast('❌ Erreur lors de la sauvegarde');
+  }
+}
+async function toggleSettingsPush(btn) {
+  if (!currentUser || !window.fbSaveUserProfile) return;
+  if (!('Notification' in window)) {
+    showToast('❌ Ton navigateur ne supporte pas les notifications push.');
+    return;
+  }
+  const current = (currentUserProfile && currentUserProfile.notifPrefs) || {};
+  const wantsOn = current.push !== true;
+  const note = document.getElementById('settings-push-note');
+  if (wantsOn) {
+    // On ne redemande la permission au navigateur que si elle n'a jamais été tranchée —
+    // si elle a déjà été refusée, Chrome/Edge/Firefox ne réaffichent plus jamais le popup
+    // et il faut la débloquer manuellement depuis les réglages du navigateur.
+    let perm = Notification.permission;
+    if (perm === 'default') perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+      if (note) note.style.display = 'block';
+      showToast(perm === 'denied' ? '🚫 Notifications bloquées par ton navigateur.' : '❌ Permission refusée.');
+      return; // le toggle reste visuellement off, rien à sauvegarder
+    }
+    if (note) note.style.display = 'none';
+  }
+  const notifPrefs = { ...current, push: wantsOn };
+  btn.classList.toggle('on', wantsOn);
+  try {
+    await window.fbSaveUserProfile(currentUser.uid, { notifPrefs });
+    currentUserProfile = { ...(currentUserProfile || {}), notifPrefs };
+    showToast(wantsOn ? '🔔 Notifications push activées' : '🔕 Notifications push désactivées');
+  } catch (e) {
+    console.error(e);
+    btn.classList.toggle('on', !wantsOn);
     showToast('❌ Erreur lors de la sauvegarde');
   }
 }
