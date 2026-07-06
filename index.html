@@ -3699,6 +3699,10 @@ window.fbClearLoginHistory = async function(uid) {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="4.9" y1="4.9" x2="19.1" y2="19.1"/></svg>
         Bannissement <span id="bans-badge" style="background:#ff4040;color:#fff;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
       </div>
+      <div class="sidebar-item" id="sidebar-warnings-btn" onclick="showSection('warnings',this);renderWarningsSection()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Avertissements <span id="warnings-badge" style="background:#ffb020;color:#1a1a1a;font-size:9px;font-weight:800;padding:1px 6px;border-radius:10px;margin-left:4px;display:none"></span>
+      </div>
 
 
       <div class="sidebar-item" onclick="showSection('footer-admin',this)">
@@ -4112,6 +4116,19 @@ window.fbClearLoginHistory = async function(uid) {
             <span style="font-size:12px;color:var(--gray);font-weight:700" id="bans-total-badge">— comptes</span>
           </div>
           <div id="bans-list" style="color:var(--gray);font-size:13px">Chargement...</div>
+        </div>
+      </div>
+
+      <!-- AVERTISSEMENTS -->
+      <div class="admin-section" id="section-warnings">
+        <div class="admin-section-title">Avertissements</div>
+        <div class="admin-section-sub">Tous les membres ayant reçu au moins un avertissement, classés du plus au moins sanctionné. Clique sur le compteur d'un membre pour le réinitialiser.</div>
+        <div class="admin-card">
+          <div class="admin-card-header">
+            <span class="admin-card-title">Membres avertis</span>
+            <span style="font-size:12px;color:var(--gray);font-weight:700" id="warnings-total-badge">— membres</span>
+          </div>
+          <div id="warnings-list" style="color:var(--gray);font-size:13px">Chargement...</div>
         </div>
       </div>
 
@@ -7701,6 +7718,7 @@ function resetMemberWarnings(uid) {
         showToast('✅ Avertissements réinitialisés');
         renderMembersSection();
         renderCollabSection();
+        renderWarningsSection();
       } catch (e) {
         console.error(e);
         showToast('❌ Erreur lors de la réinitialisation');
@@ -7715,6 +7733,50 @@ function updateAdminMembersVisibility() {
   if (collabBtn) collabBtn.style.display = isAdmin() ? '' : 'none';
   const bansBtn = document.getElementById('sidebar-bans-btn');
   if (bansBtn) bansBtn.style.display = isAdmin() ? '' : 'none';
+  const warningsBtn = document.getElementById('sidebar-warnings-btn');
+  if (warningsBtn) warningsBtn.style.display = isAdmin() ? '' : 'none';
+}
+
+// Liste tous les membres ayant reçu au moins un avertissement, triés du plus au moins
+// sanctionné (warningCount décroissant). Celui qui en a le plus est mis en avant avec un
+// style distinct (bordure rouge + badge 🔥), pour repérer immédiatement qui surveiller.
+async function renderWarningsSection() {
+  const list = document.getElementById('warnings-list');
+  const totalBadge = document.getElementById('warnings-total-badge');
+  if (!list) return;
+  if (!allMembersCache) {
+    list.innerHTML = 'Chargement...';
+    try { await ensureMembersCacheLoaded(); }
+    catch (e) { console.error(e); list.innerHTML = '<div style="text-align:center;padding:30px;color:var(--gray)">Erreur de chargement des membres.</div>'; return; }
+  }
+  const warned = allMembersCache
+    .filter(u => (u.warningCount || 0) > 0)
+    .sort((a, b) => (b.warningCount || 0) - (a.warningCount || 0));
+  if (totalBadge) totalBadge.textContent = `— ${warned.length} membre${warned.length > 1 ? 's' : ''}`;
+  const warningsBadge = document.getElementById('warnings-badge');
+  if (warningsBadge) { warningsBadge.style.display = warned.length ? '' : 'none'; warningsBadge.textContent = warned.length || ''; }
+  if (!warned.length) {
+    list.innerHTML = `<div style="text-align:center;padding:30px;color:var(--gray)">Aucun membre averti actuellement. 🎉</div>`;
+    return;
+  }
+  const maxCount = warned[0].warningCount || 0;
+  list.innerHTML = warned.map((u, i) => renderWarningItemHTML(u, i === 0 && maxCount > 0)).join('');
+  if (window.lucide) lucide.createIcons({ nodes: [list] });
+}
+function renderWarningItemHTML(u, isTop) {
+  const letter = (u.username || '?').trim().charAt(0).toUpperCase();
+  const count = u.warningCount || 0;
+  const warnColor = count >= 2 ? '#ff4040' : '#ffb020';
+  return `<div class="member-item" style="cursor:pointer${isTop ? `;border:1px solid ${warnColor}55;background:${warnColor}0d` : ''}" onclick="openTeamMemberModal('${u.id}')">
+    ${u.avatarURL ? `<img class="member-avatar" src="${escapeHTML(u.avatarURL)}" alt="">` : `<div class="member-avatar" style="background:${warnColor}">${escapeHTML(letter)}</div>`}
+    <div class="member-info">
+      <div class="member-name">${escapeHTML(u.username || '(sans pseudo)')}${isTop ? ` <span style="font-size:11px;font-weight:800;color:${warnColor}">🔥 Le plus averti</span>` : ''}</div>
+      <div class="member-meta">ID: ${escapeHTML(u.id)}</div>
+    </div>
+    <div onclick="event.stopPropagation()">
+      <span class="account-role-badge warning-badge-icon" style="background:${warnColor}22;color:${warnColor};cursor:pointer" title="${count} avertissement${count > 1 ? 's' : ''} — cliquer pour réinitialiser" onclick="resetMemberWarnings('${u.id}')">${WARNING_TRIANGLE_ICON}${count}</span>
+    </div>
+  </div>`;
 }
 
 function showSection(id, el) {
