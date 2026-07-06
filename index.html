@@ -2208,16 +2208,18 @@ window.fbDeleteReport = async function(id) {
   await deleteDoc(doc(db, 'reports', id));
 };
 
-// ===== LIKES DE JEUX (Firestore: games/{gameId}/likes/{email}) =====
-// Vrai système : un document par utilisateur (id = son email), donc impossible de liker
-// deux fois, impossible de liker pour quelqu'un d'autre, et plus aucune dépendance au
-// document "site/games" (qui n'est modifiable que par les admins). Chaque like/unlike
-// est écrit directement par l'utilisateur concerné, en temps réel, sans écrasement possible.
-window.fbToggleGameLike = async function(gameId, email, username) {
-  const ref = doc(db, 'games', gameId, 'likes', email);
+// ===== LIKES DE JEUX (Firestore: games/{gameId}/likes/{uid}) =====
+// Vrai système : un document par utilisateur (id = son UID Firebase, jamais son email),
+// donc impossible de liker deux fois, impossible de liker pour quelqu'un d'autre, et plus
+// aucune dépendance au document "site/games" (qui n'est modifiable que par les admins).
+// Chaque like/unlike est écrit directement par l'utilisateur concerné, en temps réel,
+// sans écrasement possible. Ce document est public (compteur affiché à tout le monde),
+// donc il ne doit jamais contenir d'email — seulement l'UID technique, sans valeur en soi.
+window.fbToggleGameLike = async function(gameId, uid, username) {
+  const ref = doc(db, 'games', gameId, 'likes', uid);
   const snap = await getDoc(ref);
   if (snap.exists()) { await deleteDoc(ref); return false; }
-  await setDoc(ref, { uid: email, username: username || '', createdAt: serverTimestamp() });
+  await setDoc(ref, { uid: uid, username: username || '', createdAt: serverTimestamp() });
   return true;
 };
 window.fbListenGameLikes = function(gameId, callback) {
@@ -2226,14 +2228,15 @@ window.fbListenGameLikes = function(gameId, callback) {
   }, (err) => { console.error('Erreur écoute likes:', err); callback([]); });
 };
 
-// ===== FAVORIS DE JEUX (Firestore: games/{gameId}/favorites/{email}) =====
-// Même principe que les likes : un document par utilisateur, privé (lisible uniquement
-// par son propriétaire), pour synchroniser la liste de favoris entre tous ses appareils.
-window.fbToggleGameFavorite = async function(gameId, email) {
-  const ref = doc(db, 'games', gameId, 'favorites', email);
+// ===== FAVORIS DE JEUX (Firestore: games/{gameId}/favorites/{uid}) =====
+// Même principe que les likes : un document par utilisateur (id = son UID Firebase),
+// privé (lisible uniquement par son propriétaire), pour synchroniser la liste de favoris
+// entre tous ses appareils. Jamais d'email ici non plus, même si ce document est privé.
+window.fbToggleGameFavorite = async function(gameId, uid) {
+  const ref = doc(db, 'games', gameId, 'favorites', uid);
   const snap = await getDoc(ref);
   if (snap.exists()) { await deleteDoc(ref); return false; }
-  await setDoc(ref, { uid: email, createdAt: serverTimestamp() });
+  await setDoc(ref, { uid: uid, createdAt: serverTimestamp() });
   return true;
 };
 
@@ -4709,7 +4712,7 @@ function subscribeAllGameLikes() {
   });
 }
 function gameLikeCount(g) { return (gameLikesCache[gameCommentsId(g)] || []).length; }
-function userLikedGame(g) { return !!(currentUser && (gameLikesCache[gameCommentsId(g)] || []).includes(currentUser.email)); }
+function userLikedGame(g) { return !!(currentUser && (gameLikesCache[gameCommentsId(g)] || []).includes(currentUser.uid)); }
 window._gsSetHeroSlides = (data) => {
   if (!data || !data.length) return;
   heroSlides.length = 0;
@@ -5101,8 +5104,8 @@ function buildCommentThreads(comments) {
 }
 // Génère le HTML d'une bulle de commentaire (racine ou réponse imbriquée).
 function commentItemHTML(c, isReply) {
-  const uid = currentUser ? currentUser.email : null;
-  const canDelete = currentUser && (currentUser.email === c.uid || isAdmin());
+  const uid = currentUser ? currentUser.uid : null;
+  const canDelete = currentUser && (currentUser.uid === c.uid || isAdmin());
   const authorName = escapeHTML(c.username || 'Utilisateur');
   const quote = (isReply && c.replyTo) ? `<div class="comment-quote"><div class="comment-quote-label"><i data-lucide="corner-up-left" style="width:11px;height:11px"></i> Réponse à <strong>${escapeHTML(c.replyTo.username || 'Utilisateur')}</strong></div><div class="comment-quote-text">${escapeHTML((c.replyTo.text || '').slice(0, 200))}</div></div>` : '';
   const likes = c.likes || [];
@@ -5193,7 +5196,7 @@ async function toggleCommentVote(commentId, type) {
   if (!requireAccount()) return;
   if (!currentCommentsGameId || !window.fbToggleCommentReaction) return;
   try {
-    await window.fbToggleCommentReaction(currentCommentsGameId, commentId, currentUser.email, type);
+    await window.fbToggleCommentReaction(currentCommentsGameId, commentId, currentUser.uid, type);
   } catch (e) {
     console.error('Erreur vote commentaire:', e);
     showToast('❌ Erreur lors du vote');
@@ -5217,7 +5220,7 @@ function reportComment(commentId) {
         commentAuthor: c.username || 'Utilisateur',
         commentAuthorAvatar: c.avatarURL || '',
         commentAuthorUid: c.uid || '',
-        reportedByUid: currentUser.email,
+        reportedByUid: currentUser.uid,
         reportedByUsername: currentUserProfile?.username || currentUser.displayName || 'Utilisateur',
         reason: (reason || '').slice(0, 300),
         status: 'pending'
@@ -5279,7 +5282,7 @@ async function postGameComment() {
     const flagged = !!bannedMatch;
     const authorUsername = currentUserProfile?.username || currentUser.displayName || 'Utilisateur';
     const payload = {
-      uid: currentUser.email,
+      uid: currentUser.uid,
       username: authorUsername,
       avatarURL: currentUserProfile?.avatarURL || currentUser.photoURL || '',
       text: flagged ? censorText(originalText) : originalText
@@ -5309,8 +5312,8 @@ async function postGameComment() {
             commentText: originalText,
             commentAuthor: authorUsername,
             commentAuthorAvatar: currentUserProfile?.avatarURL || currentUser.photoURL || '',
-            commentAuthorUid: currentUser.email,
-            reportedByUid: currentUser.email,
+            commentAuthorUid: currentUser.uid,
+            reportedByUid: currentUser.uid,
             reportedByUsername: `Signalement automatique (${categoryLabel})`,
             reason: `Mot banni détecté automatiquement — catégorie "${categoryLabel}" — commentaire supprimé et avertissement envoyé à l'auteur.`,
             status: 'pending'
@@ -5383,7 +5386,7 @@ async function toggleVote(index, type, ev) {
   const gid = gameCommentsId(g);
   if (_likeToggleInFlight[gid]) return; // évite le double-clic pendant l'écriture Firestore
   _likeToggleInFlight[gid] = true;
-  const uid = currentUser.email;
+  const uid = currentUser.uid;
   // Mise à jour optimiste de l'UI en attendant la confirmation Firestore (le listener
   // temps réel remettra de toute façon la valeur exacte juste après).
   const cached = gameLikesCache[gid] || (gameLikesCache[gid] = []);
