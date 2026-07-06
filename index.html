@@ -1480,7 +1480,7 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
   border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
 }
 .member-info { flex: 1; min-width: 0; }
-.member-name { font-weight: 700; font-size: 15px; color: var(--white); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.member-name { display: inline-flex; align-items: center; flex-wrap: wrap; gap: 8px; max-width: 100%; font-weight: 700; font-size: 15px; color: var(--white); margin-bottom: 3px; }
 .member-email { font-size: 12px; color: rgba(255,255,255,0.55); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
 .member-meta { font-size: 11.5px; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .member-role-slot { flex-shrink: 0; width: 152px; display: flex; align-items: center; justify-content: flex-end; }
@@ -1517,7 +1517,16 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
 }
 .announcement-item:last-child { margin-bottom: 0; }
 .announcement-item-body { min-width: 0; flex: 1; }
-.announcement-item-title { font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 4px; word-break: break-word; overflow-wrap: anywhere; }
+.announcement-item-title { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-weight: 700; font-size: 14px; color: var(--white); margin-bottom: 4px; word-break: break-word; overflow-wrap: anywhere; }
+.announcement-item-title-text { display: inline-flex; align-items: center; gap: 6px; }
+.announcement-tag {
+  display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 700; white-space: nowrap;
+  background: var(--glass-highlight), var(--tag-bg, rgba(255,255,255,0.08));
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(10px) saturate(160%); -webkit-backdrop-filter: blur(10px) saturate(160%);
+  box-shadow: var(--glass-shadow);
+}
 .announcement-item-detail { font-size: 12.5px; color: rgba(255,255,255,0.6); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .announcement-item-detail.clampable { display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
 .announcement-item-detail.clampable.is-expanded { display: block; -webkit-line-clamp: unset; overflow: visible; }
@@ -1531,7 +1540,7 @@ textarea::-webkit-scrollbar { display: none; width: 0; height: 0; }
   font-weight: 800; color: #fff; font-size: 15px;
   border: 2px solid rgba(255,255,255,0.2); box-shadow: 0 2px 10px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.25);
 }
-.warning-badge-icon { display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; }
+.warning-badge-icon { display: inline-flex; align-items: center; gap: 3px; vertical-align: middle; margin-top: 0 !important; }
 .warning-badge-icon svg { width: 11px; height: 11px; flex-shrink: 0; }
 .game-list-item {
   position: relative; overflow: hidden;
@@ -6068,12 +6077,12 @@ async function renderAnnouncementsHistory() {
   const hasWarnings = anns.some(n => WARNING_TYPES.includes(n.type));
   if (hasWarnings) { try { await ensureMembersCacheLoaded(); } catch (e) { console.warn('Membres indisponibles:', e); } }
   list.innerHTML = anns.map(n => {
-    const pollTag = n.poll ? '<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(124,92,255,0.15);color:#a78bfa;font-size:10.5px;font-weight:700;vertical-align:middle">🗳️ sondage</span>' : '';
+    const pollTag = n.poll ? '<span class="announcement-tag" style="--tag-bg:rgba(124,92,255,0.18);color:#a78bfa">🗳️ sondage</span>' : '';
     const auto = AUTO_ANNOUNCEMENT_LABELS[n.type];
-    const autoTag = auto ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:${auto.color}22;color:${auto.color};font-size:10.5px;font-weight:700;vertical-align:middle">${auto.label}</span>` : '';
+    const autoTag = auto ? `<span class="announcement-tag" style="--tag-bg:${auto.color}22;color:${auto.color}">${auto.label}</span>` : '';
     const isWarning = WARNING_TYPES.includes(n.type);
     const targetUser = isWarning ? allMembersCache?.find(u => u.id === n.uid) : null;
-    const targetTag = isWarning && n.fromUsername ? `<span style="display:inline-block;margin-left:8px;padding:2px 8px;border-radius:20px;background:rgba(255,255,255,0.08);color:var(--gray);font-size:10.5px;font-weight:700;vertical-align:middle">${escapeHTML(n.fromUsername)}</span>` : '';
+    const targetTag = isWarning && n.fromUsername ? `<span class="announcement-tag" style="--tag-bg:rgba(255,255,255,0.08);color:var(--gray)">${escapeHTML(n.fromUsername)}</span>` : '';
     const deleteAction = isWarning ? `confirmDeleteWarningNotif('${n.uid}','${n.id}')` : `confirmDeleteAnnouncement('${n.id}')`;
     const avatarHTML = isWarning
       ? (targetUser?.avatarURL
@@ -6081,21 +6090,30 @@ async function renderAnnouncementsHistory() {
           : `<div class="announcement-item-avatar">${escapeHTML((n.fromUsername || '?').trim().charAt(0).toUpperCase())}</div>`)
       : '';
     const detailText = n.detail || '';
-    const isLong = detailText.length > 220 || (detailText.match(/\n/g) || []).length > 3;
-    const detailHTML = isLong
-      ? `<div class="announcement-item-detail clampable">${escapeHTML(detailText)}</div><button class="announcement-toggle-btn" onclick="toggleAnnouncementText(this)">Voir plus</button>`
-      : `<div class="announcement-item-detail">${escapeHTML(detailText)}</div>`;
     return `
     <div class="announcement-item">
       ${avatarHTML}
       <div class="announcement-item-body">
-        <div class="announcement-item-title">${escapeHTML(n.title)}${pollTag}${autoTag}${targetTag}</div>
-        ${detailHTML}
+        <div class="announcement-item-title"><span class="announcement-item-title-text">${escapeHTML(n.title)}</span>${pollTag}${autoTag}${targetTag}</div>
+        <div class="announcement-item-detail clampable">${escapeHTML(detailText)}</div>
+        <button class="announcement-toggle-btn" style="display:none" onclick="toggleAnnouncementText(this)">Voir plus</button>
         <div class="announcement-item-time">${formatNotifTime(n.date)}</div>
       </div>
       <button class="btn-delete" style="font-size:11px;padding:8px 12px;flex:none" onclick="${deleteAction}"><i data-lucide="trash-2"></i></button>
     </div>`;
   }).join('');
+  // Le bouton "Voir plus" n'a de sens que si le texte est réellement tronqué visuellement
+  // (une longueur de caractères ne suffit pas à le prédire vu que ça dépend de la largeur
+  // du bloc) : on mesure donc le débordement réel après le rendu.
+  list.querySelectorAll('.announcement-item-detail.clampable').forEach(el => {
+    const btn = el.nextElementSibling;
+    if (!btn || !btn.classList.contains('announcement-toggle-btn')) return;
+    if (el.scrollHeight - el.clientHeight > 2) {
+      btn.style.display = 'inline-block';
+    } else {
+      el.classList.remove('clampable');
+    }
+  });
   if (window.lucide) lucide.createIcons({ nodes: [list] });
 }
 function toggleAnnouncementText(btn) {
