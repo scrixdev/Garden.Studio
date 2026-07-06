@@ -7474,10 +7474,6 @@ function renderMemberItemHTML(u) {
     : '';
   const sanctionBadge = banBadgeHTML(u);
   const isSelf = !!(currentUser && currentUser.uid === u.id);
-  const sanctionButtons = (owner || isSelf) ? '' : `
-    <div class="member-sanction-slot" onclick="event.stopPropagation()">
-      <button class="sanction-btn" title="Vue du modérateur (commentaires, jeux aimés, notes, avertissements, sanctions)" onclick="openModPanel('${u.id}')"><i data-lucide="shield"></i></button>
-    </div>`;
   return `<div class="member-item" style="cursor:pointer" onclick="openTeamMemberModal('${u.id}')">
     ${u.avatarURL ? `<img class="member-avatar" src="${u.avatarURL}" alt="">` : `<div class="member-avatar" style="background:${rs.color}">${escapeHTML(letter)}</div>`}
     <div class="member-info">
@@ -7492,7 +7488,6 @@ function renderMemberItemHTML(u) {
           ${ALL_ROLES.map(r => `<option value="${r}" ${r === role ? 'selected' : ''}>${r}</option>`).join('')}
         </select>`}
     </div>
-    ${sanctionButtons}
   </div>`;
 }
 async function changeMemberRole(uid, role) {
@@ -11150,7 +11145,7 @@ select.authbox-input option {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <button class="mod-panel-trigger" id="tm-mod-btn" style="display:none" title="Vue du modérateur">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor"><path fill="none" d="M0 0h24v24H0z"></path><path fill-rule="nonzero" d="M7.05 13.406l3.534 3.536-1.413 1.414 1.415 1.415-1.414 1.414-2.475-2.475-2.829 2.829-1.414-1.414 2.829-2.83-2.475-2.474 1.414-1.414 1.414 1.413 1.413-1.414zM3 3l3.546.003 11.817 11.818 1.415-1.414 1.414 1.414-2.474 2.475 2.828 2.829-1.414 1.414-2.829-2.829-2.475 2.475-1.414-1.414 1.414-1.415L3.003 6.531 3 3zm14.457 0L21 3.003l.002 3.523-4.053 4.052-3.536-3.535L17.457 3z"></path></svg>
+      <i data-lucide="shield"></i>
     </button>
     <div id="tm-banner" class="account-banner" style="border-radius:0"></div>
     <div style="padding:0 26px 26px">
