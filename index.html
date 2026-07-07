@@ -2160,13 +2160,17 @@ function startSelfBanWatch(uid) {
       _lastKnownForceLogoutAt = d.forceLogoutAt ? d.forceLogoutAt.toMillis() : null;
       _selfBanFirstSnapshot = false;
     }
-    handleSelfBanSnapshot(d);
+    handleSelfBanSnapshot(d, uid);
   }, () => {});
 }
 function stopSelfBanWatch() {
   if (_unsubSelfBanWatch) { _unsubSelfBanWatch(); _unsubSelfBanWatch = null; }
 }
-async function handleSelfBanSnapshot(d) {
+// ----- Détection 100% Firestore (aucun localStorage) : le flag "pendingReactivation"
+// vit dans le document users/{uid} lui-même, donc ça marche sur n'importe quel appareil
+// où le membre se reconnecte, et c'est vérifié côté serveur par les règles (impossible à
+// trafiquer depuis la console du navigateur). -----
+async function handleSelfBanSnapshot(d, uid) {
   const now = Date.now();
   const untilMs = (d.banUntil && typeof d.banUntil.toMillis === 'function') ? d.banUntil.toMillis() : null;
   const isPermaBanned = d.banStatus === 'banned';
@@ -2175,6 +2179,22 @@ async function handleSelfBanSnapshot(d) {
     stopSelfBanWatch();
     showBanScreen(isPermaBanned ? 'banned' : 'timeout', d.banReason || '', untilMs);
     try { await signOut(auth); } catch (e) {}
+    return;
+  }
+  // Ban temporaire arrivé à échéance TOUT SEUL (aucun admin n'est intervenu) : le membre
+  // s'auto-nettoie lui-même, mais les règles Firestore vérifient côté serveur (avec
+  // request.time) que banUntil est bien dépassé avant d'accepter cette écriture —
+  // impossible de tricher en changeant l'horloge de son téléphone/PC.
+  if (d.banStatus === 'timeout' && untilMs !== null && untilMs <= now && !d.pendingReactivation) {
+    try {
+      await fsMergeSet('users/' + uid, { banStatus: 'none', banUntil: null, banReason: '', pendingReactivation: true });
+    } catch (e) { console.error('Erreur auto-nettoyage du ban expiré:', e); }
+    return; // le prochain instantané verra pendingReactivation === true (branche ci-dessous)
+  }
+  // Sanction levée (déban admin OU auto-nettoyage ci-dessus) : on affiche l'écran
+  // "bienvenue de retour" tant que le membre n'a pas cliqué sur "Réactiver mon compte".
+  if (d.pendingReactivation === true) {
+    showReactivationScreen(uid);
     return;
   }
   const forceLogoutMs = d.forceLogoutAt ? d.forceLogoutAt.toMillis() : null;
@@ -2202,7 +2222,40 @@ function showBanScreen(type, reason, untilMs) {
   else { reasonEl.style.display = 'none'; }
   document.getElementById('ban-screen-modal')?.classList.add('open');
 }
-function closeBanScreen() { document.getElementById('ban-screen-modal')?.classList.remove('open'); }
+// Bouton "J'ai compris" de l'écran de sanction : le compte a déjà été déconnecté juste
+// avant l'affichage de l'écran (voir handleSelfBanSnapshot), mais on re-sécurise ici (au
+// cas où) puis on force un rechargement complet de la page pour repartir sur un état
+// totalement propre (nav déconnectée, caches vidés, etc.).
+async function closeBanScreen() {
+  document.getElementById('ban-screen-modal')?.classList.remove('open');
+  try { await signOut(auth); } catch (e) {}
+  location.reload();
+}
+// ----- Écran "bienvenue de retour" (fin de sanction) -----
+// Affiché uniquement au membre dont pendingReactivation == true côté Firestore (voir
+// handleSelfBanSnapshot ci-dessus). Rappelle le règlement et exige un clic sur "Réactiver
+// mon compte" avant de pouvoir continuer à naviguer normalement — pas de fermeture en
+// cliquant en dehors.
+function showReactivationScreen(uid) {
+  const modal = document.getElementById('reactivation-modal');
+  if (!modal) return;
+  modal.dataset.uid = uid || '';
+  modal.classList.add('open');
+}
+// Acquitte l'écran : repasse pendingReactivation à false dans Firestore (les règles
+// n'autorisent QUE cette transition true -> false par le propriétaire du compte, rien
+// d'autre ne peut bouger via cette écriture), donc l'écran ne réapparaîtra plus, peu
+// importe l'appareil utilisé ensuite.
+async function closeReactivationScreen() {
+  const modal = document.getElementById('reactivation-modal');
+  const uid = modal?.dataset.uid;
+  modal?.classList.remove('open');
+  showToast('✅ Compte réactivé, bon retour parmi nous !');
+  if (uid) {
+    try { await fsMergeSet('users/' + uid, { pendingReactivation: false }); }
+    catch (e) { console.error('Erreur en acquittant la réactivation:', e); }
+  }
+}
 
 // ===== FIRESTORE =====
 async function fsGet(path) {
@@ -2285,11 +2338,18 @@ window.fbSetUserBan = async function(uid, { status, until, reason }) {
     banUntil: (status === 'timeout' && until) ? Timestamp.fromDate(new Date(until)) : null,
     banReason: reason || '',
     bannedAt: serverTimestamp(),
-    bannedBy: (currentUser && currentUser.uid) || ''
+    bannedBy: (currentUser && currentUser.uid) || '',
+    // On repart toujours d'un pendingReactivation propre : si un cycle précédent avait
+    // laissé ce flag à true sans que le membre ne l'ait acquitté, une nouvelle sanction ne
+    // doit pas déclencher l'écran "bienvenue de retour" par erreur.
+    pendingReactivation: false
   });
 };
 window.fbUnbanUser = async function(uid) {
-  await fsMergeSet('users/' + uid, { banStatus: 'none', banUntil: null, banReason: '', bannedAt: null, bannedBy: '' });
+  // pendingReactivation: true -> à la prochaine connexion du membre (sur n'importe quel
+  // appareil, ce flag vit côté serveur), l'écran "bienvenue de retour" s'affichera pour
+  // rappeler le règlement avant qu'il ne puisse continuer à naviguer normalement.
+  await fsMergeSet('users/' + uid, { banStatus: 'none', banUntil: null, banReason: '', bannedAt: null, bannedBy: '', pendingReactivation: true });
 };
 window.fbKickUser = async function(uid) {
   await fsMergeSet('users/' + uid, { forceLogoutAt: serverTimestamp() });
@@ -11510,6 +11570,31 @@ select.authbox-input option {
           <div id="ban-screen-detail" style="font-size:13px;color:#bbb;margin-bottom:14px;line-height:1.6"></div>
           <div id="ban-screen-reason" style="font-size:12.5px;color:#999;margin-bottom:26px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px;text-align:left;display:none"></div>
           <button class="authbox-btn" style="width:100%;background:var(--lime);color:var(--dark)" onclick="closeBanScreen()">J'ai compris</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ÉCRAN DE RÉACTIVATION (affiché quand la sanction du membre vient de se terminer) ===== -->
+<div class="modal-overlay" id="reactivation-modal" style="z-index:999999">
+  <div class="modal-box" style="max-width:420px;width:92%;height:auto;max-height:none;overflow:visible;background:transparent;border:none;box-shadow:none;border-radius:0">
+    <div class="authbox-container">
+      <div class="authbox-login-box" style="padding:44px 36px 36px;text-align:center">
+        <div class="authbox-content">
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(158,255,60,0.12);border:1px solid rgba(158,255,60,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 20px">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--lime)" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg>
+          </div>
+          <div style="font-family:'Barlow Condensed',sans-serif;font-weight:900;font-size:24px;text-transform:uppercase;margin-bottom:10px;color:var(--lime)">Bienvenue de retour !</div>
+          <div style="font-size:13px;color:#bbb;margin-bottom:14px;line-height:1.6">Ta suspension est terminée et tu peux à nouveau utiliser ton compte normalement.</div>
+          <div style="font-size:12.5px;color:#ccc;margin-bottom:26px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:14px;text-align:left;line-height:1.7">
+            Avant de continuer, merci de garder en tête le règlement de la communauté :<br>
+            • Pas d'insultes ni de harcèlement envers les autres membres<br>
+            • Pas de spam ni de propos déplacés dans les commentaires<br>
+            • Respecte les décisions de l'équipe de modération<br><br>
+            En cas de nouvelle infraction, la prochaine sanction pourra être plus sévère, jusqu'au bannissement définitif.
+          </div>
+          <button class="authbox-btn" style="width:100%;background:var(--lime);color:var(--dark)" onclick="closeReactivationScreen()">Réactiver mon compte</button>
         </div>
       </div>
     </div>
