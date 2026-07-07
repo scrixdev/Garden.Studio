@@ -9664,7 +9664,7 @@ async function doRegister() {
     const user = await window.fbRegister(email, pwd, username);
     if (window.fbLogLogin && user) window.fbLogLogin(user.uid, 'register');
     showAuthSuccess('<i data-lucide="check"></i> Compte créé ! Bienvenue ' + username);
-    setTimeout(() => { closeSignInDirect(); showToast('Bienvenue sur Garden Studio, ' + username + ' !'); }, 1200);
+    setTimeout(() => { closeSignInDirect(); showToast('Bienvenue sur Garden Studio, ' + username + ' !'); setTimeout(() => { window.location.reload(); }, 600); }, 1200);
   } catch(e) {
     const msgs = { 'auth/email-already-in-use': 'Cet email est déjà utilisé.', 'auth/invalid-email': 'Email invalide.', 'auth/weak-password': 'Mot de passe trop faible.' };
     showAuthError(msgs[e.code] || 'Erreur : ' + e.message);
@@ -9682,6 +9682,9 @@ async function doSignIn() {
     const username = user.displayName || email.split('@')[0];
     closeSignInDirect();
     showToast('Connexion réussie ! Bienvenue ' + username + ' 👋');
+    // Même logique que la déconnexion : on force un rechargement complet de la page pour
+    // repartir sur un état 100% propre (nav, profil, notifications... tout resynchronisé).
+    setTimeout(() => { window.location.reload(); }, 600);
   } catch(e) {
     const msgs = { 'auth/user-not-found': 'Aucun compte trouvé.', 'auth/wrong-password': 'Mot de passe incorrect.', 'auth/invalid-credential': 'Email ou mot de passe incorrect.', 'auth/too-many-requests': 'Trop de tentatives. Réessaie plus tard.' };
     showAuthError(msgs[e.code] || 'Erreur de connexion.');
@@ -9695,6 +9698,8 @@ async function doSignInGoogle() {
     const username = user.displayName || user.email.split('@')[0];
     closeSignInDirect();
     showToast('Connecté avec Google ! Bienvenue ' + username + ' 👋');
+    // Idem : rechargement automatique après connexion réussie.
+    setTimeout(() => { window.location.reload(); }, 600);
   } catch(e) {
     if (e.code !== 'auth/popup-closed-by-user') {
       showAuthError('Erreur Google : ' + (e.message || e.code));
