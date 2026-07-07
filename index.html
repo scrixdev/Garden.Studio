@@ -2205,7 +2205,7 @@ async function handleSelfBanSnapshot(d, uid) {
     try { await signOut(auth); } catch (e) {}
   }
 }
-function showBanScreen(type, reason, untilMs) {
+window.showBanScreen = function showBanScreen(type, reason, untilMs) {
   const titleEl = document.getElementById('ban-screen-title');
   const detailEl = document.getElementById('ban-screen-detail');
   const reasonEl = document.getElementById('ban-screen-reason');
@@ -2226,7 +2226,7 @@ function showBanScreen(type, reason, untilMs) {
 // avant l'affichage de l'écran (voir handleSelfBanSnapshot), mais on re-sécurise ici (au
 // cas où) puis on force un rechargement complet de la page pour repartir sur un état
 // totalement propre (nav déconnectée, caches vidés, etc.).
-async function closeBanScreen() {
+window.closeBanScreen = async function closeBanScreen() {
   document.getElementById('ban-screen-modal')?.classList.remove('open');
   try { await signOut(auth); } catch (e) {}
   location.reload();
@@ -2236,7 +2236,7 @@ async function closeBanScreen() {
 // handleSelfBanSnapshot ci-dessus). Rappelle le règlement et exige un clic sur "Réactiver
 // mon compte" avant de pouvoir continuer à naviguer normalement — pas de fermeture en
 // cliquant en dehors.
-function showReactivationScreen(uid) {
+window.showReactivationScreen = function showReactivationScreen(uid) {
   const modal = document.getElementById('reactivation-modal');
   if (!modal) return;
   modal.dataset.uid = uid || '';
@@ -2246,7 +2246,7 @@ function showReactivationScreen(uid) {
 // n'autorisent QUE cette transition true -> false par le propriétaire du compte, rien
 // d'autre ne peut bouger via cette écriture), donc l'écran ne réapparaîtra plus, peu
 // importe l'appareil utilisé ensuite.
-async function closeReactivationScreen() {
+window.closeReactivationScreen = async function closeReactivationScreen() {
   const modal = document.getElementById('reactivation-modal');
   const uid = modal?.dataset.uid;
   modal?.classList.remove('open');
